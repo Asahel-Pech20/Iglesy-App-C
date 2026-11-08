@@ -6,6 +6,7 @@ import { configuracionRouter } from './modules/configuracion/configuracion.route
 import { crearDashboardRouter } from './modules/dashboard/dashboard.routes';
 import { diezmoRouter } from './modules/diezmo/diezmo.routes';
 import { donacionesRouter } from './modules/donaciones/donaciones.routes';
+import { iglesiasRouter } from './modules/iglesias/iglesias.routes';
 import { eventosRouter } from './modules/eventos/eventos.routes';
 import { miembrosRouter } from './modules/miembros/miembros.routes';
 import { misasRouter } from './modules/misas/misas.routes';
@@ -38,6 +39,7 @@ export function crearModulos(): ModuloApi[] {
     { prefijo: '/donaciones', router: donacionesRouter },
     { prefijo: '/dashboard', router: crearDashboardRouter() },
     { prefijo: '/reportes', router: reportesRouter },
+    { prefijo: '/iglesias', router: iglesiasRouter },
     // Ecclesia: datos internos de una iglesia; cada ruta pasa por alcanceIglesia
     { prefijo: '/iglesias/:iglesiaId', router: misasRouter },
     { prefijo: '/iglesias/:iglesiaId', router: diezmoRouter },

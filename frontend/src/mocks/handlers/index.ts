@@ -7,6 +7,7 @@ import { configuracionHandlers } from './configuracion';
 import { dashboardHandlers } from './dashboard';
 import { diezmoHandlers } from './diezmo';
 import { donacionesHandlers } from './donaciones';
+import { iglesiasHandlers } from './iglesias';
 import { eventosHandlers } from './eventos';
 import { miembrosHandlers } from './miembros';
 import { ministeriosHandlers } from './ministerios';
@@ -28,4 +29,5 @@ export const handlers = [
   ...dashboardHandlers,
   ...reportesHandlers,
   ...diezmoHandlers,
+  ...iglesiasHandlers,
 ];

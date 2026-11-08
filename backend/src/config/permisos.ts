@@ -63,6 +63,9 @@ export const PERMISOS = [
   // Misas celebradas y padres (versión mínima que necesita el diezmo)
   'misas:leer',
   'misas:registrar',
+  // Iglesias del sistema nacional (solo la Coordinación)
+  'iglesias:leer',
+  'iglesias:crear',
 ] as const;
 
 export type Permiso = (typeof PERMISOS)[number];
@@ -78,6 +81,8 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'usuarios:opciones',
     'configuracion:leer',
     'configuracion:editar',
+    'iglesias:leer',
+    'iglesias:crear',
   ],
   ADMIN_IGLESIA: [
     ...CLED('usuarios'),

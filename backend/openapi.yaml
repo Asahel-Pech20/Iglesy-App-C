@@ -21,6 +21,7 @@ tags:
   - name: Donaciones
   - name: Dashboard
   - name: Reportes
+  - name: Iglesias
   - name: Misas
   - name: Diezmo
 
@@ -626,6 +627,39 @@ paths:
       responses:
         '204': { $ref: '#/components/responses/SinContenido' }
         '400': { $ref: '#/components/responses/Validacion' }
+
+  /iglesias:
+    get:
+      tags: [Iglesias]
+      summary: Listar las iglesias del sistema (iglesias:leer, solo la Coordinación)
+      parameters:
+        - { name: q, in: query, schema: { type: string }, description: Busca por nombre }
+      responses:
+        '200': { description: Lista paginada de iglesias }
+        '403': { $ref: '#/components/responses/Prohibido' }
+    post:
+      tags: [Iglesias]
+      summary: Crear una iglesia (iglesias:crear, solo la Coordinación)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, tipo]
+              properties:
+                nombre: { type: string, maxLength: 150 }
+                tipo:
+                  {
+                    type: string,
+                    enum: [CATEDRAL, BASILICA, PARROQUIA, TEMPLO, CAPILLA, SANTUARIO],
+                  }
+                zonaHoraria: { type: string, default: America/Mexico_City }
+      responses:
+        '201': { description: Creada }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '409': { $ref: '#/components/responses/Conflicto' }
 
   /usuarios:
     get:

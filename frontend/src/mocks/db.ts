@@ -27,11 +27,13 @@ import {
   correccionesIniciales,
   type DiezmoMock,
   diezmosIniciales,
+  iglesiasIniciales,
   type MisaMock,
   misasIniciales,
   padresIniciales,
 } from './datos/diezmo';
 import type { Padre } from '@/app/tipos/diezmo';
+import type { Iglesia } from '@/app/tipos/iglesias';
 
 // "Base de datos" en memoria de los mocks. Cada dueño agrega aquí sus colecciones (B2–B4).
 export const db = {
@@ -53,6 +55,7 @@ export const db = {
   // F4: donaciones
   donaciones: donacionesIniciales(),
   // Ecclesia: diezmo de las misas
+  iglesias: iglesiasIniciales(),
   padres: padresIniciales(),
   misas: misasIniciales(),
   diezmos: diezmosIniciales(),
@@ -71,6 +74,7 @@ export const db = {
   asistencias: AsistenciaMock[];
   anuncios: AnuncioMock[];
   donaciones: DonacionMock[];
+  iglesias: Iglesia[];
   padres: Padre[];
   misas: MisaMock[];
   diezmos: DiezmoMock[];
@@ -92,6 +96,7 @@ export function reiniciarDb() {
   db.asistencias = asistenciasIniciales();
   db.anuncios = anunciosIniciales();
   db.donaciones = donacionesIniciales();
+  db.iglesias = iglesiasIniciales();
   db.padres = padresIniciales();
   db.misas = misasIniciales();
   db.diezmos = diezmosIniciales();

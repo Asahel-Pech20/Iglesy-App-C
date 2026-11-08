@@ -1,4 +1,5 @@
 import type { Padre } from '@/app/tipos/diezmo';
+import type { Iglesia } from '@/app/tipos/iglesias';
 import { IGLESIA_MOCK, OTRA_IGLESIA_MOCK } from './b1';
 
 // Datos simulados del diezmo (Ecclesia). Las misas se calculan respecto a hoy (nunca futuras) para
@@ -38,6 +39,29 @@ function haceDias(dias: number, horaUtc = 16) {
   d.setUTCHours(horaUtc, 0, 0, 0);
   return d.toISOString();
 }
+
+const creada = '2026-01-01T00:00:00.000Z';
+
+export const iglesiasIniciales = (): Iglesia[] => [
+  {
+    id: IGLESIA_MOCK,
+    nombre: 'Parroquia Comunidad de Fe',
+    tipo: 'PARROQUIA',
+    zonaHoraria: 'America/Mexico_City',
+    activa: true,
+    createdAt: creada,
+    updatedAt: creada,
+  },
+  {
+    id: OTRA_IGLESIA_MOCK,
+    nombre: 'Capilla del Valle',
+    tipo: 'CAPILLA',
+    zonaHoraria: 'America/Mexico_City',
+    activa: true,
+    createdAt: creada,
+    updatedAt: creada,
+  },
+];
 
 export const padresIniciales = (): Padre[] => [
   { id: 'pa-luis', nombre: 'Luis Pérez Cámara' },

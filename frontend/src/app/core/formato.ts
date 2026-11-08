@@ -3,6 +3,7 @@ import { es } from 'date-fns/locale';
 import type { PrioridadAnuncio } from '@/app/tipos/anuncios';
 import type { Rol } from '@/app/tipos/comunes';
 import type { AgrupacionIngresos, ConceptoDonacion, MetodoPago } from '@/app/tipos/donaciones';
+import type { TipoIglesia } from '@/app/tipos/iglesias';
 import type { CategoriaEvento, EstadoEvento, TipoEvento } from '@/app/tipos/eventos';
 
 // Helpers de formato de AGENTS.md §4 (UX). Todas las fechas se muestran en español.
@@ -52,6 +53,15 @@ export function aFechaApi(fecha: Date): string {
 
 // ───────── Etiquetas de enums en español ─────────
 // Cada dueño agrega las de su módulo (F2–F4) siguiendo el mismo patrón.
+
+export const ETIQUETAS_TIPO_IGLESIA: Record<TipoIglesia, string> = {
+  CATEDRAL: 'Catedral',
+  BASILICA: 'Basílica',
+  PARROQUIA: 'Parroquia',
+  TEMPLO: 'Templo',
+  CAPILLA: 'Capilla',
+  SANTUARIO: 'Santuario',
+};
 
 export const ETIQUETAS_ROL: Record<Rol, string> = {
   COORDINACION: 'Coordinación nacional',

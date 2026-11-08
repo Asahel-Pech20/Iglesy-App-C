@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import {
@@ -21,6 +22,8 @@ import {
   requerido,
   validarEmail,
 } from '@/app/core/validadores';
+import { SesionService } from '@/app/core/sesion.service';
+import { IglesiasService } from '@/app/features/iglesias/iglesias.service';
 import type { Rol } from '@/app/tipos/comunes';
 import type { Usuario } from '@/app/tipos/usuarios';
 import { UsuariosService } from './usuarios.service';
@@ -75,6 +78,19 @@ import { UsuariosService } from './usuarios.service';
           </mat-select>
           <mat-error>{{ error('rol') }}</mat-error>
         </mat-form-field>
+        @if (pideIglesia()) {
+          <mat-form-field>
+            <mat-label>Iglesia</mat-label>
+            <mat-select formControlName="iglesiaId" aria-required="true">
+              @for (i of iglesias(); track i.id) {
+                <mat-option [value]="i.id">{{ i.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (errorIglesia()) {
+            <p class="texto-peligro" role="alert">{{ errorIglesia() }}</p>
+          }
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -90,6 +106,20 @@ export class UsuarioFormDialogo {
   protected readonly ref = inject(MatDialogRef<UsuarioFormDialogo, boolean>);
   private readonly servicio = inject(UsuariosService);
   private readonly notificar = inject(NotificarService);
+  private readonly sesion = inject(SesionService);
+  private readonly iglesiasServicio = inject(IglesiasService);
+
+  /** Solo la Coordinación elige la iglesia, y solo al crear; el resto crea en la suya */
+  private readonly eligeIglesia = !this.usuario && this.sesion.puede('iglesias:leer');
+  protected readonly listaIglesias = rxResource({
+    params: () => (this.eligeIglesia ? {} : undefined),
+    stream: () => this.iglesiasServicio.listar({ page: 1, limit: 100 }),
+  });
+  protected readonly iglesias = computed(() =>
+    this.listaIglesias.hasValue() ? this.listaIglesias.value().data : [],
+  );
+
+  protected readonly errorIglesia = signal('');
 
   protected readonly roles = opcionesDe(ETIQUETAS_ROL);
   protected readonly enviando = signal(false);
@@ -98,7 +128,15 @@ export class UsuarioFormDialogo {
     nombre: [this.usuario?.nombre ?? '', [requerido('Escribe el nombre.'), maximo(120)]],
     email: [this.usuario?.email ?? '', [requerido('Escribe el correo.'), validarEmail]],
     rol: [(this.usuario?.rol ?? '') as Rol | '', requerido('Selecciona un rol.')],
+    iglesiaId: [''],
   });
+  private readonly rolElegido = toSignal(this.form.controls.rol.valueChanges, {
+    initialValue: this.form.controls.rol.value,
+  });
+  /** La Coordinación nacional no pertenece a una iglesia: no se le pide */
+  protected readonly pideIglesia = computed(
+    () => this.eligeIglesia && this.rolElegido() !== '' && this.rolElegido() !== 'COORDINACION',
+  );
 
   protected error(campo: 'nombre' | 'email' | 'rol') {
     return mensajeError(this.form.controls[campo]);
@@ -107,12 +145,22 @@ export class UsuarioFormDialogo {
   protected enviar() {
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
-    const { nombre, email, rol } = this.form.getRawValue();
+    const { nombre, email, rol, iglesiaId } = this.form.getRawValue();
+    if (this.pideIglesia() && !iglesiaId) {
+      this.errorIglesia.set('Elige la iglesia del usuario.');
+      return;
+    }
+    this.errorIglesia.set('');
     this.errorGeneral.set(null);
     this.enviando.set(true);
     this.servicio
       .guardar(
-        { nombre: nombre.trim(), email: email.trim().toLowerCase(), rol: rol as Rol },
+        {
+          nombre: nombre.trim(),
+          email: email.trim().toLowerCase(),
+          rol: rol as Rol,
+          ...(this.pideIglesia() && { iglesiaId }),
+        },
         this.usuario?.id,
       )
       .subscribe({

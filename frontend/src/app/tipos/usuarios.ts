@@ -38,6 +38,8 @@ export interface CrearUsuario {
   nombre: string;
   email: string;
   rol: Rol;
+  /** Solo la Coordinación la indica; el administrador crea en su propia iglesia */
+  iglesiaId?: string;
 }
 
 export type EditarUsuario = Partial<CrearUsuario>;

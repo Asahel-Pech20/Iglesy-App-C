@@ -1,7 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import type { Rol } from '@/app/tipos/comunes';
 import type { CrearUsuario, Usuario } from '@/app/tipos/usuarios';
-import { IGLESIA_MOCK } from '../datos/b1';
 import { db } from '../db';
 import { ahora, autenticar, errorApi, paginarMock, ruta } from '../utils';
 
@@ -55,12 +54,20 @@ export const usuariosHandlers = [
     if (usuario instanceof Response) return usuario;
     const cuerpo = (await request.json()) as CrearUsuario;
     if (emailDuplicado(cuerpo.email)) return errorEmail();
+    // Solo la Coordinación indica la iglesia; el administrador crea en la suya
+    const iglesiaId =
+      cuerpo.rol === 'COORDINACION' ? null : (usuario.iglesiaId ?? cuerpo.iglesiaId ?? null);
+    if (cuerpo.rol !== 'COORDINACION' && !iglesiaId) {
+      return errorApi(400, 'VALIDATION_ERROR', 'Indica la iglesia del usuario.', [
+        { campo: 'iglesiaId', mensaje: 'Elige la iglesia.' },
+      ]);
+    }
     const nuevo: Usuario = {
       id: crypto.randomUUID(),
       nombre: cuerpo.nombre,
       email: cuerpo.email.toLowerCase(),
       rol: cuerpo.rol,
-      iglesiaId: cuerpo.rol === 'COORDINACION' ? null : (usuario.iglesiaId ?? IGLESIA_MOCK),
+      iglesiaId,
       activo: true,
       ultimoAcceso: null,
       createdAt: ahora(),
