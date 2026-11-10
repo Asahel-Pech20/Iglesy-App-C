@@ -95,6 +95,43 @@ Fechas sin hora (`?desde=2026-10-31&hasta=2026-10-31` en `/eventos` y `/asistenc
 7. Documenta las rutas en `openapi.yaml`.
 8. **test**: por endpoint, un caso feliz, uno de validación (400) y uno de permisos (401/403). `loginComo('TESORERO')` devuelve la cabecera `Authorization`.
 
+## Alcance por iglesia (Ecclesia, E1-01)
+
+Toda ruta con datos de **una** iglesia pasa por `alcanceIglesia` (`middlewares/alcanceIglesia.ts`), después de `autenticar` y `autorizar`. La iglesia del recurso se lee **de la BD**; la del usuario, de su sesión. Una `iglesiaId` en body, query o cabeceras **nunca** se usa para decidir.
+
+```ts
+import { SUPUESTOS_ALCANCE, alcanceIglesia, iglesiaAlcanceDe, iglesiaDe, iglesiaDeLaRuta } from '../../middlewares/alcanceIglesia';
+
+// 1) Rutas /iglesias/:iglesiaId/... → la iglesia es el parámetro (se comprueba que exista).
+//    Sin opciones, la Coordinación recibe 403 (datos privados: diezmo, solicitudes).
+router.get('/padres', autenticar, autorizar('misas:leer'), alcanceIglesia(iglesiaDeLaRuta), controller.listar);
+//    Datos de la iglesia que la Coordinación sí consulta (objetos, servicios…):
+router.get('/objetos', autenticar, autorizar('...'),
+  alcanceIglesia(iglesiaDeLaRuta, { coordinacion: SUPUESTOS_ALCANCE.datosIglesia }), controller.listar);
+
+// 2) Recurso por id → tu service exporta un resolver que lee su iglesiaId de la BD
+export const iglesiaDeDiezmo: ResolverIglesia = async (req) =>
+  (await prisma.diezmo.findUnique({ where: { id: req.params.id }, select: { iglesiaId: true } }))?.iglesiaId;
+
+// En el controller: la iglesia ya verificada
+const iglesiaId = iglesiaAlcanceDe(req);
+
+// 3) Crear algo de la iglesia del usuario sin :iglesiaId en la ruta: iglesiaDe(req). La Coordinación → 403
+const iglesiaId = iglesiaDe(req);
+```
+
+| Caso | Respuesta |
+|---|---|
+| Sin sesión | 401 `UNAUTHENTICATED` |
+| Recurso o iglesia inexistente (el resolver devuelve `null`/`undefined`) | 404 `NOT_FOUND` |
+| Personal de otra iglesia | 403 `FORBIDDEN` |
+| `COORDINACION` | 403 por omisión; entra solo con `coordinacion: SUPUESTOS_ALCANCE.datosIglesia` |
+
+- Los valores de `SUPUESTOS_ALCANCE` son supuestos de P-21 y P-28 (S-02 de `docs/ecclesia/plan-santiago.md`); cuando el cliente responda, se cambian solo ahí.
+- `req.usuario.iglesiaId` es `null` solo en la Coordinación: lo garantiza el `CHECK usuarios_iglesia_segun_rol` en la BD. Una iglesia con personal no se puede borrar (`RESTRICT`); se cierra con `activa = false`.
+- En pruebas: `crearIglesia()` y `loginComo('TESORERO', { iglesiaId })`; ejemplos en `middlewares/alcanceIglesia.test.ts`.
+- Roles: `COORDINACION` (nacional, sin iglesia) · `ADMIN_IGLESIA` (antes `ADMIN`) · `TESORERO`… No confundir `COORDINACION` con `COORDINADOR` (de ministerio).
+
 ## Utilidades compartidas (B1)
 
 | Archivo | Qué ofrece |

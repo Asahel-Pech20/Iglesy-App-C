@@ -83,7 +83,8 @@ model Usuario {
   rol                Rol
   // Iglesia a la que pertenece el personal. Nulo solo para la Coordinación (alcance nacional).
   iglesiaId          String?
-  iglesia            Iglesia?           @relation(fields: [iglesiaId], references: [id])
+  // Restrict: una iglesia con personal no se borra (se cierra con `activa = false`)
+  iglesia            Iglesia?           @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
   diezmosCapturados  Diezmo[]           @relation("DiezmoCapturador")
   correccionesDiezmo DiezmoCorreccion[] @relation("DiezmoCorrector")
   activo             Boolean            @default(true)

@@ -1,8 +1,16 @@
 import express, { Router } from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { crearIglesia, loginComo } from '../test/helpers';
-import { alcanceIglesia, evaluarAlcance, iglesiaDeLaRuta } from './alcanceIglesia';
+import { prisma } from '../lib/prisma';
+import { crearIglesia, crearUsuario, loginComo } from '../test/helpers';
+import {
+  SUPUESTOS_ALCANCE,
+  alcanceIglesia,
+  evaluarAlcance,
+  iglesiaAlcanceDe,
+  iglesiaDe,
+  iglesiaDeLaRuta,
+} from './alcanceIglesia';
 import { autenticar } from './auth';
 import { manejarErrores } from './errores';
 
@@ -78,5 +86,138 @@ describe('alcanceIglesia en una ruta /iglesias/:iglesiaId (RNF-10)', () => {
     await prisma.usuario.update({ where: { id: usuario.id }, data: { iglesiaId: despues.id } });
     const res = await request(app).get(`/iglesias/${antes.id}/ping`).set('Authorization', auth);
     expect(res.status).toBe(403);
+  });
+});
+
+// ───────── E1-01 (Santiago): Coordinación por ruta, iglesia verificada y datos inyectados ─────────
+
+describe('regla pura: la Coordinación según la ruta (supuesto S-02: P-21, P-28)', () => {
+  it('entra si la ruta lo permite y no entra si lo deniega', () => {
+    expect(evaluarAlcance(null, 'a', SUPUESTOS_ALCANCE.datosIglesia)).toBe('PERMITIDO');
+    expect(evaluarAlcance(null, 'a', SUPUESTOS_ALCANCE.datosPrivados)).toBe('PROHIBIDO');
+  });
+
+  it('permitir a la Coordinación no abre la puerta al personal de otra iglesia', () => {
+    expect(evaluarAlcance('a', 'b', 'permitir')).toBe('PROHIBIDO');
+  });
+});
+
+describe('alcanceIglesia con opciones, iglesiaAlcanceDe e iglesiaDe', () => {
+  const responder = (req: express.Request, res: express.Response) => {
+    res.json({ data: { iglesiaId: iglesiaAlcanceDe(req) } });
+  };
+  const appE1 = express()
+    .use(express.json())
+    .get(
+      '/iglesias/:iglesiaId/datos',
+      autenticar,
+      alcanceIglesia(iglesiaDeLaRuta, { coordinacion: SUPUESTOS_ALCANCE.datosIglesia }),
+      responder,
+    )
+    .patch('/iglesias/:iglesiaId/datos', autenticar, alcanceIglesia(iglesiaDeLaRuta), responder)
+    .get(
+      '/usuarios/:id/iglesia',
+      autenticar,
+      // Recurso cuya iglesia se lee de la BD (no de la ruta): un usuario
+      alcanceIglesia(async (req) => {
+        const u = await prisma.usuario.findUnique({
+          where: { id: String(req.params['id']) },
+          select: { iglesiaId: true },
+        });
+        return u?.iglesiaId;
+      }),
+      responder,
+    )
+    // Crear sin :iglesiaId en la ruta: la iglesia sale de la sesión, nunca del body
+    .post('/recursos', autenticar, (req, res) => {
+      res.status(201).json({ data: { iglesiaId: iglesiaDe(req) } });
+    })
+    .use(manejarErrores);
+
+  it('deja la iglesia verificada para el controller', async () => {
+    const iglesia = await crearIglesia();
+    const { auth } = await loginComo('PASTOR', { iglesiaId: iglesia.id });
+    const res = await request(appE1)
+      .get(`/iglesias/${iglesia.id}/datos`)
+      .set('Authorization', auth);
+    expect(res.status).toBe(200);
+    expect(res.body.data.iglesiaId).toBe(iglesia.id);
+  });
+
+  it('la Coordinación entra donde la ruta lo permite', async () => {
+    const iglesia = await crearIglesia();
+    const { auth } = await loginComo('COORDINACION');
+    const res = await request(appE1)
+      .get(`/iglesias/${iglesia.id}/datos`)
+      .set('Authorization', auth);
+    expect(res.status).toBe(200);
+    expect(res.body.data.iglesiaId).toBe(iglesia.id);
+  });
+
+  it('un recurso cuya iglesia (leída de la BD) es otra → 403', async () => {
+    const [propia, ajena] = [await crearIglesia(), await crearIglesia()];
+    const { auth } = await loginComo('ADMIN_IGLESIA', { iglesiaId: propia.id });
+    const otro = await crearUsuario('PASTOR', { iglesiaId: ajena.id });
+    const res = await request(appE1).get(`/usuarios/${otro.id}/iglesia`).set('Authorization', auth);
+    expect(res.status).toBe(403);
+  });
+
+  it('enviar otra iglesiaId en body, query o cabecera no cambia nada', async () => {
+    const [propia, ajena] = [await crearIglesia(), await crearIglesia()];
+    const { auth } = await loginComo('ADMIN_IGLESIA', { iglesiaId: propia.id });
+    // Intenta entrar a otra iglesia diciendo que es la suya
+    const ajenaRes = await request(appE1)
+      .patch(`/iglesias/${ajena.id}/datos?iglesiaId=${propia.id}`)
+      .set('Authorization', auth)
+      .set('X-Iglesia-Id', propia.id)
+      .send({ iglesiaId: propia.id });
+    expect(ajenaRes.status).toBe(403);
+    // Intenta crear en otra iglesia: se crea en la suya
+    const creado = await request(appE1)
+      .post(`/recursos?iglesiaId=${ajena.id}`)
+      .set('Authorization', auth)
+      .send({ iglesiaId: ajena.id });
+    expect(creado.status).toBe(201);
+    expect(creado.body.data.iglesiaId).toBe(propia.id);
+  });
+
+  it('la Coordinación no crea recursos de iglesia (no tiene iglesia) → 403', async () => {
+    const iglesia = await crearIglesia();
+    const { auth } = await loginComo('COORDINACION');
+    const res = await request(appE1)
+      .post('/recursos')
+      .set('Authorization', auth)
+      .send({ iglesiaId: iglesia.id });
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('BD: iglesia según el rol (CHECK usuarios_iglesia_segun_rol)', () => {
+  it('rechaza personal de iglesia sin iglesia', async () => {
+    await expect(
+      prisma.usuario.create({
+        data: { nombre: 'Sin iglesia', email: 'sin@prueba.local', rol: 'ADMIN_IGLESIA' },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('rechaza a la Coordinación con iglesia', async () => {
+    const iglesia = await crearIglesia();
+    await expect(
+      prisma.usuario.create({
+        data: {
+          nombre: 'Coordinación',
+          email: 'coord@prueba.local',
+          rol: 'COORDINACION',
+          iglesiaId: iglesia.id,
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('no deja borrar una iglesia que tiene personal (RESTRICT)', async () => {
+    const iglesia = await crearIglesia();
+    await crearUsuario('TESORERO', { iglesiaId: iglesia.id });
+    await expect(prisma.iglesia.delete({ where: { id: iglesia.id } })).rejects.toThrow();
   });
 });
