@@ -132,6 +132,38 @@ const iglesiaId = iglesiaDe(req);
 - En pruebas: `crearIglesia()` y `loginComo('TESORERO', { iglesiaId })`; ejemplos en `middlewares/alcanceIglesia.test.ts`.
 - Roles: `COORDINACION` (nacional, sin iglesia) · `ADMIN_IGLESIA` (antes `ADMIN`) · `TESORERO`… No confundir `COORDINACION` con `COORDINADOR` (de ministerio).
 
+## Catálogo del INEGI e iglesias (Ecclesia, E2-05 y E2-06)
+
+**Catálogo** (`modules/catalogos`): estados, municipios y localidades con sus claves oficiales. Las claves son de 2, 5 (estado + municipio) y 9 dígitos (estado + municipio + localidad); la BD exige que cada una empiece con la de su padre.
+
+```bash
+# Cargar el archivo oficial del INEGI (CSV con CVE_ENT, NOM_ENT, CVE_MUN, NOM_MUN, CVE_LOC, NOM_LOC).
+# El archivo no se sube al repositorio. Sin --localidades solo carga estados y municipios.
+pnpm --filter backend db:catalogos ruta/al/archivo.csv [--localidades]
+```
+
+- Consulta pública (sin sesión): `GET /public/estados`, `/public/estados/:clave/municipios` y `/public/municipios/:clave/localidades`.
+- Carga desde el panel: `POST /catalogos/importacion` con `{ filas: [{ cveEnt, nomEnt, cveMun?, nomMun?, cveLoc?, nomLoc? }] }` (hasta 5 000 filas, solo `COORDINACION`). Inserta lo nuevo y actualiza nombres; nunca borra.
+
+**Iglesias** (`modules/iglesias`, base de Oscar ampliada):
+
+| Ruta | Quién | Qué hace |
+|---|---|---|
+| `GET /iglesias?q&estado&municipio&tipo&situacion=activas\|cerradas\|todas` | Coordinación | Lista nacional, incluidas las cerradas |
+| `POST /iglesias` | Coordinación | Crea con ubicación del INEGI, dirección, capacidad, año, contacto y coordenadas (todos opcionales por ahora) |
+| `GET /iglesias/:iglesiaId` | Coordinación o personal con `iglesias:editar` de esa iglesia | Detalle |
+| `PATCH /iglesias/:iglesiaId` | Coordinación o el administrador de **esa** iglesia | Edita; 422 si está cerrada |
+| `POST /iglesias/:iglesiaId/cierre` | Coordinación | `{ fecha, motivo }`: la cierra sin borrar nada |
+
+| Función | Uso |
+|---|---|
+| `catalogosService.validarUbicacion({ estado, municipio, localidad })` | RN-09: 400 con el campo que no coincide con el catálogo |
+| `iglesiasService.obtenerActiva(iglesiaId)` | Para servicios, misas y espacios: 404 si no existe, 422 si está cerrada; devuelve `{ id, nombre, zonaHoraria }` |
+
+- Respuesta de una iglesia: `estado`, `municipio` y `localidad` como `{ clave, nombre }` o `null`; `latitud` y `longitud` como texto con 6 decimales; `fechaCierre` como `yyyy-MM-dd`.
+- La ubicación se guarda con las tres claves en el mismo `UPDATE` (no con `connect`): si Prisma las cambia una por una, el `CHECK iglesias_ubicacion_consistente` rechaza el paso intermedio.
+- Pendiente de acordar con Oscar: el nombre hoy es único en todo el país; la propuesta de `plan-nataly.md` es que sea único por municipio.
+
 ## Utilidades compartidas (B1)
 
 | Archivo | Qué ofrece |

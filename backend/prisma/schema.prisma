@@ -326,14 +326,75 @@ model Iglesia {
   zonaHoraria String      @default("America/Mexico_City")
   // Una iglesia cerrada conserva su historia pero no aparece en consultas públicas
   activa      Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+
+  // E2-06 (Nataly): ubicación del catálogo del INEGI (RN-09 se valida en iglesias.service) y datos
+  // de la ficha (RF-07). Opcionales mientras no se carguen el catálogo y los seeds (E2-05, E2-09).
+  direccion        String?
+  estadoClave      String?   @db.Char(2)
+  municipioClave   String?   @db.Char(5)
+  localidadClave   String?   @db.Char(9)
+  capacidad        Int?
+  anioConstruccion Int?
+  telefono         String?
+  correo           String?
+  latitud          Decimal?  @db.Decimal(9, 6)
+  longitud         Decimal?  @db.Decimal(9, 6)
+  // Cierre sin borrar la historia (RF-11, RN-07)
+  fechaCierre      DateTime? @db.Date
+  motivoCierre     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  estado    Estado?    @relation(fields: [estadoClave], references: [clave], onDelete: Restrict)
+  municipio Municipio? @relation(fields: [municipioClave], references: [clave], onDelete: Restrict)
+  localidad Localidad? @relation(fields: [localidadClave], references: [clave], onDelete: Restrict)
 
   usuarios Usuario[]
   misas    MisaCelebrada[]
   diezmos  Diezmo[]
 
+  @@index([estadoClave, activa])
+  @@index([municipioClave])
   @@map("iglesias")
+}
+
+// ───────────── Ecclesia · Catálogo del INEGI (E2-05, Nataly) ─────────────
+// Claves oficiales: estado (2 dígitos), estado + municipio (5) y estado + municipio + localidad (9).
+
+model Estado {
+  clave  String @id @db.Char(2)
+  nombre String
+
+  municipios Municipio[]
+  iglesias   Iglesia[]
+
+  @@map("estados")
+}
+
+model Municipio {
+  clave       String @id @db.Char(5)
+  estadoClave String @db.Char(2)
+  nombre      String
+
+  estado      Estado      @relation(fields: [estadoClave], references: [clave], onDelete: Restrict)
+  localidades Localidad[]
+  iglesias    Iglesia[]
+
+  @@index([estadoClave])
+  @@map("municipios")
+}
+
+model Localidad {
+  clave          String @id @db.Char(9)
+  municipioClave String @db.Char(5)
+  nombre         String
+
+  municipio Municipio @relation(fields: [municipioClave], references: [clave], onDelete: Restrict)
+  iglesias  Iglesia[]
+
+  @@index([municipioClave])
+  @@map("localidades")
 }
 
 // ───────────── Ecclesia · Misas y diezmo ─────────────
