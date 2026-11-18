@@ -1,0 +1,148 @@
+[
+  {
+    "type": "dependency",
+    "from": "backend/src/modules/asistencia/asistencia.service.ts",
+    "to": "backend/src/modules/eventos/eventos.fechas.ts",
+    "unresolvedTo": "../eventos/eventos.fechas",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "modulos-solo-por-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "backend/src/modules/dashboard/dashboard.service.ts",
+    "to": "backend/src/modules/eventos/eventos.fechas.ts",
+    "unresolvedTo": "../eventos/eventos.fechas",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "modulos-solo-por-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "backend/src/modules/reportes/reportes.service.ts",
+    "to": "backend/src/modules/eventos/eventos.fechas.ts",
+    "unresolvedTo": "../eventos/eventos.fechas",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "modulos-solo-por-service"
+    }
+  },
+  {
+    "type": "cycle",
+    "from": "backend/src/lib/exportadores/excel.ts",
+    "to": "backend/src/lib/exportadores/reporte.ts",
+    "unresolvedTo": "./reporte",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "sin-ciclos"
+    },
+    "cycle": [
+      {
+        "name": "backend/src/lib/exportadores/reporte.ts",
+        "dependencyTypes": ["local", "import"]
+      },
+      {
+        "name": "backend/src/lib/exportadores/excel.ts",
+        "dependencyTypes": ["local", "import"]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "backend/src/lib/exportadores/pdf.ts",
+    "to": "backend/src/lib/exportadores/reporte.ts",
+    "unresolvedTo": "./reporte",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "sin-ciclos"
+    },
+    "cycle": [
+      {
+        "name": "backend/src/lib/exportadores/reporte.ts",
+        "dependencyTypes": ["local", "import"]
+      },
+      {
+        "name": "backend/src/lib/exportadores/pdf.ts",
+        "dependencyTypes": ["local", "import"]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "backend/src/modules/asistencia/asistencia.service.ts",
+    "to": "backend/src/modules/eventos/eventos.service.ts",
+    "unresolvedTo": "../eventos/eventos.service",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "sin-ciclos"
+    },
+    "cycle": [
+      {
+        "name": "backend/src/modules/eventos/eventos.service.ts",
+        "dependencyTypes": ["local", "import"]
+      },
+      {
+        "name": "backend/src/modules/miembros/miembros.service.ts",
+        "dependencyTypes": ["local", "import"]
+      },
+      {
+        "name": "backend/src/modules/asistencia/asistencia.service.ts",
+        "dependencyTypes": ["local", "import"]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "backend/src/modules/asistencia/asistencia.service.ts",
+    "to": "backend/src/modules/miembros/miembros.service.ts",
+    "unresolvedTo": "../miembros/miembros.service",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "sin-ciclos"
+    },
+    "cycle": [
+      {
+        "name": "backend/src/modules/miembros/miembros.service.ts",
+        "dependencyTypes": ["local", "import"]
+      },
+      {
+        "name": "backend/src/modules/asistencia/asistencia.service.ts",
+        "dependencyTypes": ["local", "import"]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "backend/src/modules/asistencia/asistencia.service.ts",
+    "to": "backend/src/modules/ministerios/ministerios.service.ts",
+    "unresolvedTo": "../ministerios/ministerios.service",
+    "dependencyTypes": ["local", "import"],
+    "rule": {
+      "severity": "error",
+      "name": "sin-ciclos"
+    },
+    "cycle": [
+      {
+        "name": "backend/src/modules/ministerios/ministerios.service.ts",
+        "dependencyTypes": ["local", "import"]
+      },
+      {
+        "name": "backend/src/modules/miembros/miembros.service.ts",
+        "dependencyTypes": ["local", "import"]
+      },
+      {
+        "name": "backend/src/modules/asistencia/asistencia.service.ts",
+        "dependencyTypes": ["local", "import"]
+      }
+    ]
+  }
+]
