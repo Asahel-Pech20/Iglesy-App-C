@@ -31,8 +31,8 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E2-05 | Migración y carga del catálogo del INEGI: 32 estados, sus municipios y las localidades donde haya iglesias | RF-09, RF-10, RN-09, RNF-05 | Revisión de Santiago | Pendiente |
-| E2-06 | Ampliar `Iglesia` (ubicación, dirección, capacidad, año, contacto, coordenadas, cierre) sobre el módulo mínimo de Oscar | RF-07, RF-08, RF-11, RF-12, RN-07–RN-09, CA-09 | E2-05, `alcanceIglesia` | Pendiente |
+| E2-05 | Migración y carga del catálogo del INEGI: 32 estados, sus municipios y las localidades donde haya iglesias | RF-09, RF-10, RN-09, RNF-05 | Revisión de Santiago | Hecha en el PR #6 (en revisión); Auditoría 2 atendida |
+| E2-06 | Ampliar `Iglesia` (ubicación, dirección, capacidad, año, contacto, coordenadas, cierre) sobre el módulo mínimo de Oscar | RF-07, RF-08, RF-11, RF-12, RN-07–RN-09, CA-09 | E2-05, `alcanceIglesia` | Hecha en el PR #6 (en revisión); Auditoría 2 atendida |
 | E2-07 | Lista pública por estado con filtros de municipio, localidad, tipo, nombre y capacidad | RF-01–RF-05, CA-02, CA-03 | E2-06, P-02, P-03 | Pendiente |
 | E2-08 | Objetos: migración, registro, edición y cambio de estado (perdido, prestado, baja) | RF-13–RF-15, RF-17, RN-10, RN-11, RN-16 | E2-06, P-06, P-08 | Pendiente |
 | E2-09 | Seeds: 40 iglesias en ≥ 3 estados y ≥ 8 municipios con todos los tipos; 120 objetos (≥ 15 de 200 años o más y ≥ 5 de 300 o más) | Datos de prueba | E2-05, E2-08 | Pendiente |
@@ -105,5 +105,5 @@ Borrador para que Santiago lo integre en `docs/modelo-datos.md`; se ajusta con l
 
 - [ ] Respuestas a P-01–P-09
 - [ ] `docs/modelo-datos.md` y diseño de la API aprobados
-- [ ] Módulo mínimo de `Iglesia` y `alcanceIglesia` en la rama base (hoy están en la rama de Oscar)
+- [x] Módulo mínimo de `Iglesia` y `alcanceIglesia` en la rama base (`feat/E1-01-base-fusion` de Santiago)
 - [ ] Archivo del catálogo del INEGI descargado y fuera del repositorio si es muy grande
