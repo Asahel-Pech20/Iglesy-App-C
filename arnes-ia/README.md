@@ -58,10 +58,11 @@ Requisitos: Node 22.12+ o 24+, pnpm, git, Claude Code.
    ```bash
    pnpm add -D eslint @eslint/js typescript-eslint eslint-config-prettier globals prettier dependency-cruiser
    ```
-4. **Hook de pre-commit** (sin dependencias extra; git lo ejecuta desde la carpeta del arnés):
+4. **Hook de pre-commit** (sin dependencias extra; git lo ejecuta desde la carpeta del arnés). Para que todo el equipo lo tenga sin configurarlo a mano, copia `plantilla-proyecto/` o usa un script `prepare` como `scripts/activar-hooks.mjs` de AppIglesia, que lo activa en cada `pnpm install` (y no hace nada en el CI). A mano:
    ```bash
    git config core.hooksPath arnes-ia/stacks/express/hooks
    ```
+   Si el proyecto ya tenía violaciones de arquitectura, pon su lista de conocidas en `CONOCIDAS_DEPENDENCIAS` de `hooks/verificar.mjs` (la misma del CI): el commit falla solo con violaciones nuevas.
    Corre en este orden y detiene el commit si algo falla: formato (Prettier) → lint (ESLint) → reglas de dependencias (dependency-cruiser) → pruebas (Vitest), y revisa que el mensaje tenga `Asistido-por:` cuando la IA participó (ver `core/AGENTS.base.md`).
 5. **Claude Code**: `CLAUDE.md` del proyecto debe importar `@AGENTS.md`. Los prompts de `core/prompts/` se copian a `.claude/commands/` para usarlos como `/nuevo-modulo`, `/nuevo-endpoint`, etc.
 6. **Probar el arnés**: hacer un commit con un `console.log` o un import prohibido (p. ej. un controller que importa Prisma): el hook debe rechazarlo.

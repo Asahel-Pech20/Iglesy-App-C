@@ -2,6 +2,14 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones con [SemVer](https://semver.org/lang/es/).
 
+## [0.3.0] — 2026-11-18
+
+### Agregado
+- Activación automática de los hooks con un script `prepare` (`scripts/activar-hooks.mjs` en AppIglesia): todo el equipo los tiene al hacer `pnpm install`; en el CI se omite.
+
+### Cambiado
+- El pre-commit aplica las reglas de dependencias a todo `backend/src` con la lista de violaciones conocidas (`CONOCIDAS_DEPENDENCIAS`), igual que el CI; antes solo revisaba el módulo de referencia.
+
 ## [0.2.0] — 2026-11-11
 
 ### Agregado
