@@ -65,5 +65,5 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 | A2-E1-02 | Media | Hecho: `errores.ts` traduce SQLSTATE 23514 a 422 `BUSINESS_RULE`, sin devolver la fila (puede traer datos personales). Cubre también A2-E2-01 de Nataly. |
 | A2-E1-03 | Media | Hecho: la migración `e1_01_usuario_iglesia_segun_rol` ya no asigna la iglesia más antigua; se detiene y lista al personal sin iglesia. Las BD que ya la aplicaron siguen al día con `migrate deploy`; `migrate dev` puede avisar que el archivo cambió (los datos son de prueba). |
 | A2-E1-04 | Baja | Hecho: las pruebas del `CHECK` y del `RESTRICT` exigen el nombre de la restricción. |
-| A2-E1-05 | Baja | Pendiente. |
-| A2-E1-06 | Info | Pendiente: retirar S-04 y abrir el PR de `feat/E1-01-base-fusion`. |
+| A2-E1-05 | Baja | Hecho: `test/setup.ts` no vacía la BD en las pruebas de carpetas `dominio/` (funciones puras). Las de dominio pasaron de 14.5 s a 6.9 s. |
+| A2-E1-06 | Info | S-04 se retira **después** de fusionar el PR #6: ahí vive `iglesias:editar`, y el PR toca las mismas líneas de `permisos.ts` (quitarlo antes le daría un conflicto a Nataly). Falta abrir el PR de `feat/E1-01-base-fusion`. |
