@@ -14,9 +14,17 @@ export interface Usuario {
 }
 
 /** GET /auth/me */
+/** Iglesia del usuario en la sesión (E1-02); null solo en la Coordinación */
+export interface IglesiaSesion {
+  id: string;
+  nombre: string;
+  activa: boolean;
+}
+
 export interface Sesion {
   usuario: Usuario;
   permisos: Permiso[];
+  iglesia: IglesiaSesion | null;
 }
 
 /** POST /auth/login */

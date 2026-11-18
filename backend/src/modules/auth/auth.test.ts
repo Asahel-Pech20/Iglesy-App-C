@@ -5,7 +5,7 @@ import { crearApp } from '../../app';
 import { env } from '../../config/env';
 import { correosEnviados } from '../../lib/mailer';
 import { prisma } from '../../lib/prisma';
-import { crearUsuario, loginComo, PASSWORD_PRUEBA } from '../../test/helpers';
+import { crearIglesia, crearUsuario, loginComo, PASSWORD_PRUEBA } from '../../test/helpers';
 
 let app: ReturnType<typeof crearApp>;
 beforeEach(() => {
@@ -116,6 +116,36 @@ describe('refresh, logout y /auth/me (B1-10)', () => {
       .get('/api/v1/auth/me')
       .set('Authorization', coordinacion.auth);
     expect(nacional.body.data.usuario.iglesiaId).toBeNull();
+  });
+
+  it('la sesión trae nombre y estado de la iglesia para la barra superior (E1-02)', async () => {
+    const iglesia = await crearIglesia({ nombre: 'Parroquia de San Pedro', activa: false });
+    const tesorero = await loginComo('TESORERO', { iglesiaId: iglesia.id });
+    const res = await request(app).get('/api/v1/auth/me').set('Authorization', tesorero.auth);
+    expect(res.body.data.iglesia).toEqual({
+      id: iglesia.id,
+      nombre: 'Parroquia de San Pedro',
+      activa: false,
+    });
+    // Solo esos tres campos: nada más de la iglesia viaja en la sesión
+    expect(Object.keys(res.body.data.usuario)).not.toContain('iglesia');
+
+    const coordinacion = await loginComo('COORDINACION');
+    const nacional = await request(app)
+      .get('/api/v1/auth/me')
+      .set('Authorization', coordinacion.auth);
+    expect(nacional.body.data.iglesia).toBeNull();
+  });
+
+  it('el inicio de sesión también trae la iglesia', async () => {
+    const iglesia = await crearIglesia({ nombre: 'Templo del Carmen' });
+    await crearUsuario('PASTOR', { email: 'pastor-e102@prueba.local', iglesiaId: iglesia.id });
+    const res = await entrar('pastor-e102@prueba.local');
+    expect(res.body.data.iglesia).toEqual({
+      id: iglesia.id,
+      nombre: 'Templo del Carmen',
+      activa: true,
+    });
   });
 
   it('refresh rota el token: el anterior deja de servir', async () => {
