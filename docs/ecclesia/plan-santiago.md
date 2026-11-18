@@ -56,3 +56,14 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 
 - **Nataly:** el resto de los campos de `Iglesia` (dirección, catálogo INEGI, capacidad, año, contacto, coordenadas) y su edición. Hoy existen `id`, `nombre`, `tipo`, `zonaHoraria` y `activa`, y `GET`/`POST /iglesias` mínimos de Oscar. Cuando exista la edición, se retira el marcador S-04.
 - **Genaro y Oscar:** usar `alcanceIglesia` (con `SUPUESTOS_ALCANCE.datosIglesia` donde la Coordinación deba entrar) e `iglesiaDe` en sus rutas (`backend/README.md`). Las rutas de diezmo y misas no cambian: la Coordinación sigue con 403.
+
+## Auditoría 2 (rama `fix/E1-auditoria2`)
+
+| ID | Sev. | Estado |
+|---|---|---|
+| A2-E1-01 | Media | Hecho: `alcanceIglesia` responde 422 a POST, PUT, PATCH y DELETE en una iglesia cerrada; GET sigue permitido. Lo heredan misas y diezmo sin cambiar sus rutas, así que A2-E4-01 (Oscar) ya no hace falta. |
+| A2-E1-02 | Media | Hecho: `errores.ts` traduce SQLSTATE 23514 a 422 `BUSINESS_RULE`, sin devolver la fila (puede traer datos personales). Cubre también A2-E2-01 de Nataly. |
+| A2-E1-03 | Media | Hecho: la migración `e1_01_usuario_iglesia_segun_rol` ya no asigna la iglesia más antigua; se detiene y lista al personal sin iglesia. Las BD que ya la aplicaron siguen al día con `migrate deploy`; `migrate dev` puede avisar que el archivo cambió (los datos son de prueba). |
+| A2-E1-04 | Baja | Hecho: las pruebas del `CHECK` y del `RESTRICT` exigen el nombre de la restricción. |
+| A2-E1-05 | Baja | Pendiente. |
+| A2-E1-06 | Info | Pendiente: retirar S-04 y abrir el PR de `feat/E1-01-base-fusion`. |
