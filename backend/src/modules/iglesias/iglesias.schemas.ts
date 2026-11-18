@@ -1,6 +1,7 @@
 // Iglesias (base de Oscar, ampliada en E2-06 por Nataly): RF-07, RF-08, RF-11, RF-12, RN-08, RN-09.
 import { z } from 'zod';
 import { esquemaPaginacion } from '../../lib/paginacion';
+import { digitos as clave } from '../catalogos/catalogos.schemas';
 
 export const TIPOS_IGLESIA = [
   'CATEDRAL',
@@ -21,15 +22,13 @@ const zonaValida = (zona: string) => {
 };
 
 const texto = (max: number) => z.string().trim().max(max, `Máximo ${max} caracteres.`);
-const clave = (n: number) =>
-  z
-    .string()
-    .trim()
-    .regex(new RegExp(`^\\d{${n}}$`), `La clave debe tener ${n} dígitos.`);
-
-// Opcionales: cadena vacía o null se guardan como null (mismo criterio que miembros)
+// Opcionales: texto vacío (o solo espacios) o null se guardan como null. A2-E2-05: se recorta
+// antes de comparar; si no, «   » llegaba a coordenada() como '' y Number('') daba 0.
 const opcional = <T extends z.ZodType>(esquema: T) =>
-  z.preprocess((v) => (v === '' ? null : v), esquema.nullable().optional());
+  z.preprocess(
+    (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+    esquema.nullable().optional(),
+  );
 
 const telefono = z
   .string()
@@ -41,7 +40,7 @@ const correo = z.string().trim().toLowerCase().pipe(z.email('Correo no válido.'
 // Coordenadas: se reciben como número o texto y se guardan con 6 decimales (RF-07)
 const coordenada = (limite: number, nombre: string) =>
   z
-    .union([z.number(), z.string().trim()])
+    .union([z.number(), z.string().trim().min(1, `Escribe la ${nombre.toLowerCase()}.`)])
     .transform((v) => Number(v))
     .pipe(
       z

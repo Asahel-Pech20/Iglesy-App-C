@@ -353,3 +353,78 @@ describe('iglesiasService.obtenerActiva (para otros módulos)', () => {
     ).rejects.toMatchObject({ status: 404 });
   });
 });
+
+// ───────────── Auditoría 2 (A2-E2-01, 03 y 05) ─────────────
+
+describe('Auditoría 2: edición contra lo guardado', () => {
+  it('A2-E2-01: latitud sin longitud se rechaza con 400 aunque la otra esté guardada (no 500)', async () => {
+    const { auth } = await loginComo('COORDINACION');
+    const conCoordenadas = await api(auth).post('/iglesias', {
+      nombre: 'Con coordenadas',
+      tipo: 'TEMPLO',
+      latitud: 19.04,
+      longitud: -98.19,
+    });
+    const id = conCoordenadas.body.data.id as string;
+    const quitarUna = await enviar('patch', `/iglesias/${id}`, auth, { latitud: null });
+    expect(quitarUna.status).toBe(400);
+    expect(quitarUna.body.error.details).toEqual([expect.objectContaining({ campo: 'latitud' })]);
+
+    const sinCoordenadas = await crearIglesia();
+    const ponerUna = await enviar('patch', `/iglesias/${sinCoordenadas.id}`, auth, { latitud: 20 });
+    expect(ponerUna.status).toBe(400);
+    expect(ponerUna.body.error.details).toEqual([expect.objectContaining({ campo: 'longitud' })]);
+
+    // Quitar las dos juntas sí se puede
+    const quitarAmbas = await enviar('patch', `/iglesias/${id}`, auth, {
+      latitud: null,
+      longitud: null,
+    });
+    expect(quitarAmbas.body.data).toMatchObject({ latitud: null, longitud: null });
+  });
+
+  it('A2-E2-03: reenviar el mismo estado (formulario completo) no borra municipio ni localidad', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    const { auth } = await loginComo('COORDINACION');
+    const creada = await api(auth).post('/iglesias', parroquia);
+    const id = creada.body.data.id as string;
+
+    const res = await enviar('patch', `/iglesias/${id}`, auth, {
+      estado: '21',
+      nombre: 'Parroquia de San Miguel',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      nombre: 'Parroquia de San Miguel',
+      municipio: { clave: '21114' },
+      localidad: { clave: '211140001' },
+    });
+
+    // El mismo municipio tampoco borra la localidad; uno distinto sí
+    const mismo = await enviar('patch', `/iglesias/${id}`, auth, { municipio: '21114' });
+    expect(mismo.body.data.localidad).toMatchObject({ clave: '211140001' });
+    const otro = await enviar('patch', `/iglesias/${id}`, auth, { municipio: '21019' });
+    expect(otro.body.data).toMatchObject({ municipio: { clave: '21019' }, localidad: null });
+  });
+
+  it('A2-E2-05: una coordenada de solo espacios cuenta como vacía, no como 0', async () => {
+    const { auth } = await loginComo('COORDINACION');
+    const vacias = await api(auth).post('/iglesias', {
+      nombre: 'Sin coordenadas',
+      tipo: 'CAPILLA',
+      latitud: '   ',
+      longitud: '  ',
+    });
+    expect(vacias.status).toBe(201);
+    expect(vacias.body.data).toMatchObject({ latitud: null, longitud: null });
+
+    const media = await api(auth).post('/iglesias', {
+      nombre: 'Solo longitud',
+      tipo: 'CAPILLA',
+      latitud: '   ',
+      longitud: -98.2,
+    });
+    expect(media.status).toBe(400);
+    expect(await prisma.iglesia.count({ where: { latitud: 0 } })).toBe(0);
+  });
+});

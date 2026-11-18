@@ -812,19 +812,37 @@ paths:
     get:
       tags: [Catálogos]
       security: []
-      summary: Los estados del catálogo del INEGI (sin sesión)
+      summary: Los estados del catálogo del INEGI (sin sesión, paginado)
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string, maxLength: 100 },
+            description: Busca por nombre,
+          }
       responses:
-        '200': { description: '[{ clave, nombre }] ordenados por clave' }
+        '200': { description: 'Lista paginada de { clave, nombre }, ordenados por clave' }
+        '400': { $ref: '#/components/responses/Validacion' }
 
   /public/estados/{clave}/municipios:
     get:
       tags: [Catálogos]
       security: []
-      summary: Municipios de un estado (sin sesión)
+      summary: Municipios de un estado (sin sesión, paginado)
       parameters:
         - { name: clave, in: path, required: true, schema: { type: string, pattern: '^\d{2}$' } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string, maxLength: 100 },
+            description: Busca por nombre,
+          }
       responses:
-        '200': { description: '[{ clave, nombre }] ordenados por nombre' }
+        '200': { description: 'Lista paginada de { clave, nombre }, ordenados por nombre' }
         '400': { $ref: '#/components/responses/Validacion' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
 
@@ -832,11 +850,19 @@ paths:
     get:
       tags: [Catálogos]
       security: []
-      summary: Localidades de un municipio (sin sesión)
+      summary: Localidades de un municipio (sin sesión, paginado)
       parameters:
         - { name: clave, in: path, required: true, schema: { type: string, pattern: '^\d{5}$' } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string, maxLength: 100 },
+            description: Busca por nombre,
+          }
       responses:
-        '200': { description: '[{ clave, nombre }] ordenadas por nombre' }
+        '200': { description: 'Lista paginada de { clave, nombre }, ordenadas por nombre' }
         '400': { $ref: '#/components/responses/Validacion' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
 

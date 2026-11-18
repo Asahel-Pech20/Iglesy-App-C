@@ -3,19 +3,24 @@ import { Router } from 'express';
 import { autenticar, autorizar } from '../../middlewares/auth';
 import { validar } from '../../middlewares/validar';
 import * as c from './catalogos.controller';
-import { esquemaClaveEstado, esquemaClaveMunicipio, esquemaImportacion } from './catalogos.schemas';
+import {
+  esquemaClaveEstado,
+  esquemaClaveMunicipio,
+  esquemaImportacion,
+  esquemaListaCatalogo,
+} from './catalogos.schemas';
 
 /** Se monta en /public: catálogo para elegir el lugar (RF-01, RF-02, RF-09). */
 export const catalogosPublicoRouter = Router();
-catalogosPublicoRouter.get('/estados', c.estados);
+catalogosPublicoRouter.get('/estados', validar({ query: esquemaListaCatalogo }), c.estados);
 catalogosPublicoRouter.get(
   '/estados/:clave/municipios',
-  validar({ params: esquemaClaveEstado }),
+  validar({ params: esquemaClaveEstado, query: esquemaListaCatalogo }),
   c.municipios,
 );
 catalogosPublicoRouter.get(
   '/municipios/:clave/localidades',
-  validar({ params: esquemaClaveMunicipio }),
+  validar({ params: esquemaClaveMunicipio, query: esquemaListaCatalogo }),
   c.localidades,
 );
 

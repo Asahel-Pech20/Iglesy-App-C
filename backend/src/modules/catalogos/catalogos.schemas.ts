@@ -1,10 +1,12 @@
 // Catálogo del INEGI (E2-05, RF-09, RF-10, RN-09, RNF-05).
 import { z } from 'zod';
+import { esquemaPaginacion } from '../../lib/paginacion';
 
 export const MAX_FILAS_IMPORTACION = 5000;
 
 const nombre = z.string().trim().min(1, 'Escribe el nombre.').max(150, 'Máximo 150 caracteres.');
-const digitos = (n: number) =>
+/** Clave del INEGI de n dígitos. La usan también iglesias (A2-E2-07: una sola definición). */
+export const digitos = (n: number) =>
   z
     .string()
     .trim()
@@ -54,5 +56,11 @@ export const esquemaImportacion = z.strictObject({
 export const esquemaClaveEstado = z.object({ clave: digitos(2) });
 export const esquemaClaveMunicipio = z.object({ clave: digitos(5) });
 
+/** Listados del catálogo: paginados (por omisión 20, máximo 100) y con búsqueda `q` por nombre. */
+export const esquemaListaCatalogo = esquemaPaginacion.extend({
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
 export type FilaCatalogo = z.infer<typeof esquemaFilaCatalogo>;
 export type Importacion = z.infer<typeof esquemaImportacion>;
+export type QueryCatalogo = z.infer<typeof esquemaListaCatalogo>;

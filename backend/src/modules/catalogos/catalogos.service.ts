@@ -1,35 +1,51 @@
 // Catálogo del INEGI (E2-05): estados, municipios y localidades con sus claves oficiales.
 import { AppError, type DetalleError } from '../../lib/appError';
+import { crearMeta, paginar } from '../../lib/paginacion';
 import { prisma } from '../../lib/prisma';
-import type { FilaCatalogo } from './catalogos.schemas';
+import type { FilaCatalogo, QueryCatalogo } from './catalogos.schemas';
 
 const SELECT = { clave: true, nombre: true } as const;
 
-export function listarEstados() {
-  return prisma.estado.findMany({ select: SELECT, orderBy: { clave: 'asc' } });
+// A2-E2-04: listados paginados (AGENTS.md §3). Un municipio puede tener más de mil localidades;
+// `q` busca por nombre para que el selector no tenga que traerlas todas.
+const porNombre = (q?: string) =>
+  q ? { nombre: { contains: q, mode: 'insensitive' as const } } : {};
+
+export async function listarEstados(query: QueryCatalogo) {
+  const { page, limit, skip, take } = paginar(query);
+  const where = porNombre(query.q);
+  const [total, datos] = await Promise.all([
+    prisma.estado.count({ where }),
+    prisma.estado.findMany({ where, select: SELECT, orderBy: { clave: 'asc' }, skip, take }),
+  ]);
+  return { datos, meta: crearMeta(total, page, limit) };
 }
 
-export async function municipiosDe(estadoClave: string) {
+export async function municipiosDe(estadoClave: string, query: QueryCatalogo) {
   const estado = await prisma.estado.findUnique({ where: { clave: estadoClave }, select: SELECT });
   if (!estado) throw AppError.noEncontrado('El estado no existe en el catálogo.');
-  return prisma.municipio.findMany({
-    where: { estadoClave },
-    select: SELECT,
-    orderBy: { nombre: 'asc' },
-  });
+  const { page, limit, skip, take } = paginar(query);
+  const where = { estadoClave, ...porNombre(query.q) };
+  const [total, datos] = await Promise.all([
+    prisma.municipio.count({ where }),
+    prisma.municipio.findMany({ where, select: SELECT, orderBy: { nombre: 'asc' }, skip, take }),
+  ]);
+  return { datos, meta: crearMeta(total, page, limit) };
 }
 
-export async function localidadesDe(municipioClave: string) {
+export async function localidadesDe(municipioClave: string, query: QueryCatalogo) {
   const municipio = await prisma.municipio.findUnique({
     where: { clave: municipioClave },
     select: SELECT,
   });
   if (!municipio) throw AppError.noEncontrado('El municipio no existe en el catálogo.');
-  return prisma.localidad.findMany({
-    where: { municipioClave },
-    select: SELECT,
-    orderBy: { nombre: 'asc' },
-  });
+  const { page, limit, skip, take } = paginar(query);
+  const where = { municipioClave, ...porNombre(query.q) };
+  const [total, datos] = await Promise.all([
+    prisma.localidad.count({ where }),
+    prisma.localidad.findMany({ where, select: SELECT, orderBy: { nombre: 'asc' }, skip, take }),
+  ]);
+  return { datos, meta: crearMeta(total, page, limit) };
 }
 
 export interface Ubicacion {

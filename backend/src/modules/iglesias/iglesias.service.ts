@@ -53,14 +53,31 @@ function hoyEn(zonaHoraria: string) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: zonaHoraria }).format(new Date());
 }
 
-/** Datos de entrada → columnas de Prisma (las claves del catálogo se guardan en sus relaciones). */
-function aColumnas(d: Omit<EditarIglesia, 'estado' | 'municipio' | 'localidad'>) {
+/** Datos de entrada → columnas de Prisma: las coordenadas se guardan como texto con 6 decimales. */
+function aColumnas<T extends { latitud?: number | null; longitud?: number | null }>(d: T) {
   const { latitud, longitud, ...resto } = d;
   return {
     ...resto,
     ...(latitud !== undefined && { latitud: latitud === null ? null : latitud.toFixed(6) }),
     ...(longitud !== undefined && { longitud: longitud === null ? null : longitud.toFixed(6) }),
   };
+}
+
+/**
+ * A2-E2-01: latitud y longitud van juntas también contra lo guardado. Zod solo ve lo que llega;
+ * sin esto, `{ latitud: null }` en una iglesia con coordenadas violaría el CHECK y daría 500.
+ */
+function validarCoordenadas(
+  cambios: { latitud?: number | null; longitud?: number | null },
+  actual: { latitud: unknown; longitud: unknown },
+) {
+  const latitud = cambios.latitud !== undefined ? cambios.latitud : actual.latitud;
+  const longitud = cambios.longitud !== undefined ? cambios.longitud : actual.longitud;
+  if ((latitud === null) === (longitud === null)) return;
+  const falta = latitud === null ? 'latitud' : 'longitud';
+  throw AppError.validacion('Escribe latitud y longitud juntas.', [
+    { campo: falta, mensaje: 'Escribe latitud y longitud juntas.' },
+  ]);
 }
 
 /**
@@ -108,12 +125,7 @@ export async function crear(datos: CrearIglesia) {
   const { estado = null, municipio = null, localidad = null, ...resto } = datos;
   await catalogosService.validarUbicacion({ estado, municipio, localidad });
   const creada = await prisma.iglesia.create({
-    data: {
-      ...aColumnas(resto),
-      nombre: resto.nombre,
-      tipo: resto.tipo,
-      ...columnasUbicacion({ estado, municipio, localidad }),
-    },
+    data: { ...aColumnas(resto), ...columnasUbicacion({ estado, municipio, localidad }) },
     select: SELECT,
   });
   return formatear(creada);
@@ -129,27 +141,35 @@ export async function obtener(id: string) {
 export async function editar(id: string, cambios: EditarIglesia) {
   const actual = await prisma.iglesia.findUnique({
     where: { id },
-    select: { activa: true, estadoClave: true, municipioClave: true, localidadClave: true },
+    select: {
+      activa: true,
+      estadoClave: true,
+      municipioClave: true,
+      localidadClave: true,
+      latitud: true,
+      longitud: true,
+    },
   });
   if (!actual) throw AppError.noEncontrado('La iglesia no existe.');
   if (!actual.activa) throw AppError.reglaNegocio('La iglesia está cerrada; no se puede editar.');
   if (cambios.nombre) await nombreRepetido(cambios.nombre, id);
+  validarCoordenadas(cambios, actual);
 
   const { estado, municipio, localidad, ...resto } = cambios;
-  const tocaUbicacion = estado !== undefined || municipio !== undefined || localidad !== undefined;
   let ubicacion: ReturnType<typeof columnasUbicacion> | Record<string, never> = {};
-  if (tocaUbicacion) {
-    // Cambiar el estado sin mandar municipio deja de valer el municipio anterior (y su localidad)
+  if (estado !== undefined || municipio !== undefined || localidad !== undefined) {
+    // A2-E2-03: solo un cambio REAL de estado deja sin municipio (y de municipio, sin localidad).
+    // Reenviar el mismo estado guardado, como hace un formulario completo, no borra la ubicación.
+    const cambiaEstado = estado !== undefined && estado !== actual.estadoClave;
+    const nuevoEstado = estado !== undefined ? estado : actual.estadoClave;
+    const nuevoMunicipio =
+      municipio !== undefined ? municipio : cambiaEstado ? null : actual.municipioClave;
+    const cambiaMunicipio = nuevoMunicipio !== actual.municipioClave;
     const nueva = {
-      estado: estado !== undefined ? estado : actual.estadoClave,
-      municipio:
-        municipio !== undefined ? municipio : estado !== undefined ? null : actual.municipioClave,
+      estado: nuevoEstado,
+      municipio: nuevoMunicipio,
       localidad:
-        localidad !== undefined
-          ? localidad
-          : estado !== undefined || municipio !== undefined
-            ? null
-            : actual.localidadClave,
+        localidad !== undefined ? localidad : cambiaMunicipio ? null : actual.localidadClave,
     };
     await catalogosService.validarUbicacion(nueva);
     ubicacion = columnasUbicacion(nueva);

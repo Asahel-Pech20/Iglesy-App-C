@@ -171,3 +171,20 @@ describe('validarUbicacion (RN-09)', () => {
     }
   });
 });
+
+describe('A2-E2-04: catálogos paginados y con búsqueda', () => {
+  it('pagina con meta (20 por omisión, máximo 100) y busca por nombre', async () => {
+    await catalogosService.importar(FILAS);
+    const pagina = await request(app).get('/api/v1/public/estados/21/municipios?limit=1');
+    expect(pagina.body.data).toEqual([{ clave: '21019', nombre: 'Atlixco' }]);
+    expect(pagina.body.meta).toEqual({ page: 1, limit: 1, total: 2, totalPages: 2 });
+
+    const estados = await request(app).get('/api/v1/public/estados');
+    expect(estados.body.meta).toMatchObject({ limit: 20, total: 3 });
+
+    const busqueda = await request(app).get('/api/v1/public/estados/21/municipios?q=ATL');
+    expect(busqueda.body.data.map((m: { nombre: string }) => m.nombre)).toEqual(['Atlixco']);
+
+    expect((await request(app).get('/api/v1/public/estados?limit=101')).status).toBe(400);
+  });
+});
