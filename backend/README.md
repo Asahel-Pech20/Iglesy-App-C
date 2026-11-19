@@ -138,15 +138,17 @@ const iglesiaId = iglesiaAlcanceDe(req);
 const iglesiaId = iglesiaDe(req);
 ```
 
-| Caso                                                                    | Respuesta                                                                      |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Sin sesión                                                              | 401 `UNAUTHENTICATED`                                                          |
-| Recurso o iglesia inexistente (el resolver devuelve `null`/`undefined`) | 404 `NOT_FOUND`                                                                |
-| Personal de otra iglesia                                                | 403 `FORBIDDEN`                                                                |
-| `COORDINACION`                                                          | 403 por omisión; entra solo con `coordinacion: SUPUESTOS_ALCANCE.datosIglesia` |
+| Caso | Respuesta |
+|---|---|
+| Sin sesión | 401 `UNAUTHENTICATED` |
+| Recurso o iglesia inexistente (el resolver devuelve `null`/`undefined`) | 404 `NOT_FOUND` |
+| Personal de otra iglesia | 403 `FORBIDDEN` |
+| `COORDINACION` | 403 por omisión; entra solo con `coordinacion: SUPUESTOS_ALCANCE.datosIglesia` |
+| Iglesia cerrada (`activa = false`) | GET se permite (consultar su historia); POST, PUT, PATCH y DELETE → 422 `BUSINESS_RULE`. Lo hace `alcanceIglesia`: tu módulo no tiene que repetirlo |
 
 - Los valores de `SUPUESTOS_ALCANCE` son supuestos de P-21 y P-28 (S-02 de `docs/ecclesia/plan-santiago.md`); cuando el cliente responda, se cambian solo ahí.
 - `req.usuario.iglesiaId` es `null` solo en la Coordinación: lo garantiza el `CHECK usuarios_iglesia_segun_rol` en la BD. Una iglesia con personal no se puede borrar (`RESTRICT`); se cierra con `activa = false`.
+- Si una escritura viola un `CHECK` de la BD que Zod no anticipó, `errores.ts` responde 422 `BUSINESS_RULE` (no 500) y registra en el log solo el nombre de la restricción, nunca la fila.
 - En pruebas: `crearIglesia()` y `loginComo('TESORERO', { iglesiaId })`; ejemplos en `middlewares/alcanceIglesia.test.ts`.
 - Roles: `COORDINACION` (nacional, sin iglesia) · `ADMIN_IGLESIA` (antes `ADMIN`) · `TESORERO`… No confundir `COORDINACION` con `COORDINADOR` (de ministerio).
 
