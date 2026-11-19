@@ -37,7 +37,7 @@ describe('POST /auth/login (B1-09)', () => {
   });
 
   it('credenciales inválidas → 401 con mensaje genérico', async () => {
-    await crearUsuario('ADMIN', { email: 'a@prueba.local' });
+    await crearUsuario('ADMIN_IGLESIA', { email: 'a@prueba.local' });
     for (const res of [
       await entrar('a@prueba.local', 'mala1234'),
       await entrar('no@prueba.local'),
@@ -79,8 +79,8 @@ describe('middleware autenticar (B1-09)', () => {
   });
 
   it('token expirado → 401 TOKEN_EXPIRED', async () => {
-    const { usuario } = await loginComo('ADMIN');
-    const expirado = jwt.sign({ sub: usuario.id, rol: 'ADMIN' }, env.JWT_ACCESS_SECRET, {
+    const { usuario } = await loginComo('ADMIN_IGLESIA');
+    const expirado = jwt.sign({ sub: usuario.id, rol: 'ADMIN_IGLESIA' }, env.JWT_ACCESS_SECRET, {
       expiresIn: -1,
     });
     const res = await request(app)
@@ -91,7 +91,7 @@ describe('middleware autenticar (B1-09)', () => {
   });
 
   it('usuario desactivado después de emitir el token → 401', async () => {
-    const { usuario, auth } = await loginComo('ADMIN');
+    const { usuario, auth } = await loginComo('ADMIN_IGLESIA');
     await prisma.usuario.update({ where: { id: usuario.id }, data: { activo: false } });
     expect((await request(app).get('/api/v1/auth/me').set('Authorization', auth)).status).toBe(401);
   });
@@ -106,8 +106,20 @@ describe('refresh, logout y /auth/me (B1-10)', () => {
     expect(res.body.data.permisos).toContain('miembros:crear');
   });
 
+  it('/auth/me trae la iglesia del personal y la Coordinación no tiene (null)', async () => {
+    const tesorero = await loginComo('TESORERO');
+    const propio = await request(app).get('/api/v1/auth/me').set('Authorization', tesorero.auth);
+    expect(propio.body.data.usuario.iglesiaId).toBe(tesorero.usuario.iglesiaId);
+    expect(propio.body.data.usuario.iglesiaId).toEqual(expect.any(String));
+    const coordinacion = await loginComo('COORDINACION');
+    const nacional = await request(app)
+      .get('/api/v1/auth/me')
+      .set('Authorization', coordinacion.auth);
+    expect(nacional.body.data.usuario.iglesiaId).toBeNull();
+  });
+
   it('refresh rota el token: el anterior deja de servir', async () => {
-    await crearUsuario('ADMIN', { email: 'r@prueba.local' });
+    await crearUsuario('ADMIN_IGLESIA', { email: 'r@prueba.local' });
     const original = cookieDe(await entrar('r@prueba.local'));
 
     const primero = await request(app).post('/api/v1/auth/refresh').set('Cookie', original);
@@ -120,7 +132,7 @@ describe('refresh, logout y /auth/me (B1-10)', () => {
   });
 
   it('refresh reutilizado → 401 y todas las sesiones del usuario cerradas', async () => {
-    const usuario = await crearUsuario('ADMIN', { email: 'robo@prueba.local' });
+    const usuario = await crearUsuario('ADMIN_IGLESIA', { email: 'robo@prueba.local' });
     const sesionA = cookieDe(await entrar('robo@prueba.local'));
     const sesionB = cookieDe(await entrar('robo@prueba.local'));
 
@@ -142,7 +154,7 @@ describe('refresh, logout y /auth/me (B1-10)', () => {
   });
 
   it('logout revoca el refresh y limpia la cookie', async () => {
-    await crearUsuario('ADMIN', { email: 'l@prueba.local' });
+    await crearUsuario('ADMIN_IGLESIA', { email: 'l@prueba.local' });
     const login = await entrar('l@prueba.local');
     const cookie = cookieDe(login);
     const res = await request(app)
@@ -157,7 +169,7 @@ describe('refresh, logout y /auth/me (B1-10)', () => {
   });
 
   it('logout funciona solo con la cookie (access token vencido o ausente)', async () => {
-    await crearUsuario('ADMIN', { email: 'l2@prueba.local' });
+    await crearUsuario('ADMIN_IGLESIA', { email: 'l2@prueba.local' });
     const cookie = cookieDe(await entrar('l2@prueba.local'));
     const res = await request(app)
       .post('/api/v1/auth/logout')
@@ -243,7 +255,7 @@ describe('recuperación de contraseña (B1-12)', () => {
 
 describe('PATCH /auth/me/password', () => {
   it('cambia la contraseña con la actual correcta', async () => {
-    const { usuario, auth } = await loginComo('ADMIN', { email: 'c@prueba.local' });
+    const { usuario, auth } = await loginComo('ADMIN_IGLESIA', { email: 'c@prueba.local' });
     const res = await request(app)
       .patch('/api/v1/auth/me/password')
       .set('Authorization', auth)
@@ -253,7 +265,7 @@ describe('PATCH /auth/me/password', () => {
   });
 
   it('contraseña actual incorrecta → 400 con el error en el campo', async () => {
-    const { auth } = await loginComo('ADMIN');
+    const { auth } = await loginComo('ADMIN_IGLESIA');
     const res = await request(app)
       .patch('/api/v1/auth/me/password')
       .set('Authorization', auth)

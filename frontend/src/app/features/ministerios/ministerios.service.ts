@@ -16,7 +16,7 @@ export class MinisteriosService {
   private readonly sesion = inject(SesionService);
 
   /**
-   * ¿Puede agregar o quitar integrantes? ADMIN/PASTOR siempre; COORDINADOR solo en los que coordina.
+   * ¿Puede agregar o quitar integrantes? ADMIN_IGLESIA/PASTOR siempre; COORDINADOR solo en los que coordina.
    * El backend lo valida de nuevo (AGENTS.md regla 2).
    */
   puedeGestionarIntegrantes(ministerio: Pick<Ministerio, 'coordinadores'> | undefined) {

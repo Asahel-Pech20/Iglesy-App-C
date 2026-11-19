@@ -19,7 +19,7 @@ let app: ReturnType<typeof crearApp>;
 let admin: Awaited<ReturnType<typeof loginComo>>;
 beforeEach(async () => {
   app = crearApp();
-  admin = await loginComo('ADMIN');
+  admin = await loginComo('ADMIN_IGLESIA');
 });
 
 /** Pide un reporte; con formato pdf/xlsx devuelve el cuerpo como Buffer. */
@@ -452,11 +452,11 @@ describe('seguridad financiera (B4-14)', () => {
     '/reportes/ingresos?formato=pdf',
   ];
 
-  it.each(ROLES)(
+  it.each(ROLES.filter((rol) => rol !== 'COORDINACION'))(
     '%s: 403 en endpoints financieros y sin "ingresos" en el dashboard si no tiene donaciones:leer',
     async (rol) => {
       const { auth } = await loginComo(rol);
-      const autorizado = ['ADMIN', 'PASTOR', 'TESORERO'].includes(rol);
+      const autorizado = ['ADMIN_IGLESIA', 'PASTOR', 'TESORERO'].includes(rol);
       for (const url of FINANCIEROS) {
         expect((await pedir(url, auth)).status, `${rol} ${url}`).toBe(autorizado ? 200 : 403);
       }
@@ -464,6 +464,13 @@ describe('seguridad financiera (B4-14)', () => {
       expect(Object.hasOwn(dashboard.body.data, 'ingresos')).toBe(autorizado);
     },
   );
+
+  it('COORDINACION: 403 en los endpoints financieros y en el dashboard', async () => {
+    const { auth } = await loginComo('COORDINACION');
+    for (const url of [...FINANCIEROS, '/dashboard']) {
+      expect((await pedir(url, auth)).status, url).toBe(403);
+    }
+  });
 
   it(`PDF con más de ${MAX_FILAS_PDF} filas → 422`, async () => {
     const filas = Array.from({ length: MAX_FILAS_PDF + 1 }, (_, i) => ({

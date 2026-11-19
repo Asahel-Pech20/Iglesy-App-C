@@ -2,6 +2,7 @@
 
 > Documento de planeamiento de **AppIglesia**: alcance, tecnologías, arquitectura, modelo de datos, contrato de API y división del trabajo.
 > Reglas de diseño y restricciones → [AGENTS.md](AGENTS.md). Memoria / información clave → [CLAUDE.md](CLAUDE.md).
+> **Expansión Ecclesia:** el proyecto se complementa con el caso de la Coordinación Nacional de Templos. Las §1–§11 describen la base ya construida; lo que el caso agrega o cambia está en la [§12](#12-expansión-ecclesia), que **prevalece** si hay diferencias.
 
 ---
 
@@ -449,6 +450,8 @@ F2 (SelectorMiembros) ──► F3 (asistencia, responsables), F4 (donaciones)
 ```
 Para no bloquearse: el frontend trabaja contra **mocks MSW** basados en §7 hasta que el endpoint real exista; el backend expone stubs que responden el contrato desde la Fase 1.
 
+Reparto de los módulos que agrega Ecclesia → §12.6.
+
 ---
 
 ## 10. Cronograma por fases
@@ -460,7 +463,7 @@ Para no bloquearse: el frontend trabaja contra **mocks MSW** basados en §7 hast
 | **2. Módulos** | 4–6 | Asistencia, calendario, anuncios, donaciones, vínculos ministerio-miembro | Todos los CRUD funcionando end-to-end |
 | **3. Integración** | 7–8 | Dashboard, reportes PDF/Excel, cartelera pública, pruebas, pulido UI, documentación | Versión 1.0 demostrable |
 
-Cada `plan.md` detalla qué tareas caen en cada fase.
+Cada `plan.md` detalla qué tareas caen en cada fase. Calendario de Ecclesia → §12.7.
 
 ---
 
@@ -490,3 +493,122 @@ SEED_PASSWORD=Iglesia123
 VITE_API_URL=http://localhost:3000/api/v1
 VITE_USE_MOCKS=true
 ```
+
+---
+
+## 12. Expansión Ecclesia
+
+> **Estado: propuesta para revisión del equipo** (2026-11-06). Decisión en [ADR-0006](docs/ecclesia/adr/0006-complemento-de-appiglesia.md).
+
+### 12.1 Qué cambia
+
+El sistema pasa de administrar **una** iglesia a ser el **sistema nacional** de la Coordinación Nacional de Templos. Lo construido no se tira: se convierte en la **gestión interna de cada iglesia**, y Ecclesia agrega el nivel nacional, el público y los dominios nuevos.
+
+| Nivel | Quién | Qué hace | Origen |
+|---|---|---|---|
+| Público | Visitante, investigador, solicitante | Consulta iglesias, servicios, pláticas, misas y reconocidas; pide espacios con folio y clave | Caso (nuevo) |
+| Nacional | Personal de la Coordinación | Administra catálogos, iglesias, usuarios y criterios del índice | Caso (nuevo) |
+| Iglesia: lo que pide el caso | Administrador y tesorero | Datos, objetos, servicios, pláticas, padres, horarios, misas, solicitudes y diezmo de **su** iglesia | Caso (nuevo) |
+| Iglesia: gestión interna | Personal de cada iglesia | Miembros, ministerios, eventos, asistencia, anuncios, donaciones, dashboard y reportes | AppIglesia (§2) |
+
+**Fuentes y precedencia**
+- Requerimientos del caso: [docs/requerimientos.md](docs/requerimientos.md) (`RF-01`…, `RN-`, `CA-`, `RNF-`). Aquí no se duplican.
+- Gestión interna: §2 de este archivo (`RF-01.1`…). Se llaman **requerimientos heredados**: no tienen origen en el caso, así que no entran en la matriz de trazabilidad de Ecclesia y su continuidad se pregunta al cliente (P-20).
+- Si un heredado contradice al caso, gana el caso.
+
+### 12.2 Cómo se complementa lo existente
+
+| Base AppIglesia | Con Ecclesia | Tipo de cambio |
+|---|---|---|
+| `ConfiguracionIglesia` (fila única, `id = 1`) | `Iglesia`: una fila por iglesia, con sus datos, contacto, logo, moneda y zona horaria | Se reemplaza |
+| `HorarioReunion` | Se conserva por iglesia para reuniones; las misas usan `HorarioMisa` | Se amplía |
+| `Usuario` | Agrega `iglesiaId` (null solo en la Coordinación) | Se amplía |
+| Roles (§3) | Ver §12.3 | Se amplía |
+| `Miembro`, `Ministerio`, `Evento`, `Anuncio`, `Donacion` | Agregan `iglesiaId`; `Asistencia` la obtiene de su evento | Se amplía |
+| `Evento` y `Asistencia` | Siguen para actividades internas; una misa **no** es un evento: usa `HorarioMisa` y `MisaCelebrada` | Convive |
+| `Donacion` | Sigue para aportaciones por persona; el diezmo de cada misa usa `Diezmo` | Convive |
+| Dashboard y reportes | Se limitan a la iglesia del usuario; se agregan los reportes de diezmo | Se amplía |
+| `/public/cartelera` | Una por iglesia, dentro de la ficha pública | Se amplía |
+| Auth, permisos, errores, paginación, OpenAPI, exportadores, CI, base de Angular | Se reutilizan | Sin cambio de fondo |
+
+Toda consulta de gestión interna se filtra por iglesia y pasa por `alcanceIglesia`. Los datos actuales se migran a una iglesia inicial. Los cambios a `schema.prisma` siguen la regla de siempre: PR propio revisado por B1 y el dueño del modelo.
+
+### 12.3 Roles
+
+Se conservan los de §3 y se agrega el nivel nacional. Unifica [ADR-0004](docs/ecclesia/adr/0004-autenticacion.md) con la matriz existente.
+
+| Rol | Alcance | Puede | Origen |
+|---|---|---|---|
+| `COORDINACION` | Nacional | Catálogos, iglesias, usuarios y criterios del índice. **No** ve datos de solicitantes | Caso |
+| `ADMIN_IGLESIA` (hoy `ADMIN`) | Su iglesia | Datos, objetos, servicios, pláticas, padres, horarios, misas y solicitudes; además, lo de `ADMIN` en §3, salvo los usuarios, que pasan a la Coordinación | Caso + heredado |
+| `TESORERO` | Su iglesia | Capturar y corregir el diezmo; lo de `TESORERO` en §3 | Caso + heredado |
+| `PASTOR`, `SECRETARIO`, `COORDINADOR` | Su iglesia | Lo que indica §3 | Heredado |
+
+Nadie modifica información de otra iglesia. Se debe aclarar con el cliente quién de la iglesia y si la Coordinación ven los reportes de diezmo (P-21).
+
+### 12.4 Modelo de datos que se agrega
+
+Borrador: la versión definitiva va en `docs/modelo-datos.md` con su diagrama entidad-relación, y se ajusta con las respuestas del cliente. Decisiones de datos en [ADR-0003](docs/ecclesia/adr/0003-acceso-a-datos.md).
+
+| Módulo | Entidades | Puntos clave del caso |
+|---|---|---|
+| `catalogos` | `Estado`, `Municipio`, `Localidad` | Claves oficiales del INEGI |
+| `iglesias` | `Iglesia` | Tipo, ubicación, capacidad, año, contacto, coordenadas; cierre sin borrar historia |
+| `patrimonio` | `ObjetoPatrimonial`, `CriterioIndice` | Siglo → mitad del siglo; INAH; estados vigente, perdido, prestado y baja; criterios ajustables |
+| `servicios` | `Servicio`, `Platica` y sus horarios | Costo, gratuito o donativo; requisitos, duración y cita; sesiones, cupo, lugar y quién imparte |
+| `misas` | `Padre`, `PadreIglesia`, `HorarioMisa`, `MisaCelebrada` | Tipo e idioma; sin choques de un padre; una hora por defecto; hora local; quién ofició, quién cambió y por qué |
+| `diezmo` | `Diezmo`, `DiezmoCorreccion` | Una captura por misa celebrada; historial de solo inserción; `Decimal(12,2)` |
+| `espacios` | `TipoEspacio`, `SolicitudEspacio`, `Cotizacion` | Folio + clave con hash; vigencia de 15 días; datos privados; diagrama de estados |
+
+### 12.5 API que se agrega
+
+Grupos previstos bajo `/api/v1`; las rutas exactas se definen en el diseño de la API de la Entrega 1 y se documentan en `backend/openapi.yaml`. Convenciones de §7.1 sin cambios.
+
+| Grupo | Acceso |
+|---|---|
+| `/public/*`: iglesias por estado, ficha, reconocidas, búsqueda por patrimonio, misas, servicios y pláticas | Sin sesión; nunca devuelve datos privados |
+| `/public/solicitudes-espacio`: crear y dar seguimiento con folio y clave | Sin sesión, con límite de intentos |
+| `/catalogos`, `/iglesias`, `/criterios-indice`, `/usuarios` | `COORDINACION`; el administrador edita los datos de la suya |
+| `/iglesias/:iglesiaId/*`: objetos, servicios, pláticas, padres, horarios, misas, diezmos, solicitudes y gestión interna | Personal de esa iglesia, con `alcanceIglesia` |
+| Agenda semanal de cada padre | Por definir con los requerimientos de Genaro |
+
+### 12.6 Reparto
+
+Se mantiene la propiedad vertical: cada quien conserva sus módulos y suma los del caso más afines.
+
+| Integrante | Mantiene | Suma de Ecclesia | Requerimientos |
+|---|---|---|---|
+| **Santiago** | B1, F1 | Alcance por iglesia, roles, cambios a `Usuario`, migración a varias iglesias, arnés, integración, modelo de datos | RNF-01–20 |
+| **Nataly** | B2, F2 | Catálogos, iglesias, patrimonio, índice, ranking, búsqueda; listado, ficha y reconocidas | RF-01–29 |
+| **Genaro** | B3, F3 | Servicios, pláticas, padres, horarios, misas celebradas, agenda; sus consultas públicas | RF-30–59 |
+| **Oscar (líder)** | B4, F4 | Diezmo y sus reportes, espacios y cotizaciones, diagrama de estados; reúne OpenAPI y Postman | RF-60–89 |
+
+`usuarios` queda con Santiago, su dueño actual; Oscar conserva la redacción de «Quién usará el sistema». Cada quien aporta sus seeds, sus rutas en OpenAPI, sus pantallas y sus entradas de bitácora.
+
+Dependencias: `Usuario` + `alcanceIglesia` ► todos · `Iglesia` ► servicios, misas, espacios · `MisaCelebrada` (Genaro) ► `Diezmo` (Oscar), a acordar antes de programar.
+
+### 12.7 Calendario
+
+Calendario sugerido por el caso; el docente ajusta las fechas.
+
+| Fase | Semanas | Contenido | Entrega |
+|---|---|---|---|
+| **0. Análisis y arnés** | 1–2 | Requerimientos, reglas, preguntas al cliente; arnés v1, arquitectura, ADR, modelo de datos y API | Documento de requerimientos, diseño y arnés v1 |
+| **1. Base y catálogos** | 3–4 | Migraciones, seeds, iglesias, listado por estado, roles; objetos, servicios, costos y pláticas | Iglesias por estado, login y catálogos |
+| **2. Misas y procesos** | 5–6 | Padres, horario de misas, celebraciones, diezmos; solicitudes y cotizaciones | Misas, diezmos y solicitudes |
+| **3. Consultas e interfaz** | 7 | Índice, ranking, reportes de diezmo, interfaz pública | Versión candidata |
+| **4. Cierre** | 8 | Pruebas, documentación, portabilidad, reflexión, defensa | Entrega final |
+
+La gestión interna se adapta a varias iglesias en la Fase 1 (`iglesiaId`, `alcanceIglesia`), sin desplazar lo que evalúa el caso.
+
+### 12.8 Lineamientos del curso que se suman
+
+- **Arquitectura:** `ARCHITECTURE.md` y reglas con dependency-cruiser en verde; índice como función pura.
+- **Pruebas:** al menos una por regla de negocio, integración en endpoints principales y cobertura mínima de 70 % en dominio y servicios.
+- **Rama principal** sin pruebas fallando; README que levante el sistema en menos de 10 minutos.
+- **IA:** una sola herramienta (Claude Code), commits con `Asistido-por: Claude Code`, flujo plan → aprobación → paso pequeño → verificaciones → revisión; bitácora con ≥ 20 entradas y ≥ 5 errores.
+- **Arnés compartido por el equipo:** `arnes-ia/`, con al menos 5 ADR y 5 plantillas, módulo de referencia, CHANGELOG y prueba de portabilidad; se publica también como repositorio aparte.
+
+**Seeds mínimos:** 32 estados y sus municipios (INEGI) · localidades con iglesias · 40 iglesias en ≥ 3 estados y ≥ 8 municipios, con todos los tipos · 120 objetos (≥ 15 de 200 años o más, ≥ 5 de 300 o más) · bautizo, primera comunión, confirmación y matrimonio en cada iglesia · ≥ 2 tipos de plática por iglesia · 15 padres (≥ 3 en más de una iglesia) · al menos una misa cada día de la semana en cada iglesia · 4 semanas de celebraciones y diezmos en ≥ 6 iglesias · 12 solicitudes (≥ 1 por estado del flujo) · un usuario por rol. Nombres de personas siempre inventados; datos ficticios marcados.
+
+**Entrega final:** requerimientos con trazabilidad · repositorio del proyecto · repositorio del arnés · OpenAPI y Postman · `docs/` con modelo de datos, diagrama de estados, arquitectura, ADR y bitácora · portabilidad (repositorio, video de máximo 5 minutos y nota) · reflexión de 1–2 páginas · defensa oral de 20 minutos.

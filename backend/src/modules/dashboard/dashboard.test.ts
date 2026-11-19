@@ -98,8 +98,8 @@ async function datosDePrueba(usuarioId: string) {
 }
 
 describe('GET /dashboard (B4-07)', () => {
-  it('devuelve los indicadores, las gráficas y los ingresos del mes para ADMIN', async () => {
-    const admin = await loginComo('ADMIN');
+  it('devuelve los indicadores, las gráficas y los ingresos del mes para ADMIN_IGLESIA', async () => {
+    const admin = await loginComo('ADMIN_IGLESIA');
     const { hoy } = await datosDePrueba(admin.usuario.id);
     const res = await get(admin.auth);
     expect(res.status).toBe(200);
@@ -138,26 +138,37 @@ describe('GET /dashboard (B4-07)', () => {
     });
   });
 
-  it.each(ROLES)('%s: la clave ingresos solo existe si tiene donaciones:leer', async (rol) => {
-    const { auth } = await loginComo(rol);
-    const res = await get(auth);
-    expect(res.status).toBe(200);
-    const conIngresos = ['ADMIN', 'PASTOR', 'TESORERO'].includes(rol);
-    expect(Object.hasOwn(res.body.data, 'ingresos')).toBe(conIngresos);
-    // Omitida, no null ni 0 (AGENTS.md §1, regla 4)
-    if (!conIngresos) expect(JSON.stringify(res.body)).not.toContain('"ingresos"');
+  // El dashboard es de una iglesia: la Coordinación nacional no lo tiene
+  const ROLES_DE_IGLESIA = ROLES.filter((rol) => rol !== 'COORDINACION');
+
+  it('COORDINACION: 403 (el dashboard es de cada iglesia)', async () => {
+    const { auth } = await loginComo('COORDINACION');
+    expect((await get(auth)).status).toBe(403);
   });
+
+  it.each(ROLES_DE_IGLESIA)(
+    '%s: la clave ingresos solo existe si tiene donaciones:leer',
+    async (rol) => {
+      const { auth } = await loginComo(rol);
+      const res = await get(auth);
+      expect(res.status).toBe(200);
+      const conIngresos = ['ADMIN_IGLESIA', 'PASTOR', 'TESORERO'].includes(rol);
+      expect(Object.hasOwn(res.body.data, 'ingresos')).toBe(conIngresos);
+      // Omitida, no null ni 0 (AGENTS.md §1, regla 4)
+      if (!conIngresos) expect(JSON.stringify(res.body)).not.toContain('"ingresos"');
+    },
+  );
 
   it('sin token → 401', async () => {
     expect((await request(app).get('/api/v1/dashboard')).status).toBe(401);
   });
 
   it('responde en menos de 500 ms', async () => {
-    const admin = await loginComo('ADMIN');
+    const admin = await loginComo('ADMIN_IGLESIA');
     await datosDePrueba(admin.usuario.id);
     await get(admin.auth); // calienta conexiones
     const inicio = performance.now();
-    await crearCacheDashboard(0)('ADMIN');
+    await crearCacheDashboard(0)('ADMIN_IGLESIA');
     expect(performance.now() - inicio).toBeLessThan(500);
   });
 });
@@ -165,8 +176,8 @@ describe('GET /dashboard (B4-07)', () => {
 describe('cache del dashboard (B4-08)', () => {
   it('reutiliza la respuesta mientras los datos no cambian', async () => {
     const obtener = crearCacheDashboard();
-    const primera = await obtener('ADMIN');
-    expect(await obtener('ADMIN')).toBe(primera);
+    const primera = await obtener('ADMIN_IGLESIA');
+    expect(await obtener('ADMIN_IGLESIA')).toBe(primera);
     // Otra vista (sin ingresos) no comparte la entrada
     const sinIngresos = await obtener('SECRETARIO');
     expect(sinIngresos).not.toBe(primera);
@@ -174,16 +185,16 @@ describe('cache del dashboard (B4-08)', () => {
   });
 
   it('se invalida al registrar asistencia y al crear o anular una aportación', async () => {
-    const admin = await loginComo('ADMIN');
+    const admin = await loginComo('ADMIN_IGLESIA');
     const { hoy, evento, ana } = await datosDePrueba(admin.usuario.id);
     const obtener = crearCacheDashboard();
-    expect((await obtener('ADMIN')).asistenciasRegistradas.mesActual).toBe(1);
+    expect((await obtener('ADMIN_IGLESIA')).asistenciasRegistradas.mesActual).toBe(1);
 
     await prisma.asistencia.update({
       where: { eventoId_miembroId: { eventoId: evento.id, miembroId: ana.id } },
       data: { presente: false },
     });
-    expect((await obtener('ADMIN')).asistenciasRegistradas.mesActual).toBe(0);
+    expect((await obtener('ADMIN_IGLESIA')).asistenciasRegistradas.mesActual).toBe(0);
 
     const nueva = await prisma.donacion.create({
       data: {
@@ -195,15 +206,15 @@ describe('cache del dashboard (B4-08)', () => {
         registradoPorId: admin.usuario.id,
       },
     });
-    expect((await obtener('ADMIN')).ingresos?.mesActual).toBe('200.00');
+    expect((await obtener('ADMIN_IGLESIA')).ingresos?.mesActual).toBe('200.00');
 
     await prisma.donacion.update({ where: { id: nueva.id }, data: { anulada: true } });
-    expect((await obtener('ADMIN')).ingresos?.mesActual).toBe('150.50');
+    expect((await obtener('ADMIN_IGLESIA')).ingresos?.mesActual).toBe('150.50');
   });
 
   it('caduca a los 60 s aunque los datos no cambien', async () => {
     const obtener = crearCacheDashboard(-1);
-    const primera = await obtener('ADMIN');
-    expect(await obtener('ADMIN')).not.toBe(primera);
+    const primera = await obtener('ADMIN_IGLESIA');
+    expect(await obtener('ADMIN_IGLESIA')).not.toBe(primera);
   });
 });

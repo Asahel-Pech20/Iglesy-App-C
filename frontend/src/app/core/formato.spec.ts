@@ -42,7 +42,10 @@ describe('lib/formato', () => {
   });
 
   it('opcionesDe convierte etiquetas en opciones', () => {
-    expect(opcionesDe(ETIQUETAS_ROL)[0]).toEqual({ valor: 'ADMIN', etiqueta: 'Administrador' });
-    expect(opcionesDe(ETIQUETAS_ROL)).toHaveLength(5);
+    expect(opcionesDe(ETIQUETAS_ROL)).toContainEqual({
+      valor: 'ADMIN_IGLESIA',
+      etiqueta: 'Administrador de iglesia',
+    });
+    expect(opcionesDe(ETIQUETAS_ROL)).toHaveLength(6);
   });
 });

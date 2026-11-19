@@ -4,7 +4,7 @@ import type { CrearUsuario, Usuario } from '@/app/tipos/usuarios';
 import { db } from '../db';
 import { ahora, autenticar, errorApi, paginarMock, ruta } from '../utils';
 
-const adminsActivos = () => db.usuarios.filter((u) => u.rol === 'ADMIN' && u.activo);
+const adminsActivos = () => db.usuarios.filter((u) => u.rol === 'ADMIN_IGLESIA' && u.activo);
 
 function emailDuplicado(email: string, exceptoId?: string) {
   return db.usuarios.some((u) => u.email === email.toLowerCase() && u.id !== exceptoId);
@@ -54,11 +54,20 @@ export const usuariosHandlers = [
     if (usuario instanceof Response) return usuario;
     const cuerpo = (await request.json()) as CrearUsuario;
     if (emailDuplicado(cuerpo.email)) return errorEmail();
+    // Solo la Coordinación indica la iglesia; el administrador crea en la suya
+    const iglesiaId =
+      cuerpo.rol === 'COORDINACION' ? null : (usuario.iglesiaId ?? cuerpo.iglesiaId ?? null);
+    if (cuerpo.rol !== 'COORDINACION' && !iglesiaId) {
+      return errorApi(400, 'VALIDATION_ERROR', 'Indica la iglesia del usuario.', [
+        { campo: 'iglesiaId', mensaje: 'Elige la iglesia.' },
+      ]);
+    }
     const nuevo: Usuario = {
       id: crypto.randomUUID(),
       nombre: cuerpo.nombre,
       email: cuerpo.email.toLowerCase(),
       rol: cuerpo.rol,
+      iglesiaId,
       activo: true,
       ultimoAcceso: null,
       createdAt: ahora(),
@@ -75,7 +84,8 @@ export const usuariosHandlers = [
     if (!objetivo) return errorApi(404, 'NOT_FOUND', 'El usuario no existe.');
     const cuerpo = (await request.json()) as Partial<CrearUsuario>;
     if (cuerpo.email && emailDuplicado(cuerpo.email, objetivo.id)) return errorEmail();
-    const quitaAdmin = objetivo.rol === 'ADMIN' && cuerpo.rol && cuerpo.rol !== 'ADMIN';
+    const quitaAdmin =
+      objetivo.rol === 'ADMIN_IGLESIA' && cuerpo.rol && cuerpo.rol !== 'ADMIN_IGLESIA';
     if (quitaAdmin && adminsActivos().length === 1) {
       return errorApi(422, 'BUSINESS_RULE', 'Debe existir al menos un administrador activo.');
     }
@@ -92,7 +102,7 @@ export const usuariosHandlers = [
     if (!activo && objetivo.id === usuario.id) {
       return errorApi(422, 'BUSINESS_RULE', 'No puedes desactivar tu propia cuenta.');
     }
-    if (!activo && objetivo.rol === ('ADMIN' as Rol) && adminsActivos().length === 1) {
+    if (!activo && objetivo.rol === ('ADMIN_IGLESIA' as Rol) && adminsActivos().length === 1) {
       return errorApi(422, 'BUSINESS_RULE', 'Debe existir al menos un administrador activo.');
     }
     objetivo.activo = activo;

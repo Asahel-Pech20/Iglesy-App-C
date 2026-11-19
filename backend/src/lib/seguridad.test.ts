@@ -44,18 +44,18 @@ describe('tokens', () => {
   });
 
   it('firma y verifica el access token', () => {
-    const token = firmarAccessToken({ sub: 'u1', rol: 'ADMIN' });
-    expect(verificarAccessToken(token)).toEqual({ sub: 'u1', rol: 'ADMIN' });
+    const token = firmarAccessToken({ sub: 'u1', rol: 'ADMIN_IGLESIA' });
+    expect(verificarAccessToken(token)).toEqual({ sub: 'u1', rol: 'ADMIN_IGLESIA' });
   });
 
   it('token expirado → TOKEN_EXPIRED; token alterado → UNAUTHENTICATED', () => {
-    const expirado = jwt.sign({ sub: 'u1', rol: 'ADMIN' }, env.JWT_ACCESS_SECRET, {
+    const expirado = jwt.sign({ sub: 'u1', rol: 'ADMIN_IGLESIA' }, env.JWT_ACCESS_SECRET, {
       expiresIn: -10,
     });
     expect(() => verificarAccessToken(expirado)).toThrow(
       expect.objectContaining({ code: 'TOKEN_EXPIRED', status: 401 }),
     );
-    const ajeno = jwt.sign({ sub: 'u1', rol: 'ADMIN' }, 'otro-secreto');
+    const ajeno = jwt.sign({ sub: 'u1', rol: 'ADMIN_IGLESIA' }, 'otro-secreto');
     expect(() => verificarAccessToken(ajeno)).toThrow(
       expect.objectContaining({ code: 'UNAUTHENTICATED' }),
     );

@@ -23,10 +23,17 @@ export const esquemaCrearUsuario = z.strictObject({
   email,
   rol,
   password: esquemaPassword.optional(),
+  /** Solo la Coordinación la indica; el administrador de una iglesia crea en la suya. */
+  iglesiaId: z.uuid('Identificador no válido.').optional(),
 });
 
 export const esquemaEditarUsuario = z
-  .strictObject({ nombre: nombre.optional(), email: email.optional(), rol: rol.optional() })
+  .strictObject({
+    nombre: nombre.optional(),
+    email: email.optional(),
+    rol: rol.optional(),
+    iglesiaId: z.uuid('Identificador no válido.').optional(),
+  })
   .refine((d) => Object.keys(d).length > 0, 'No hay cambios para guardar.');
 
 export const esquemaEstadoUsuario = z.strictObject({ activo: z.boolean() });

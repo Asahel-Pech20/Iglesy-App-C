@@ -1,0 +1,3 @@
+#!/bin/sh
+# Hook del arnés: formato, lint, reglas de dependencias y pruebas unitarias.
+exec node arnes-ia/stacks/express/hooks/verificar.mjs pre-commit

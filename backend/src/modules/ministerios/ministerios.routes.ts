@@ -15,7 +15,7 @@ import {
 } from './ministerios.schemas';
 
 const porId = validar({ params: esquemaIdMinisterio });
-// Integrantes: ADMIN/PASTOR (editar) o COORDINADOR de ese ministerio (editar-propio, se verifica en el service)
+// Integrantes: ADMIN_IGLESIA/PASTOR (editar) o COORDINADOR de ese ministerio (editar-propio, se verifica en el service)
 const gestionaIntegrantes = autorizarAlguno('ministerios:editar', 'ministerios:editar-propio');
 
 export const ministeriosRouter = Router();

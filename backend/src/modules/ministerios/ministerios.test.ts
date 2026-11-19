@@ -9,7 +9,7 @@ let app: ReturnType<typeof crearApp>;
 let admin: Awaited<ReturnType<typeof loginComo>>;
 beforeEach(async () => {
   app = crearApp();
-  admin = await loginComo('ADMIN');
+  admin = await loginComo('ADMIN_IGLESIA');
 });
 
 const api = () => ({
@@ -104,7 +104,7 @@ describe('CRUD /ministerios (B2-07)', () => {
     expect((await api().get(`/ministerios/${ID_INEXISTENTE}`)).status).toBe(404);
   });
 
-  it('solo ADMIN y PASTOR crean/editan/desactivan; todos leen; sin sesión → 401', async () => {
+  it('solo ADMIN_IGLESIA y PASTOR crean/editan/desactivan; todos leen; sin sesión → 401', async () => {
     const ministerio = await crearMinisterio();
     const pastor = await loginComo('PASTOR');
     expect((await api().post('/ministerios', { nombre: 'Servicio' }, pastor.auth)).status).toBe(

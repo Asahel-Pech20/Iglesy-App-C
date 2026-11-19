@@ -171,7 +171,7 @@ describe('detalle del ministerio (F2-09, F2-10)', () => {
     expect(enlaceOBoton(/Quitar/)).toBeUndefined();
   });
 
-  it('solo ADMIN y PASTOR ven "Editar coordinadores"', async () => {
+  it('solo ADMIN_IGLESIA y PASTOR ven "Editar coordinadores"', async () => {
     await abrirApp('/ministerios/min-jovenes', { como: 'pastor@iglesia.local' });
     await esperarA(() => enlaceOBoton(/Editar coordinadores/) !== undefined);
     document.body.innerHTML = '';

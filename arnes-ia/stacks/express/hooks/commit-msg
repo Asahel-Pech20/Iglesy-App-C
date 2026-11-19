@@ -1,0 +1,3 @@
+#!/bin/sh
+# Hook del arnés: Conventional Commits y trailer «Asistido-por:».
+exec node arnes-ia/stacks/express/hooks/verificar.mjs commit-msg "$1"

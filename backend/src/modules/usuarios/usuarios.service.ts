@@ -9,8 +9,18 @@ import { crearTokenEnlace, revocarSesiones } from '../auth/auth.service';
 import type { CrearUsuario, EditarUsuario, QueryUsuarios } from './usuarios.schemas';
 import { SELECT_USUARIO } from './usuarios.select';
 
+/** Quien hace la petición: la Coordinación (sin iglesia) ve a todos; el resto, solo a su iglesia. */
+export interface Actor {
+  id: string;
+  rol: RolUsuario;
+  iglesiaId: string | null;
+}
+
+const alcanceDe = (actor: Actor): Prisma.UsuarioWhereInput =>
+  actor.rol === 'COORDINACION' ? {} : { iglesiaId: actor.iglesiaId };
+
 const CORREO_DUPLICADO = 'El correo ya está registrado.';
-const ULTIMO_ADMIN = 'Debe existir al menos un administrador activo.';
+const ULTIMO_ADMIN = 'Debe existir al menos un administrador activo en la iglesia.';
 const HORAS_INVITACION = 48;
 
 async function verificarEmailLibre(email: string, exceptoId?: string) {
@@ -20,19 +30,26 @@ async function verificarEmailLibre(email: string, exceptoId?: string) {
   }
 }
 
-async function obtenerOFallar(id: string) {
-  const usuario = await prisma.usuario.findUnique({
-    where: { id },
+async function obtenerOFallar(id: string, actor: Actor) {
+  const usuario = await prisma.usuario.findFirst({
+    // Un usuario de otra iglesia no existe para quien no es de la Coordinación (RNF-10)
+    where: { id, ...alcanceDe(actor) },
     select: { ...SELECT_USUARIO, passwordHash: true },
   });
   if (!usuario) throw AppError.noEncontrado('El usuario no existe.');
   return usuario;
 }
 
-/** Lanza 422 si el cambio dejaría el sistema sin administradores activos. */
-async function protegerUltimoAdmin(usuario: { rol: RolUsuario; activo: boolean }) {
-  if (usuario.rol !== 'ADMIN' || !usuario.activo) return;
-  const activos = await prisma.usuario.count({ where: { rol: 'ADMIN', activo: true } });
+/** Lanza 422 si el cambio dejaría a la iglesia sin administradores activos. */
+async function protegerUltimoAdmin(usuario: {
+  rol: RolUsuario;
+  activo: boolean;
+  iglesiaId: string | null;
+}) {
+  if (usuario.rol !== 'ADMIN_IGLESIA' || !usuario.activo) return;
+  const activos = await prisma.usuario.count({
+    where: { rol: 'ADMIN_IGLESIA', activo: true, iglesiaId: usuario.iglesiaId },
+  });
   if (activos <= 1) throw AppError.reglaNegocio(ULTIMO_ADMIN);
 }
 
@@ -52,9 +69,10 @@ async function enviarInvitacion(usuario: { id: string; nombre: string; email: st
   });
 }
 
-export async function listar(query: QueryUsuarios) {
+export async function listar(query: QueryUsuarios, actor: Actor) {
   const { page, limit, skip, take } = paginar(query);
   const where: Prisma.UsuarioWhereInput = {
+    ...alcanceDe(actor),
     ...(query.q && {
       OR: [
         { nombre: { contains: query.q, mode: 'insensitive' } },
@@ -74,27 +92,73 @@ export async function listar(query: QueryUsuarios) {
   return { datos, meta: crearMeta(total, page, limit) };
 }
 
-export async function obtener(id: string) {
-  const { passwordHash: _omitido, ...usuario } = await obtenerOFallar(id);
+/** Para otros módulos (p. ej. coordinadores de un ministerio): el usuario o null, sin filtrar por iglesia. */
+export function buscarPorId(id: string) {
+  return prisma.usuario.findUnique({ where: { id }, select: SELECT_USUARIO });
+}
+
+export async function obtener(id: string, actor: Actor) {
+  const { passwordHash: _omitido, ...usuario } = await obtenerOFallar(id, actor);
   return usuario;
 }
 
 /** Usuarios activos para selectores (p. ej. coordinadores de ministerio). */
-export function opciones(rol?: RolUsuario) {
+export function opciones(actor: Actor, rol?: RolUsuario) {
   return prisma.usuario.findMany({
-    where: { activo: true, ...(rol && { rol }) },
+    where: { activo: true, ...alcanceDe(actor), ...(rol && { rol }) },
     select: { id: true, nombre: true, rol: true },
     orderBy: { nombre: 'asc' },
   });
 }
 
-export async function crear(datos: CrearUsuario) {
+/**
+ * Iglesia con la que se crea o se mueve un usuario. Solo la Coordinación crea usuarios de la
+ * Coordinación (sin iglesia); el administrador de una iglesia solo crea en la suya (ADR-0004).
+ */
+async function resolverIglesia(
+  rol: RolUsuario,
+  pedida: string | undefined,
+  actor: Actor,
+  actual: string | null = null,
+): Promise<string | null> {
+  if (rol === 'COORDINACION') {
+    if (actor.rol !== 'COORDINACION') {
+      throw AppError.prohibido('Solo la Coordinación crea usuarios de la Coordinación.');
+    }
+    return null;
+  }
+  if (actor.iglesiaId && pedida && pedida !== actor.iglesiaId) {
+    throw AppError.prohibido('Solo puedes administrar usuarios de tu iglesia.');
+  }
+  const iglesiaId = actor.iglesiaId ?? pedida ?? actual;
+  if (!iglesiaId) {
+    throw AppError.validacion('Indica la iglesia del usuario.', [
+      { campo: 'iglesiaId', mensaje: 'Elige la iglesia.' },
+    ]);
+  }
+  if (iglesiaId !== actual) {
+    const existe = await prisma.iglesia.findUnique({
+      where: { id: iglesiaId },
+      select: { id: true },
+    });
+    if (!existe) {
+      throw AppError.validacion('La iglesia no existe.', [
+        { campo: 'iglesiaId', mensaje: 'La iglesia no existe.' },
+      ]);
+    }
+  }
+  return iglesiaId;
+}
+
+export async function crear(datos: CrearUsuario, actor: Actor) {
+  const iglesiaId = await resolverIglesia(datos.rol, datos.iglesiaId, actor);
   await verificarEmailLibre(datos.email);
   const usuario = await prisma.usuario.create({
     data: {
       nombre: datos.nombre,
       email: datos.email,
       rol: datos.rol,
+      iglesiaId,
       passwordHash: datos.password ? await hashPassword(datos.password) : null,
     },
     select: SELECT_USUARIO,
@@ -103,17 +167,31 @@ export async function crear(datos: CrearUsuario) {
   return usuario;
 }
 
-export async function editar(id: string, datos: EditarUsuario) {
-  const actual = await obtenerOFallar(id);
+export async function editar(id: string, datos: EditarUsuario, actor: Actor) {
+  const actual = await obtenerOFallar(id, actor);
   if (datos.email) await verificarEmailLibre(datos.email, id);
-  if (datos.rol && datos.rol !== 'ADMIN') await protegerUltimoAdmin(actual);
-  return prisma.usuario.update({ where: { id }, data: datos, select: SELECT_USUARIO });
+  if (datos.iglesiaId !== undefined && actor.rol !== 'COORDINACION') {
+    throw AppError.prohibido('Solo la Coordinación cambia a un usuario de iglesia.');
+  }
+  const rol = datos.rol ?? actual.rol;
+  // Cambiar el rol puede cambiar la iglesia: la Coordinación no tiene; el resto sí
+  const iglesiaId =
+    datos.rol || datos.iglesiaId
+      ? await resolverIglesia(rol, datos.iglesiaId, actor, actual.iglesiaId)
+      : actual.iglesiaId;
+  if (datos.rol && datos.rol !== 'ADMIN_IGLESIA') await protegerUltimoAdmin(actual);
+  const { iglesiaId: _pedida, ...cambios } = datos;
+  return prisma.usuario.update({
+    where: { id },
+    data: { ...cambios, iglesiaId },
+    select: SELECT_USUARIO,
+  });
 }
 
-export async function cambiarEstado(id: string, activo: boolean, solicitanteId: string) {
-  const actual = await obtenerOFallar(id);
+export async function cambiarEstado(id: string, activo: boolean, actor: Actor) {
+  const actual = await obtenerOFallar(id, actor);
   if (!activo) {
-    if (id === solicitanteId) throw AppError.reglaNegocio('No puedes desactivar tu propia cuenta.');
+    if (id === actor.id) throw AppError.reglaNegocio('No puedes desactivar tu propia cuenta.');
     await protegerUltimoAdmin(actual);
   }
   return prisma.$transaction(async (tx) => {
@@ -128,8 +206,8 @@ export async function cambiarEstado(id: string, activo: boolean, solicitanteId: 
   });
 }
 
-export async function reenviarInvitacion(id: string) {
-  const usuario = await obtenerOFallar(id);
+export async function reenviarInvitacion(id: string, actor: Actor) {
+  const usuario = await obtenerOFallar(id, actor);
   if (!usuario.activo) throw AppError.reglaNegocio('El usuario está desactivado.');
   if (usuario.passwordHash) {
     throw AppError.reglaNegocio('El usuario ya configuró su contraseña.');

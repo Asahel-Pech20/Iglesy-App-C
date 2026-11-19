@@ -6,6 +6,8 @@ export const SELECT_USUARIO = {
   nombre: true,
   email: true,
   rol: true,
+  // Iglesia del personal; null para la Coordinación. El panel la usa para armar sus rutas.
+  iglesiaId: true,
   activo: true,
   ultimoAcceso: true,
   createdAt: true,

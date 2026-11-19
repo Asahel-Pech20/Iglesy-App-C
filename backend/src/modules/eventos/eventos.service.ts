@@ -62,7 +62,7 @@ function formatear({ _count, ...e }: EventoBd) {
 // ───────── Reglas comunes ─────────
 
 /**
- * ADMIN/PASTOR/SECRETARIO (permiso completo) siempre; COORDINADOR (variante "-propio") solo si el
+ * ADMIN_IGLESIA/PASTOR/SECRETARIO (permiso completo) siempre; COORDINADOR (variante "-propio") solo si el
  * ministerio existe y lo coordina. Sin ministerio o de otro ministerio → 403.
  */
 export async function verificarGestionaEvento(
