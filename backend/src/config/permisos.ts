@@ -66,6 +66,10 @@ export const PERMISOS = [
   // Iglesias del sistema nacional (solo la Coordinación)
   'iglesias:leer',
   'iglesias:crear',
+  // E2-05 y E2-06 (Nataly): catálogo del INEGI, edición y cierre de iglesias
+  'iglesias:editar',
+  'iglesias:cerrar',
+  'catalogos:gestionar',
 ] as const;
 
 export type Permiso = (typeof PERMISOS)[number];
@@ -80,15 +84,21 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     ...CLED('usuarios'),
     'usuarios:opciones',
     'configuracion:leer',
+    // Marcador (supuesto S-04, plan-santiago.md): hasta que exista la edición de iglesias de Nataly
     'configuracion:editar',
     'iglesias:leer',
     'iglesias:crear',
+    'iglesias:editar',
+    'iglesias:cerrar',
+    'catalogos:gestionar',
   ],
   ADMIN_IGLESIA: [
     ...CLED('usuarios'),
     'usuarios:opciones',
     'configuracion:leer',
     'configuracion:editar',
+    // Datos de SU iglesia (RF-08); alcanceIglesia impide tocar otra
+    'iglesias:editar',
     ...CLED('miembros'),
     ...CLED('ministerios'),
     ...CLED('eventos'),
