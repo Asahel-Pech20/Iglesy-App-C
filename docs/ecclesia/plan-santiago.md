@@ -50,12 +50,24 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E1-08 | dependency-cruiser en el CI sobre `backend/src` y bajar las 9 violaciones heredadas | RNF-19 | — | Pendiente |
+| E1-08 | dependency-cruiser en el CI sobre `backend/src` y bajar las 9 violaciones heredadas | RNF-19 | — | CI hecho (`pnpm arquitectura`); quedan 8 heredadas, de otros dueños (ver abajo) |
 
 ## Lo que E1-01 deja a otros
 
 - **Nataly:** el resto de los campos de `Iglesia` (dirección, catálogo INEGI, capacidad, año, contacto, coordenadas) y su edición. Hoy existen `id`, `nombre`, `tipo`, `zonaHoraria` y `activa`, y `GET`/`POST /iglesias` mínimos de Oscar. Cuando exista la edición, se retira el marcador S-04.
 - **Genaro y Oscar:** usar `alcanceIglesia` (con `SUPUESTOS_ALCANCE.datosIglesia` donde la Coordinación deba entrar) e `iglesiaDe` en sus rutas (`backend/README.md`). Las rutas de diezmo y misas no cambian: la Coordinación sigue con 403.
+
+## Violaciones de arquitectura heredadas (E1-08)
+
+`pnpm arquitectura` corre dependency-cruiser sobre `backend/src` y **falla con cualquier violación nueva**. Las 8 heredadas de AppIglesia están en `backend/arquitectura-conocidas.json` y se ignoran hasta que su dueño las corrija; no se desactivó ninguna regla. Al corregir una, regenerar la lista con `pnpm arquitectura:conocidas` (solo debe **bajar**).
+
+| Regla | Desde → hacia | Dueño | Arreglo sugerido |
+|---|---|---|---|
+| `modulos-solo-por-service` | `asistencia.service`, `dashboard.service`, `reportes.service` → `eventos/eventos.fechas.ts` (3) | Genaro (archivo); Oscar lo usa | Mover las funciones de fechas a `lib/dominio/` o exponerlas desde `eventos.service` |
+| `sin-ciclos` | `asistencia.service` → `eventos.service`, `miembros.service`, `ministerios.service` (3) | Genaro, con Nataly | Romper el ciclo: que `asistencia` reciba lo que necesita o mover lo compartido a un archivo sin dependencias de vuelta |
+| `sin-ciclos` | `lib/exportadores/excel.ts` y `pdf.ts` → `reporte.ts` (2) | Oscar | Sacar los tipos compartidos a un archivo que no importe a los exportadores |
+
+Corregida en E1-08: `auth.service` importaba `usuarios.select.ts`; el archivo ahora es `usuarios.tipos.ts` (forma pública del usuario).
 
 ## Auditoría 2 (rama `fix/E1-auditoria2`)
 

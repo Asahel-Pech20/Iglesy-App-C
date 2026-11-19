@@ -211,6 +211,6 @@ pnpm --filter backend db:catalogos ruta/al/archivo.csv [--localidades]
 | Usuario desactivado no entra y se revocan sus sesiones; el token deja de servir al instante                        | `usuarios.service.ts`, `middlewares/auth.ts` |
 | Un ADMIN no se desactiva a sí mismo ni se queda el sistema sin ADMIN activo                                        | `usuarios.service.ts`                        |
 | Subidas: MIME + firma real del archivo, ≤ 2 MB, nombre UUID, SVG con código activo rechazado                       | `configuracion.service.ts`                   |
-| Nunca se devuelve `passwordHash` ni tokens; logs con `redact` de contraseñas, tokens y cookies                     | `usuarios.select.ts`, `lib/logger.ts`        |
+| Nunca se devuelve `passwordHash` ni tokens; logs con `redact` de contraseñas, tokens y cookies                     | `usuarios.tipos.ts`, `lib/logger.ts`        |
 | Autorización en cada ruta                                                                                          | `rutasProtegidas.test.ts`                    |
 | CORS limitado a `FRONTEND_URL`, helmet, errores 500 sin stack en producción                                        | `app.ts`, `middlewares/errores.ts`           |
