@@ -7,7 +7,21 @@ import { AppError, type CodigoError, type DetalleError } from '../lib/appError';
 interface ErrorPrisma {
   name: string;
   code: string;
-  meta?: { target?: string[] | string; modelName?: string };
+  meta?: {
+    target?: string[] | string;
+    modelName?: string;
+    // Prisma 7 con adaptador pg: el error original de PostgreSQL
+    driverAdapterError?: { cause?: { originalCode?: string; originalMessage?: string } };
+  };
+}
+
+/** SQLSTATE 23514: la fila viola un CHECK de la BD (A2-E1-02). */
+const VIOLACION_CHECK = '23514';
+
+/** Nombre de la restricción violada, para el log (nunca la fila: puede traer datos personales). */
+function restriccionDe(err: ErrorPrisma): string | undefined {
+  const mensaje = err.meta?.driverAdapterError?.cause?.originalMessage ?? '';
+  return /constraint "([^"]+)"/.exec(mensaje)?.[1];
 }
 
 function esErrorPrisma(err: unknown): err is ErrorPrisma {
@@ -52,6 +66,14 @@ export const manejarErrores: ErrorRequestHandler = (err, req, res, _next) => {
         .json(
           cuerpo('CONFLICT', `Ya existe un registro con ese valor${campos ? ` (${campos})` : ''}.`),
         );
+      return;
+    }
+    if (err.meta?.driverAdapterError?.cause?.originalCode === VIOLACION_CHECK) {
+      // Una regla de la BD que Zod no anticipó: es un dato inválido, no un fallo del servidor
+      req.log?.warn({ restriccion: restriccionDe(err) }, 'Violación de CHECK en la BD');
+      res
+        .status(422)
+        .json(cuerpo('BUSINESS_RULE', 'Los datos no cumplen una regla de integridad del sistema.'));
       return;
     }
     if (err.code === 'P2025') {

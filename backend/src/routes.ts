@@ -1,6 +1,7 @@
 import { type Router as TipoRouter, Router } from 'express';
 import { anunciosRouter } from './modules/anuncios/anuncios.routes';
 import { asistenciaEventoRouter, asistenciasRouter } from './modules/asistencia/asistencia.routes';
+import { catalogosPublicoRouter, catalogosRouter } from './modules/catalogos/catalogos.routes';
 import { crearAuthRouter } from './modules/auth/auth.routes';
 import { configuracionRouter } from './modules/configuracion/configuracion.routes';
 import { crearDashboardRouter } from './modules/dashboard/dashboard.routes';
@@ -40,6 +41,9 @@ export function crearModulos(): ModuloApi[] {
     { prefijo: '/dashboard', router: crearDashboardRouter() },
     { prefijo: '/reportes', router: reportesRouter },
     { prefijo: '/iglesias', router: iglesiasRouter },
+    // E2-05 (Nataly): catálogo del INEGI; la consulta es pública y la carga, de la Coordinación
+    { prefijo: '/public', router: catalogosPublicoRouter },
+    { prefijo: '/catalogos', router: catalogosRouter },
     // Ecclesia: datos internos de una iglesia; cada ruta pasa por alcanceIglesia
     { prefijo: '/iglesias/:iglesiaId', router: misasRouter },
     { prefijo: '/iglesias/:iglesiaId', router: diezmoRouter },
