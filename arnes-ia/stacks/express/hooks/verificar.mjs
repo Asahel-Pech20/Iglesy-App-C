@@ -4,6 +4,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { esMergeAutomatico, revisarMensaje } from './reglas-mensaje.mjs';
 
 // ── Ajustes por proyecto ──────────────────────────────────────────────────────────────
 // Carpetas a las que se aplican las reglas de arquitectura (todo el backend y el módulo de referencia).
@@ -72,19 +73,13 @@ function preCommit() {
 
 function commitMsg(archivo) {
   const mensaje = readFileSync(archivo, 'utf8');
-  const primera = mensaje.split('\n')[0];
-  const errores = [];
-  if (
-    !/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([\w-]+\))?!?: .+/.test(
-      primera,
-    )
-  )
-    errores.push(
-      'La primera línea debe seguir Conventional Commits: «tipo(alcance): descripción».',
-    );
-  if (!/^Asistido-por: .+/m.test(mensaje))
-    errores.push('Falta el trailer «Asistido-por: <herramienta>» (o «Asistido-por: ninguno»).');
+  const errores = revisarMensaje(mensaje);
   for (const e of errores) console.log(`✗ ${e}`);
+  if (errores.length === 0 && esMergeAutomatico(mensaje)) {
+    console.log(
+      'Merge de git aceptado. Si la IA resolvió conflictos, agrega «Asistido-por: <herramienta>».',
+    );
+  }
   return errores.length === 0;
 }
 

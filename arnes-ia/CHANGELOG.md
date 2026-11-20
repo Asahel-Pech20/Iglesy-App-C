@@ -2,6 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones con [SemVer](https://semver.org/lang/es/).
 
+## [0.3.1] — 2026-11-20
+
+### Corregido
+- `commit-msg` acepta los mensajes automáticos de merge de git y de GitHub (`Merge branch…`, `Merge remote-tracking branch…`, `Merge pull request…`); antes había que reescribirlos con `-m`. Las reglas viven en `hooks/reglas-mensaje.mjs`, con pruebas.
+
 ## [0.3.0] — 2026-11-18
 
 ### Agregado
