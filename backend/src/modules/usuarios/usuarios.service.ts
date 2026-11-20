@@ -7,7 +7,7 @@ import { prisma } from '../../lib/prisma';
 import { hashPassword } from '../../lib/seguridad';
 import { crearTokenEnlace, revocarSesiones } from '../auth/auth.service';
 import type { CrearUsuario, EditarUsuario, QueryUsuarios } from './usuarios.schemas';
-import { SELECT_USUARIO } from './usuarios.select';
+import { SELECT_USUARIO } from './usuarios.tipos';
 
 /** Quien hace la petición: la Coordinación (sin iglesia) ve a todos; el resto, solo a su iglesia. */
 export interface Actor {

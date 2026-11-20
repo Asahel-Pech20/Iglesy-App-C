@@ -1,4 +1,4 @@
-import { afterAll, beforeEach } from 'vitest';
+import { afterAll, beforeEach, expect } from 'vitest';
 import { correosEnviados } from '../lib/mailer';
 import { prisma } from '../lib/prisma';
 
@@ -23,8 +23,16 @@ export async function limpiarBd() {
   await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tablas} RESTART IDENTITY CASCADE`);
 }
 
+/**
+ * Las pruebas de `dominio/` son funciones puras (regla `dominio-puro` del arnés): no usan la BD,
+ * así que no se vacía antes de cada una. Antes lo hacía y causaba timeouts (A2-E1-05).
+ */
+export function usaBd(rutaPrueba: string | undefined): boolean {
+  return !/[\\/]dominio[\\/]/.test(rutaPrueba ?? '');
+}
+
 beforeEach(async () => {
-  await limpiarBd();
+  if (usaBd(expect.getState().testPath)) await limpiarBd();
   correosEnviados.length = 0;
 });
 

@@ -2,6 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones con [SemVer](https://semver.org/lang/es/).
 
+## [0.2.0] — 2026-11-11
+
+### Agregado
+- Stack Express: guía para proyectos con violaciones heredadas (lista de conocidas con `--ignore-known`), usada en el CI de AppIglesia con `pnpm arquitectura`.
+
 ## [0.1.0] — 2026-11-06
 
 ### Agregado

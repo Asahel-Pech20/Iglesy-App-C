@@ -26,6 +26,17 @@ export const SUPUESTOS_ALCANCE = {
   datosPrivados: 'denegar',
 } as const satisfies Record<string, ReglaCoordinacion>;
 
+/** Métodos que solo leen: se permiten aunque la iglesia esté cerrada (consultar su historia). */
+const METODOS_LECTURA = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * Una iglesia cerrada conserva su historia pero no acepta escrituras (RN-07, A2-E1-01).
+ * Se exige en `alcanceIglesia` para que todos los módulos lo hereden sin repetirlo.
+ */
+export function aceptaEscrituras(metodo: string, iglesiaActiva: boolean): boolean {
+  return iglesiaActiva || METODOS_LECTURA.has(metodo.toUpperCase());
+}
+
 /**
  * Regla pura del alcance por iglesia (ADR-0004, RNF-10): el personal solo entra a recursos de su
  * propia iglesia. La Coordinación (sin iglesia) entra solo si la ruta lo permite; por omisión, no.
@@ -45,6 +56,7 @@ export function evaluarAlcance(
  * con `resolver`; nunca se confía en una `iglesiaId` enviada por el cliente.
  * 404 si el recurso no existe y 403 si es de otra iglesia. Va después de `autenticar`.
  * La Coordinación recibe 403 salvo que la ruta indique `coordinacion: SUPUESTOS_ALCANCE.datosIglesia`.
+ * En una iglesia cerrada (`activa = false`) solo se permite leer: POST, PUT, PATCH y DELETE → 422.
  * Si pasa, la iglesia verificada queda en `req.iglesiaAlcance` (ver `iglesiaAlcanceDe`).
  * @example router.use('/iglesias/:iglesiaId', autenticar, alcanceIglesia(iglesiaDeLaRuta))
  * @example alcanceIglesia(iglesiaDeLaRuta, { coordinacion: SUPUESTOS_ALCANCE.datosIglesia })
@@ -59,6 +71,17 @@ export function alcanceIglesia(
     const resultado = evaluarAlcance(usuario.iglesiaId, iglesiaDelRecurso, opciones.coordinacion);
     if (resultado === 'NO_EXISTE') throw AppError.noEncontrado('La iglesia no existe.');
     if (resultado === 'PROHIBIDO') throw AppError.prohibido();
+    if (iglesiaDelRecurso && !METODOS_LECTURA.has(req.method.toUpperCase())) {
+      const iglesia = await prisma.iglesia.findUnique({
+        where: { id: iglesiaDelRecurso },
+        select: { activa: true },
+      });
+      if (!aceptaEscrituras(req.method, iglesia?.activa ?? false)) {
+        throw AppError.reglaNegocio(
+          'La iglesia está cerrada: solo se puede consultar su historia.',
+        );
+      }
+    }
     req.iglesiaAlcance = iglesiaDelRecurso ?? undefined;
     next();
   };
