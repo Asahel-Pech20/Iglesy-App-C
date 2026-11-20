@@ -160,4 +160,12 @@ describe('matriz de permisos (specs.md §3)', () => {
     expect(quien('misas:leer')).toEqual(['ADMIN_IGLESIA', 'TESORERO']);
     expect(quien('misas:registrar')).toEqual(['ADMIN_IGLESIA']);
   });
+
+  it('E2-05 y E2-06: la Coordinación carga el catálogo y cierra iglesias; el administrador edita la suya', () => {
+    const quien = (permiso: (typeof PERMISOS)[number]) =>
+      ROLES.filter((rol) => tienePermiso(rol, permiso));
+    expect(quien('catalogos:gestionar')).toEqual(['COORDINACION']);
+    expect(quien('iglesias:cerrar')).toEqual(['COORDINACION']);
+    expect(quien('iglesias:editar')).toEqual(['COORDINACION', 'ADMIN_IGLESIA']);
+  });
 });

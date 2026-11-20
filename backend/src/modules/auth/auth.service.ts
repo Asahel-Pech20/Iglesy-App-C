@@ -11,7 +11,7 @@ import {
   hashToken,
   verificarPassword,
 } from '../../lib/seguridad';
-import { SELECT_USUARIO } from '../usuarios/usuarios.select';
+import { SELECT_USUARIO } from '../usuarios/usuarios.tipos';
 
 const CREDENCIALES_INVALIDAS = 'Correo o contraseña incorrectos.';
 const ENLACE_INVALIDO = 'El enlace no es válido o ya expiró.';

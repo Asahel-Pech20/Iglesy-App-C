@@ -50,9 +50,32 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E1-08 | dependency-cruiser en el CI sobre `backend/src` y bajar las 9 violaciones heredadas | RNF-19 | — | Pendiente |
+| E1-08 | dependency-cruiser en el CI sobre `backend/src` y bajar las 9 violaciones heredadas | RNF-19 | — | CI hecho (`pnpm arquitectura`); quedan 8 heredadas, de otros dueños (ver abajo) |
 
 ## Lo que E1-01 deja a otros
 
 - **Nataly:** el resto de los campos de `Iglesia` (dirección, catálogo INEGI, capacidad, año, contacto, coordenadas) y su edición. Hoy existen `id`, `nombre`, `tipo`, `zonaHoraria` y `activa`, y `GET`/`POST /iglesias` mínimos de Oscar. Cuando exista la edición, se retira el marcador S-04.
 - **Genaro y Oscar:** usar `alcanceIglesia` (con `SUPUESTOS_ALCANCE.datosIglesia` donde la Coordinación deba entrar) e `iglesiaDe` en sus rutas (`backend/README.md`). Las rutas de diezmo y misas no cambian: la Coordinación sigue con 403.
+
+## Violaciones de arquitectura heredadas (E1-08)
+
+`pnpm arquitectura` corre dependency-cruiser sobre `backend/src` y **falla con cualquier violación nueva**. Las 8 heredadas de AppIglesia están en `backend/arquitectura-conocidas.json` y se ignoran hasta que su dueño las corrija; no se desactivó ninguna regla. Al corregir una, regenerar la lista con `pnpm arquitectura:conocidas` (solo debe **bajar**).
+
+| Regla | Desde → hacia | Dueño | Arreglo sugerido |
+|---|---|---|---|
+| `modulos-solo-por-service` | `asistencia.service`, `dashboard.service`, `reportes.service` → `eventos/eventos.fechas.ts` (3) | Genaro (archivo); Oscar lo usa | Mover las funciones de fechas a `lib/dominio/` o exponerlas desde `eventos.service` |
+| `sin-ciclos` | `asistencia.service` → `eventos.service`, `miembros.service`, `ministerios.service` (3) | Genaro, con Nataly | Romper el ciclo: que `asistencia` reciba lo que necesita o mover lo compartido a un archivo sin dependencias de vuelta |
+| `sin-ciclos` | `lib/exportadores/excel.ts` y `pdf.ts` → `reporte.ts` (2) | Oscar | Sacar los tipos compartidos a un archivo que no importe a los exportadores |
+
+Corregida en E1-08: `auth.service` importaba `usuarios.select.ts`; el archivo ahora es `usuarios.tipos.ts` (forma pública del usuario).
+
+## Auditoría 2 (rama `fix/E1-auditoria2`)
+
+| ID | Sev. | Estado |
+|---|---|---|
+| A2-E1-01 | Media | Hecho: `alcanceIglesia` responde 422 a POST, PUT, PATCH y DELETE en una iglesia cerrada; GET sigue permitido. Lo heredan misas y diezmo sin cambiar sus rutas, así que A2-E4-01 (Oscar) ya no hace falta. |
+| A2-E1-02 | Media | Hecho: `errores.ts` traduce SQLSTATE 23514 a 422 `BUSINESS_RULE`, sin devolver la fila (puede traer datos personales). Cubre también A2-E2-01 de Nataly. |
+| A2-E1-03 | Media | Hecho: la migración `e1_01_usuario_iglesia_segun_rol` ya no asigna la iglesia más antigua; se detiene y lista al personal sin iglesia. Las BD que ya la aplicaron siguen al día con `migrate deploy`; `migrate dev` puede avisar que el archivo cambió (los datos son de prueba). |
+| A2-E1-04 | Baja | Hecho: las pruebas del `CHECK` y del `RESTRICT` exigen el nombre de la restricción. |
+| A2-E1-05 | Baja | Hecho: `test/setup.ts` no vacía la BD en las pruebas de carpetas `dominio/` (funciones puras). Las de dominio pasaron de 14.5 s a 6.9 s. |
+| A2-E1-06 | Info | S-04 se retira **después** de fusionar el PR #6: ahí vive `iglesias:editar`, y el PR toca las mismas líneas de `permisos.ts` (quitarlo antes le daría un conflicto a Nataly). Falta abrir el PR de `feat/E1-01-base-fusion`. |
