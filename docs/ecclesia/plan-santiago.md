@@ -34,7 +34,7 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
 | E1-01 | Base mínima: `Iglesia`, `Usuario.iglesiaId` (null solo en la Coordinación, con `CHECK`), rol `COORDINACION`, middleware `alcanceIglesia`, iglesia inicial y un usuario por rol en el seed | RNF-10, RF-82, RN-54 (alcance) | — | Fusionada con la base de Oscar; en revisión |
-| E1-02 | Frontend: rol `COORDINACION` en menú y permisos; iglesia del usuario en la sesión y en la barra superior | RF-87 | E1-01 | Pendiente |
+| E1-02 | Frontend: rol `COORDINACION` en menú y permisos; iglesia del usuario en la sesión y en la barra superior | RF-87 | E1-01 | Hecho: menú y permisos (base de Oscar); `iglesia` en `/auth/login` y `/auth/me`, barra superior y menú de cuenta (rama `feat/E1-02-iglesia-en-sesion`) |
 | E1-03 | Usuarios por iglesia: la Coordinación crea usuarios y les asigna iglesia y rol; revisar la regla del último administrador | RF-81, RF-82 | E1-01, P-28 | Hecho en la base de Oscar (último administrador por iglesia); falta revisarlo |
 | E1-04 | Hora local de cada iglesia para guardar y mostrar (la usa Genaro en misas): `instanteLocal` y `esZonaValida` en `lib/dominio/zona.ts`, pruebas y guía en `backend/README.md` | RNF-07 | E1-01 | Hecho (rama `feat/E1-04-zona-horaria`) |
 | E1-05 | Renombrar `ADMIN` → `ADMIN_IGLESIA` (migración, pruebas, seed, frontend, mocks) | §12.3 | E1-03 | Hecho en la base de Oscar |

@@ -5,10 +5,15 @@ import { PASSWORD_MOCK } from '../datos/b1';
 import { db, sesionMock } from '../db';
 import { ahora, autenticar, errorApi, PREFIJO_TOKEN, ruta } from '../utils';
 
-const sesionDe = (usuario: Usuario) => ({
-  usuario,
-  permisos: PERMISOS_POR_ROL[usuario.rol],
-});
+const sesionDe = (usuario: Usuario) => {
+  const iglesia = db.iglesias.find((i) => i.id === usuario.iglesiaId);
+  return {
+    usuario,
+    permisos: PERMISOS_POR_ROL[usuario.rol],
+    // Igual que el backend (E1-02): solo id, nombre y estado; null en la Coordinación
+    iglesia: iglesia ? { id: iglesia.id, nombre: iglesia.nombre, activa: iglesia.activa } : null,
+  };
+};
 
 const reglaPassword = (password: string) =>
   password.length >= 8 && /[a-zA-Z]/.test(password) && /\d/.test(password);
