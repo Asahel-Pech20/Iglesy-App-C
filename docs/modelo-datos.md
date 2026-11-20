@@ -1,7 +1,7 @@
 # Modelo de datos — Ecclesia + AppIglesia
 
 > **E1-07** (Santiago). Integra el modelo de todos en un solo lugar (`specs.md` §12.4). La fuente de verdad es `backend/prisma/schema.prisma` y sus migraciones; este documento lo explica.
-> Estado al **2026-11-18**: lo «implementado» está en la cadena `feat/E4-diezmo-completo` → `feat/E1-01-base-fusion` (PR #8) → `feat/E2-05-06-catalogos-iglesias` (PR #6). Lo «propuesto» todavía no tiene migración y se ajusta con las respuestas del cliente.
+> Estado al **2026-11-20**: lo «implementado» ya está en `main` (PR #6, #8, #9 y #11). El índice de un solo encargado por iglesia (E1-09) está en el PR #12. Lo «propuesto» todavía no tiene migración y se ajusta con las respuestas del cliente.
 
 ## Convenciones
 
@@ -152,6 +152,7 @@ erDiagram
 | Regla | Tipo | Tabla | Qué impide | Migración |
 |---|---|---|---|---|
 | `usuarios_iglesia_segun_rol` | `CHECK` | `usuarios` | Personal sin iglesia o Coordinación con iglesia | `e1_01_usuario_iglesia_segun_rol` |
+| `usuarios_un_encargado_por_iglesia` | Único parcial | `usuarios` | Un segundo `ADMIN_IGLESIA` activo en la misma iglesia (los inactivos no cuentan) | `e1_09_un_encargado_por_iglesia` (PR #12) |
 | `usuarios_iglesiaId_fkey` | FK `RESTRICT` | `usuarios` | Borrar una iglesia que tiene personal | `e1_01_usuario_iglesia_segun_rol` |
 | `diezmos_monto_no_negativo` | `CHECK` | `diezmos` | Montos negativos | `ecclesia_misas_y_diezmo` |
 | `diezmo_correcciones_montos_no_negativos` | `CHECK` | `diezmo_correcciones` | Montos negativos en el historial | `ecclesia_misas_y_diezmo` |
