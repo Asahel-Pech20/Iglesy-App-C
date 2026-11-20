@@ -455,7 +455,8 @@ describe('seguridad financiera (B4-14)', () => {
   it.each(ROLES.filter((rol) => rol !== 'COORDINACION'))(
     '%s: 403 en endpoints financieros y sin "ingresos" en el dashboard si no tiene donaciones:leer',
     async (rol) => {
-      const { auth } = await loginComo(rol);
+      // E1-09: la iglesia ya tiene encargado (el del beforeEach); no se crea un segundo
+      const { auth } = rol === 'ADMIN_IGLESIA' ? admin : await loginComo(rol);
       const autorizado = ['ADMIN_IGLESIA', 'PASTOR', 'TESORERO'].includes(rol);
       for (const url of FINANCIEROS) {
         expect((await pedir(url, auth)).status, `${rol} ${url}`).toBe(autorizado ? 200 : 403);

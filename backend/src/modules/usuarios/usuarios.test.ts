@@ -156,25 +156,14 @@ describe('PATCH /usuarios/:id y /estado (B1-13)', () => {
     );
   });
 
-  it('no se puede desactivar al último administrador activo → 422', async () => {
-    const segundo = await loginComo('ADMIN_IGLESIA');
-    // Con dos admins activos, uno puede desactivar al otro
-    expect(
-      (await api().patch(`/usuarios/${admin.usuario.id}/estado`, { activo: false }, segundo.auth))
-        .status,
-    ).toBe(200);
-    // Un admin inactivo no cuenta: `segundo` es ahora el último
-    const res = await api().patch(
-      `/usuarios/${segundo.usuario.id}`,
-      { rol: 'PASTOR' },
-      segundo.auth,
-    );
+  it('el único encargado no puede quitarse el rol: la iglesia quedaría sin encargado → 422', async () => {
+    // E1-09: cada iglesia tiene un solo encargado activo; lo reemplaza la Coordinación
+    const res = await api().patch(`/usuarios/${admin.usuario.id}`, { rol: 'PASTOR' });
     expect(res.status).toBe(422);
     expect(res.body.error.code).toBe('BUSINESS_RULE');
   });
 
   it('un ADMIN_IGLESIA no puede desactivarse a sí mismo → 422', async () => {
-    await crearUsuario('ADMIN_IGLESIA');
     const res = await api().patch(`/usuarios/${admin.usuario.id}/estado`, { activo: false });
     expect(res.status).toBe(422);
     expect(res.body.error.message).toBe('No puedes desactivar tu propia cuenta.');

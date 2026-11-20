@@ -540,9 +540,11 @@ Se conservan los de §3 y se agrega el nivel nacional. Unifica [ADR-0004](docs/e
 | Rol | Alcance | Puede | Origen |
 |---|---|---|---|
 | `COORDINACION` | Nacional | Catálogos, iglesias, usuarios y criterios del índice. **No** ve datos de solicitantes | Caso |
-| `ADMIN_IGLESIA` (hoy `ADMIN`) | Su iglesia | Datos, objetos, servicios, pláticas, padres, horarios, misas y solicitudes; además, lo de `ADMIN` en §3, salvo los usuarios, que pasan a la Coordinación | Caso + heredado |
+| `ADMIN_IGLESIA` (hoy `ADMIN`) | Su iglesia | El **encargado**: **uno solo activo por iglesia** (E1-09, pedido del docente). Datos, objetos, servicios, pláticas, padres, horarios, misas y solicitudes; además, lo de `ADMIN` en §3, salvo los usuarios, que pasan a la Coordinación | Caso + heredado + docente |
 | `TESORERO` | Su iglesia | Capturar y corregir el diezmo; lo de `TESORERO` en §3 | Caso + heredado |
 | `PASTOR`, `SECRETARIO`, `COORDINADOR` | Su iglesia | Lo que indica §3 | Heredado |
+
+**Encargado único (E1-09):** cada iglesia tiene un solo `ADMIN_IGLESIA` activo; un segundo responde 409. Lo reemplaza la Coordinación: desactiva o cambia de rol al actual y nombra al nuevo. El propio encargado no puede dejar su iglesia sin encargado (422).
 
 Nadie modifica información de otra iglesia. Se debe aclarar con el cliente quién de la iglesia y si la Coordinación ven los reportes de diezmo (P-21).
 
