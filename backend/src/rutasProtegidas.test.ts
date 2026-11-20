@@ -16,6 +16,10 @@ const PUBLICAS = new Set([
   'GET /configuracion/horarios',
   // B3-15: cartelera pública de solo lectura
   'GET /public/cartelera',
+  // E2-05: catálogo del INEGI para elegir el lugar (RF-01, RF-09)
+  'GET /public/estados',
+  'GET /public/estados/:clave/municipios',
+  'GET /public/municipios/:clave/localidades',
 ]);
 
 /** Rutas de la propia cuenta: requieren sesión pero no un permiso de módulo. */

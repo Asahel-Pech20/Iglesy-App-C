@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma';
 import { crearIglesia, crearUsuario, loginComo } from '../test/helpers';
 import {
   SUPUESTOS_ALCANCE,
+  aceptaEscrituras,
   alcanceIglesia,
   evaluarAlcance,
   iglesiaAlcanceDe,
@@ -192,13 +193,67 @@ describe('alcanceIglesia con opciones, iglesiaAlcanceDe e iglesiaDe', () => {
   });
 });
 
+describe('iglesia cerrada: solo lectura (RN-07, A2-E1-01)', () => {
+  it('regla pura: una iglesia cerrada solo acepta lecturas', () => {
+    expect(aceptaEscrituras('GET', false)).toBe(true);
+    expect(aceptaEscrituras('head', false)).toBe(true);
+    for (const metodo of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      expect(aceptaEscrituras(metodo, false)).toBe(false);
+      expect(aceptaEscrituras(metodo, true)).toBe(true);
+    }
+  });
+
+  const rutasCerrada = Router({ mergeParams: true })
+    .get('/datos', (_req, res) => {
+      res.json({ data: 'ok' });
+    })
+    .post('/datos', (_req, res) => {
+      res.status(201).json({ data: 'ok' });
+    });
+  const appCerrada = express()
+    .use('/iglesias/:iglesiaId', autenticar, alcanceIglesia(iglesiaDeLaRuta), rutasCerrada)
+    .use(manejarErrores);
+
+  it('el personal de una iglesia cerrada consulta su historia, pero no escribe (422)', async () => {
+    const iglesia = await crearIglesia({ activa: false });
+    const { auth } = await loginComo('TESORERO', { iglesiaId: iglesia.id });
+    const lectura = await request(appCerrada)
+      .get(`/iglesias/${iglesia.id}/datos`)
+      .set('Authorization', auth);
+    expect(lectura.status).toBe(200);
+    const escritura = await request(appCerrada)
+      .post(`/iglesias/${iglesia.id}/datos`)
+      .set('Authorization', auth);
+    expect(escritura.status).toBe(422);
+    expect(escritura.body.error.code).toBe('BUSINESS_RULE');
+  });
+
+  it('en una iglesia activa escribe normal', async () => {
+    const iglesia = await crearIglesia();
+    const { auth } = await loginComo('TESORERO', { iglesiaId: iglesia.id });
+    const res = await request(appCerrada)
+      .post(`/iglesias/${iglesia.id}/datos`)
+      .set('Authorization', auth);
+    expect(res.status).toBe(201);
+  });
+
+  it('el alcance se revisa antes: otra iglesia cerrada sigue siendo 403', async () => {
+    const [propia, ajena] = [await crearIglesia(), await crearIglesia({ activa: false })];
+    const { auth } = await loginComo('TESORERO', { iglesiaId: propia.id });
+    const res = await request(appCerrada)
+      .post(`/iglesias/${ajena.id}/datos`)
+      .set('Authorization', auth);
+    expect(res.status).toBe(403);
+  });
+});
+
 describe('BD: iglesia según el rol (CHECK usuarios_iglesia_segun_rol)', () => {
   it('rechaza personal de iglesia sin iglesia', async () => {
     await expect(
       prisma.usuario.create({
         data: { nombre: 'Sin iglesia', email: 'sin@prueba.local', rol: 'ADMIN_IGLESIA' },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/usuarios_iglesia_segun_rol/);
   });
 
   it('rechaza a la Coordinación con iglesia', async () => {
@@ -212,12 +267,28 @@ describe('BD: iglesia según el rol (CHECK usuarios_iglesia_segun_rol)', () => {
           iglesiaId: iglesia.id,
         },
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/usuarios_iglesia_segun_rol/);
+  });
+
+  it('por HTTP, la violación del CHECK responde 422 y no 500 (A2-E1-02)', async () => {
+    const app = express()
+      .post('/usuarios-sin-iglesia', async (_req, res) => {
+        await prisma.usuario.create({
+          data: { nombre: 'Sin iglesia', email: 'http@prueba.local', rol: 'TESORERO' },
+        });
+        res.status(201).end();
+      })
+      .use(manejarErrores);
+    const res = await request(app).post('/usuarios-sin-iglesia');
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('BUSINESS_RULE');
   });
 
   it('no deja borrar una iglesia que tiene personal (RESTRICT)', async () => {
     const iglesia = await crearIglesia();
     await crearUsuario('TESORERO', { iglesiaId: iglesia.id });
-    await expect(prisma.iglesia.delete({ where: { id: iglesia.id } })).rejects.toThrow();
+    await expect(prisma.iglesia.delete({ where: { id: iglesia.id } })).rejects.toThrow(
+      /usuarios_iglesiaId_fkey/,
+    );
   });
 });

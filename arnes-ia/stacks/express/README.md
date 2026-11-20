@@ -30,4 +30,5 @@ En este repositorio la forma completa de routes/controller/service está en `bac
 
 - `vitest run`: 7/7 pruebas del índice, incluida la de 35.5 del cliente.
 - `depcruise` sobre el backend de AppIglesia (126 módulos): las reglas sí leen TypeScript y encontraron 9 violaciones reales (ciclos entre services e imports de `eventos.fechas.ts` desde otros módulos). Por eso el pre-commit aplica las reglas solo a la carpeta del código nuevo (`RUTAS_DEPENDENCIAS` en `hooks/verificar.mjs`).
+- **Proyecto con violaciones heredadas:** en vez de apagar reglas, se guarda una lista de conocidas (`depcruise … --output-type baseline --output-to <archivo>`) y el CI corre con `--ignore-known <archivo>`: pasa con las viejas y falla con cualquier nueva. En AppIglesia: `pnpm arquitectura` y `backend/arquitectura-conocidas.json` (8 conocidas). La lista guarda rutas: si se mueve un archivo listado, su violación aparece como nueva y hay que corregirla o regenerar la lista.
 - Requiere dependency-cruiser ≥ 18 con TypeScript 6 (la 16 no lee TS 6: «0 modules cruised»).
