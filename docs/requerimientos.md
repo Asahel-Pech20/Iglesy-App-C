@@ -571,4 +571,34 @@ El diagrama se ajusta con las respuestas de P-26 y P-27.
 | RF-01 | Las iglesias, párrafo 2 | _por implementar_ | _por implementar_ |
 | RN-01 – RN-06, CA-01 | Las iglesias más reconocidas, párrafos 2–4 | _por implementar_ | _por implementar_ |
 
-> Santiago completa la matriz al juntar las secciones: una fila por requerimiento, y cada párrafo del caso con al menos un requerimiento.
+### 9.1 Requerimientos no funcionales (Santiago)
+
+Estado al 2026-11-20. **Rama o PR** indica dónde está el código; `main` significa que ya está integrado. Rutas relativas a `backend/src/` salvo que se indique otra cosa.
+
+| RNF | Estado | Código | Prueba | Rama o PR |
+|---|---|---|---|---|
+| RNF-01 Consultas públicas sin sesión | Pendiente | Rutas `/public/*` de Ecclesia (§12.5) | — | Nataly (iglesias), Genaro (misas, servicios) |
+| RNF-02 360 px sin desplazamiento horizontal | Pendiente | Pantallas públicas de Ecclesia | Revisión en el navegador a 360 px | Nataly, Genaro, Oscar |
+| RNF-03 Cambios visibles en la siguiente consulta | Pendiente | Consultas públicas leen la BD sin caché | Prueba de integración: editar y consultar | Al existir RNF-01 |
+| RNF-04 Iglesias de un estado en < 2 s | Pendiente | Consulta pública por estado | Medición con los datos de prueba | Nataly · umbral por confirmar (P-30) |
+| RNF-05 Catálogo oficial del INEGI | Cumplido en PR | `modules/catalogos/`, validación en `modules/iglesias/iglesias.service.ts` | `catalogos.test.ts`; `iglesias.test.ts` (CA-09: municipio de otro estado) | `main` (PR #6, Nataly) |
+| RNF-06 Dinero en decimales exactos | Cumplido | `modules/diezmo/dominio/dinero.ts`; `Decimal(12,2)` en `prisma/schema.prisma` | `diezmo/dominio/dinero.test.ts` | `main` (PR #11, Oscar) |
+| RNF-07 Hora local de la iglesia | Cumplido | `lib/dominio/zona.ts` (`instanteLocal`, `fechaYHoraLocal`), `lib/dominio/periodo.ts` | `lib/dominio/zona.test.ts` (incluye cambios de horario), `periodo.test.ts` | `main` (PR #14) |
+| RNF-08 Datos del solicitante solo para su iglesia | Parcial | `alcanceIglesia` con `SUPUESTOS_ALCANCE.datosPrivados`; permiso `espacios:leer` solo de `ADMIN_IGLESIA` | `middlewares/alcanceIglesia.test.ts`, `config/permisos.test.ts` | Falta el módulo de espacios (Oscar) |
+| RNF-09 Reportes de diezmo solo admin y tesorero de esa iglesia | Cumplido | `modules/diezmo/diezmo.routes.ts` (`diezmo:leer` + `alcanceIglesia`) | `diezmo.test.ts` (CA-25: otra iglesia 403; la Coordinación 403) | `main` (PR #11, Oscar) |
+| RNF-10 Nadie modifica otra iglesia | Cumplido | `middlewares/alcanceIglesia.ts`; `modules/usuarios/usuarios.service.ts` (`alcanceDe`) | `alcanceIglesia.test.ts` (`iglesiaId` falsa en body, query y cabecera), `usuarios.alcance.test.ts` | `main` (PR #8) |
+| RNF-11 Cerrar y dar de baja sin borrar | Parcial | Cierre de iglesias en `modules/iglesias/`; `RESTRICT` en `Usuario.iglesiaId`; iglesia cerrada de solo lectura en `alcanceIglesia` | `iglesias.test.ts` (se cierra con fecha y motivo); `alcanceIglesia.test.ts` (cerrada → 422) | `main` (PR #6 y #9) · falta la baja de objetos (Nataly) |
+| RNF-12 Historial inmutable de correcciones y sustituciones | Parcial | Disparador `diezmo_correcciones_inmutable` (migración `ecclesia_misas_y_diezmo`) | `diezmo.test.ts` (RN-43: la BD no deja editar ni borrar el historial) | Falta la sustitución de padre (Genaro) |
+| RNF-13 Criterios del índice como datos | Pendiente | Función pura en `arnes-ia/stacks/express/modulo-referencia/iglesias/dominio/indice-patrimonial.ts` (recibe los criterios) | `indice-patrimonial.test.ts` (7 pruebas, incluye 35.5) | Falta guardarlos en la BD (Nataly) |
+| RNF-14 Folio y clave imposibles de adivinar | Pendiente | Reglas puras en `modules/espacios/dominio/` | `espacios/dominio/*.test.ts` | Falta la API (Oscar) |
+| RNF-15 Contraseñas, tokens y secretos | Cumplido | `lib/seguridad.ts` (bcrypt), `config/env.ts`, `.gitignore` (`.env`) | `lib/seguridad.test.ts`, `config/env.test.ts`, `auth.test.ts` | `main` (AppIglesia) |
+| RNF-16 `/api/v1`, JSON, paginación, OpenAPI y un formato de error | Cumplido | `app.ts`, `lib/paginacion.ts`, `middlewares/errores.ts`, `backend/openapi.yaml` | `lib/paginacion.test.ts`, `middlewares/errores.test.ts` | `main` (CHECK → 422 desde el PR #9) |
+| RNF-17 Validación con Zod | Cumplido | `middlewares/validar.ts` y `*.schemas.ts` de cada módulo | `middlewares/errores.test.ts` (`validar`) y casos 400 de cada módulo | `main` |
+| RNF-18 Prueba por regla y 70 % de cobertura | Parcial | `@vitest/coverage-v8` instalado | Una prueba por RN implementada (ver CA) | Falta medir y publicar la cobertura |
+| RNF-19 Reglas de dependencias en pre-commit y CI | Cumplido | `arnes-ia/stacks/express/.dependency-cruiser.cjs`, `pnpm arquitectura`, paso «Arquitectura» del CI, hook `arnes-ia/stacks/express/hooks/pre-commit` | El CI falla con una violación nueva (probado) | `main` (PR #10) · 8 violaciones heredadas listadas en `backend/arquitectura-conocidas.json` |
+| RNF-20 Levantar el sistema en < 10 min | Parcial | `README.md`, `docker-compose.yml`, `scripts/verificar-equipo.mjs` | — | Falta cronometrarlo en una laptop limpia (prueba de portabilidad, semana 8) |
+
+**Resumen:** 9 cumplidos (todos en `main`), 5 parciales y 6 pendientes. Los pendientes dependen de módulos que aún no existen (consultas públicas, espacios, criterios del índice).
+
+
+> Santiago completa la matriz al juntar las secciones: una fila por requerimiento, y cada párrafo del caso con al menos un requerimiento. Los RNF ya están en §9.1; los RF, RN y CA los agrega cada dueño al implementarlos.
