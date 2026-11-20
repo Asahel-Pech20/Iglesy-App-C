@@ -4,7 +4,7 @@
 export default {
   test: {
     root: import.meta.dirname,
-    include: ['modulo-referencia/**/*.test.ts'],
+    include: ['modulo-referencia/**/*.test.ts', 'hooks/**/*.test.mjs'],
     environment: 'node',
   },
 };
