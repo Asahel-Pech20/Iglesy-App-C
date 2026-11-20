@@ -44,7 +44,7 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E1-07 | Integrar `docs/modelo-datos.md` con el diagrama entidad-relación de todos | §12.4 | Modelos de cada integrante | Pendiente |
+| E1-07 | Integrar `docs/modelo-datos.md` con el diagrama entidad-relación de todos | §12.4 | Modelos de cada integrante | Hecho con lo que existe (rama `docs/E1-07-modelo-datos`); se actualiza cuando Genaro y Oscar definan sus campos |
 
 ### Fase 4 · Cierre
 
