@@ -13,7 +13,8 @@ const MATRIZ: Record<string, Record<RolUsuario, string>> = {
     COORDINADOR: '—',
   },
   configuracion: {
-    COORDINACION: 'LE',
+    // S-04 retirado: la Coordinación edita iglesias (iglesias:editar), no la configuración
+    COORDINACION: 'L',
     ADMIN_IGLESIA: 'LE',
     PASTOR: 'L',
     SECRETARIO: 'L',
@@ -167,5 +168,13 @@ describe('matriz de permisos (specs.md §3)', () => {
     expect(quien('catalogos:gestionar')).toEqual(['COORDINACION']);
     expect(quien('iglesias:cerrar')).toEqual(['COORDINACION']);
     expect(quien('iglesias:editar')).toEqual(['COORDINACION', 'ADMIN_IGLESIA']);
+  });
+
+  it('S-04 retirado: la Coordinación ya no edita la configuración; edita iglesias (E2-06)', () => {
+    const quien = (permiso: (typeof PERMISOS)[number]) =>
+      ROLES.filter((rol) => tienePermiso(rol, permiso));
+    expect(quien('configuracion:editar')).toEqual(['ADMIN_IGLESIA']);
+    expect(tienePermiso('COORDINACION', 'configuracion:leer')).toBe(true);
+    expect(tienePermiso('COORDINACION', 'iglesias:editar')).toBe(true);
   });
 });
