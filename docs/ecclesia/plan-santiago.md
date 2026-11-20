@@ -25,7 +25,7 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 |---|---|---|
 | S-02: la Coordinación entra a los datos de cualquier iglesia (RF-07, RF-08); en datos privados (diezmo, solicitudes) se le **deniega**, que es lo que hace `alcanceIglesia` por omisión. | P-21, P-28 | `middlewares/alcanceIglesia.ts` (`SUPUESTOS_ALCANCE`) |
 | S-03: los usuarios existentes de AppIglesia pasan a la iglesia inicial (la más antigua); el administrador crea personal en su iglesia y la Coordinación indica la iglesia. | P-20, P-28 | migraciones `ecclesia_iglesias_y_roles` y `e1_01_usuario_iglesia_segun_rol`, `usuarios.service.ts` |
-| S-04: `configuracion:editar` de la Coordinación es un **marcador**: se conserva hasta que exista la edición de iglesias (Nataly) y entonces se quita y se adapta. Acordado con Oscar. | Módulo de iglesias | `config/permisos.ts` (back y front) |
+| ~~S-04~~ **Retirado (2026-11-20):** la edición de iglesias de Nataly (`iglesias:editar`, PR #6) ya está en `main`. Era: `configuracion:editar` de la Coordinación es un **marcador**: se conserva hasta que exista la edición de iglesias (Nataly) y entonces se quita y se adapta. Acordado con Oscar. | Módulo de iglesias | `config/permisos.ts` (back y front) |
 
 ## Tareas
 
@@ -34,9 +34,9 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
 | E1-01 | Base mínima: `Iglesia`, `Usuario.iglesiaId` (null solo en la Coordinación, con `CHECK`), rol `COORDINACION`, middleware `alcanceIglesia`, iglesia inicial y un usuario por rol en el seed | RNF-10, RF-82, RN-54 (alcance) | — | Fusionada con la base de Oscar; en revisión |
-| E1-02 | Frontend: rol `COORDINACION` en menú y permisos; iglesia del usuario en la sesión y en la barra superior | RF-87 | E1-01 | Pendiente |
+| E1-02 | Frontend: rol `COORDINACION` en menú y permisos; iglesia del usuario en la sesión y en la barra superior | RF-87 | E1-01 | Hecho: menú y permisos (base de Oscar); `iglesia` en `/auth/login` y `/auth/me`, barra superior y menú de cuenta (rama `feat/E1-02-iglesia-en-sesion`) |
 | E1-03 | Usuarios por iglesia: la Coordinación crea usuarios y les asigna iglesia y rol; revisar la regla del último administrador | RF-81, RF-82 | E1-01, P-28 | Hecho en la base de Oscar (último administrador por iglesia); falta revisarlo |
-| E1-04 | `lib/zona-horaria`: hora local de cada iglesia para guardar y mostrar (la usa Genaro en misas) | RNF-07 | E1-01 | Pendiente |
+| E1-04 | Hora local de cada iglesia para guardar y mostrar (la usa Genaro en misas): `instanteLocal` y `esZonaValida` en `lib/dominio/zona.ts`, pruebas y guía en `backend/README.md` | RNF-07 | E1-01 | Hecho (rama `feat/E1-04-zona-horaria`) |
 | E1-05 | Renombrar `ADMIN` → `ADMIN_IGLESIA` (migración, pruebas, seed, frontend, mocks) | §12.3 | E1-03 | Hecho en la base de Oscar |
 | E1-06 | `Iglesia` reemplaza a `ConfiguracionIglesia`; `iglesiaId` en la gestión interna, con revisión de cada dueño | §12.2, ADR-0006 | E1-05, P-20, catálogo de Nataly | Pendiente |
 
@@ -44,7 +44,7 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E1-07 | Integrar `docs/modelo-datos.md` con el diagrama entidad-relación de todos | §12.4 | Modelos de cada integrante | Pendiente |
+| E1-07 | Integrar `docs/modelo-datos.md` con el diagrama entidad-relación de todos | §12.4 | Modelos de cada integrante | Hecho con lo que existe (rama `docs/E1-07-modelo-datos`); se actualiza cuando Genaro y Oscar definan sus campos |
 
 ### Fase 4 · Cierre
 
@@ -79,4 +79,4 @@ Corregida en E1-08: `auth.service` importaba `usuarios.select.ts`; el archivo ah
 | A2-E1-03 | Media | Hecho: la migración `e1_01_usuario_iglesia_segun_rol` ya no asigna la iglesia más antigua; se detiene y lista al personal sin iglesia. Las BD que ya la aplicaron siguen al día con `migrate deploy`; `migrate dev` puede avisar que el archivo cambió (los datos son de prueba). |
 | A2-E1-04 | Baja | Hecho: las pruebas del `CHECK` y del `RESTRICT` exigen el nombre de la restricción. |
 | A2-E1-05 | Baja | Hecho: `test/setup.ts` no vacía la BD en las pruebas de carpetas `dominio/` (funciones puras). Las de dominio pasaron de 14.5 s a 6.9 s. |
-| A2-E1-06 | Info | S-04 se retira **después** de fusionar el PR #6: ahí vive `iglesias:editar`, y el PR toca las mismas líneas de `permisos.ts` (quitarlo antes le daría un conflicto a Nataly). Falta abrir el PR de `feat/E1-01-base-fusion`. |
+| A2-E1-06 | Info | Hecho: S-04 retirado (rama `fix/E1-retira-s04`) y PR de `feat/E1-01-base-fusion` fusionado (#8). |

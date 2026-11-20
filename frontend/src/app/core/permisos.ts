@@ -82,8 +82,6 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     ...CLED('usuarios'),
     'usuarios:opciones',
     'configuracion:leer',
-    // Marcador (supuesto S-04, plan-santiago.md): hasta que exista la edición de iglesias de Nataly
-    'configuracion:editar',
     'iglesias:leer',
     'iglesias:crear',
     'iglesias:editar',

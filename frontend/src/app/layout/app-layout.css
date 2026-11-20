@@ -110,6 +110,14 @@
   font-size: 12px;
   font-weight: 400;
   color: var(--texto-suave);
+  /* El nombre de la iglesia puede ser largo: se recorta en vez de empujar los botones */
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cerrada {
+  color: var(--alerta);
 }
 .cabecera-menu {
   display: flex;

@@ -152,6 +152,32 @@ const iglesiaId = iglesiaDe(req);
 - En pruebas: `crearIglesia()` y `loginComo('TESORERO', { iglesiaId })`; ejemplos en `middlewares/alcanceIglesia.test.ts`.
 - Roles: `COORDINACION` (nacional, sin iglesia) · `ADMIN_IGLESIA` (antes `ADMIN`) · `TESORERO`… No confundir `COORDINACION` con `COORDINADOR` (de ministerio).
 
+## Hora local de cada iglesia (Ecclesia, E1-04)
+
+Cada iglesia tiene su `zonaHoraria` (IANA, p. ej. `America/Mexico_City`). En la BD los instantes se guardan en **UTC**; lo que ve y escribe la persona es la **hora local de su iglesia** (RN-31, RNF-07). Las funciones están en `lib/dominio/zona.ts` y son puras (no usan la BD ni el reloj):
+
+| Función | Para qué |
+|---|---|
+| `instanteLocal(fecha, hora, zona)` | «2026-11-22» + «08:00» en la zona de la iglesia → `Date` en UTC, para **guardar** una misa o un horario. Devuelve `null` si la fecha, la hora o la zona no son válidas |
+| `fechaYHoraLocal(instante, zona)` | `Date` → `{ fecha, hora }` locales, para **mostrar** |
+| `partesLocales(instante, zona)` | Año, mes, día, hora, minuto y segundo locales (reportes por día o por mes) |
+| `desfaseDeZona(ms, zona)` | Milisegundos de diferencia con UTC en ese instante |
+| `esZonaValida(zona)` | Validar la zona antes de guardarla |
+| `inicioDelDia(fecha, zona)` (`lib/dominio/periodo.ts`) | Medianoche local de una fecha, para filtrar «del día» |
+
+```ts
+import { fechaYHoraLocal, instanteLocal } from '../../lib/dominio/zona';
+
+// Guardar: la hora llega como la ve la persona
+const inicio = instanteLocal(body.fecha, body.hora, iglesia.zonaHoraria);
+if (!inicio) throw AppError.reglaNegocio('Esa hora no existe en la zona horaria de la iglesia.');
+
+// Mostrar: nunca con toLocaleString() del servidor
+const { fecha, hora } = fechaYHoraLocal(misa.inicio, iglesia.zonaHoraria);
+```
+
+**Días con cambio de horario** (hoy solo en zonas fronterizas como Tijuana): una hora que **no existe** porque el reloj se adelanta devuelve `null` (responde 422); una hora que **ocurre dos veces** porque se atrasa toma la primera. Es una decisión técnica, no una regla del cliente. Las pruebas usan los cambios reales de Tijuana en 2026.
+
 ## Catálogo del INEGI e iglesias (Ecclesia, E2-05 y E2-06)
 
 **Catálogo** (`modules/catalogos`): estados, municipios y localidades con sus claves oficiales. Las claves son de 2, 5 (estado + municipio) y 9 dígitos (estado + municipio + localidad); la BD exige que cada una empiece con la de su padre.

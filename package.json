@@ -15,7 +15,8 @@
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verificar-equipo": "node scripts/verificar-equipo.mjs"
+    "verificar-equipo": "node scripts/verificar-equipo.mjs",
+    "prepare": "node scripts/activar-hooks.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

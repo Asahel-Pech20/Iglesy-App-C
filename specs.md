@@ -355,7 +355,8 @@ model HorarioReunion { id, nombre, diaSemana Int (0=domingo..6), horaInicio "HH:
 
 Respuestas de auth (B1):
 - `POST /auth/login` → `{ data: { accessToken, usuario, permisos[] } }` + cookie `refreshToken` (httpOnly).
-- `POST /auth/refresh` → `{ data: { accessToken } }` y rota la cookie. `GET /auth/me` → `{ data: { usuario, permisos[] } }`.
+- `POST /auth/refresh` → `{ data: { accessToken } }` y rota la cookie. `GET /auth/me` → `{ data: { usuario, permisos[], iglesia } }`.
+- `iglesia` (Ecclesia, E1-02) = `{ id, nombre, activa }` de la iglesia del usuario, o `null` en la Coordinación. También viene en `POST /auth/login`.
 - `usuario` = `{ id, nombre, email, rol, activo, ultimoAcceso, createdAt, updatedAt }` (nunca `passwordHash`).
 - `PATCH /auth/me/password` body `{ passwordActual, passwordNueva }`; `POST /auth/reset-password` body `{ token, password }` (también fija la contraseña inicial de la invitación). Errores de campo en `details[].campo`.
 

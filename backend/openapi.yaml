@@ -195,6 +195,14 @@ components:
         permisos:
           type: array
           items: { type: string, example: 'miembros:leer' }
+        iglesia:
+          type: object
+          nullable: true
+          description: Iglesia del personal (E1-02); null solo en la Coordinación
+          properties:
+            id: { type: string, format: uuid }
+            nombre: { type: string }
+            activa: { type: boolean }
     Configuracion:
       type: object
       properties:
