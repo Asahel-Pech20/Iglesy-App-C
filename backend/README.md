@@ -209,7 +209,7 @@ pnpm --filter backend db:catalogos ruta/al/archivo.csv [--localidades]
 | Contraseña mínima 8 con letra y número; bcrypt costo 12                                                            | `lib/seguridad.ts`                           |
 | Login: mismo mensaje para correo inexistente, contraseña mala o usuario inactivo; tiempo constante; 5 intentos/min | `auth.service.ts`, `auth.routes.ts`          |
 | Usuario desactivado no entra y se revocan sus sesiones; el token deja de servir al instante                        | `usuarios.service.ts`, `middlewares/auth.ts` |
-| Un ADMIN no se desactiva a sí mismo ni se queda el sistema sin ADMIN activo                                        | `usuarios.service.ts`                        |
+| Un ADMIN no se desactiva a sí mismo; cada iglesia tiene **un solo** encargado activo (409 al segundo, índice `usuarios_un_encargado_por_iglesia`); solo la Coordinación lo reemplaza | `usuarios.service.ts`, migración `e1_09_un_encargado_por_iglesia` |
 | Subidas: MIME + firma real del archivo, ≤ 2 MB, nombre UUID, SVG con código activo rechazado                       | `configuracion.service.ts`                   |
 | Nunca se devuelve `passwordHash` ni tokens; logs con `redact` de contraseñas, tokens y cookies                     | `usuarios.tipos.ts`, `lib/logger.ts`        |
 | Autorización en cada ruta                                                                                          | `rutasProtegidas.test.ts`                    |

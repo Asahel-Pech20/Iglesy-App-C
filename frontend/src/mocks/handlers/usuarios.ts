@@ -4,7 +4,18 @@ import type { CrearUsuario, Usuario } from '@/app/tipos/usuarios';
 import { db } from '../db';
 import { ahora, autenticar, errorApi, paginarMock, ruta } from '../utils';
 
-const adminsActivos = () => db.usuarios.filter((u) => u.rol === 'ADMIN_IGLESIA' && u.activo);
+// E1-09 (igual que el backend): un solo encargado (ADMIN_IGLESIA) activo por iglesia
+const ENCARGADO_OCUPADO =
+  'La iglesia ya tiene un encargado activo. La Coordinación debe desactivarlo o cambiarle el rol antes de nombrar a otro.';
+const ULTIMO_ADMIN = 'Debe existir al menos un administrador activo en la iglesia.';
+
+const encargadoActivo = (iglesiaId: string | null, exceptoId?: string) =>
+  db.usuarios.find(
+    (u) => u.rol === 'ADMIN_IGLESIA' && u.activo && u.iglesiaId === iglesiaId && u.id !== exceptoId,
+  );
+
+const errorEncargado = () =>
+  errorApi(409, 'CONFLICT', ENCARGADO_OCUPADO, [{ campo: 'rol', mensaje: ENCARGADO_OCUPADO }]);
 
 function emailDuplicado(email: string, exceptoId?: string) {
   return db.usuarios.some((u) => u.email === email.toLowerCase() && u.id !== exceptoId);
@@ -62,6 +73,7 @@ export const usuariosHandlers = [
         { campo: 'iglesiaId', mensaje: 'Elige la iglesia.' },
       ]);
     }
+    if (cuerpo.rol === 'ADMIN_IGLESIA' && encargadoActivo(iglesiaId)) return errorEncargado();
     const nuevo: Usuario = {
       id: crypto.randomUUID(),
       nombre: cuerpo.nombre,
@@ -86,8 +98,18 @@ export const usuariosHandlers = [
     if (cuerpo.email && emailDuplicado(cuerpo.email, objetivo.id)) return errorEmail();
     const quitaAdmin =
       objetivo.rol === 'ADMIN_IGLESIA' && cuerpo.rol && cuerpo.rol !== 'ADMIN_IGLESIA';
-    if (quitaAdmin && adminsActivos().length === 1) {
-      return errorApi(422, 'BUSINESS_RULE', 'Debe existir al menos un administrador activo.');
+    // La Coordinación sí puede dejar la iglesia un momento sin encargado: es quien lo reemplaza
+    if (quitaAdmin && objetivo.activo && usuario.rol !== 'COORDINACION') {
+      if (!encargadoActivo(objetivo.iglesiaId, objetivo.id)) {
+        return errorApi(422, 'BUSINESS_RULE', ULTIMO_ADMIN);
+      }
+    }
+    const destino = cuerpo.iglesiaId ?? objetivo.iglesiaId;
+    const seVuelveEncargado =
+      (cuerpo.rol ?? objetivo.rol) === 'ADMIN_IGLESIA' &&
+      (objetivo.rol !== 'ADMIN_IGLESIA' || destino !== objetivo.iglesiaId);
+    if (objetivo.activo && seVuelveEncargado && encargadoActivo(destino, objetivo.id)) {
+      return errorEncargado();
     }
     Object.assign(objetivo, cuerpo, { updatedAt: ahora() });
     return HttpResponse.json({ data: objetivo });
@@ -102,8 +124,20 @@ export const usuariosHandlers = [
     if (!activo && objetivo.id === usuario.id) {
       return errorApi(422, 'BUSINESS_RULE', 'No puedes desactivar tu propia cuenta.');
     }
-    if (!activo && objetivo.rol === ('ADMIN_IGLESIA' as Rol) && adminsActivos().length === 1) {
-      return errorApi(422, 'BUSINESS_RULE', 'Debe existir al menos un administrador activo.');
+    const esEncargado = objetivo.rol === ('ADMIN_IGLESIA' as Rol);
+    if (!activo && esEncargado && objetivo.activo && usuario.rol !== 'COORDINACION') {
+      if (!encargadoActivo(objetivo.iglesiaId, objetivo.id)) {
+        return errorApi(422, 'BUSINESS_RULE', ULTIMO_ADMIN);
+      }
+    }
+    // Reactivar a un encargado anterior: solo si la iglesia no tiene ya otro
+    if (
+      activo &&
+      !objetivo.activo &&
+      esEncargado &&
+      encargadoActivo(objetivo.iglesiaId, objetivo.id)
+    ) {
+      return errorEncargado();
     }
     objetivo.activo = activo;
     objetivo.updatedAt = ahora();

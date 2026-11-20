@@ -21,6 +21,8 @@ const alcanceDe = (actor: Actor): Prisma.UsuarioWhereInput =>
 
 const CORREO_DUPLICADO = 'El correo ya está registrado.';
 const ULTIMO_ADMIN = 'Debe existir al menos un administrador activo en la iglesia.';
+const ENCARGADO_OCUPADO =
+  'La iglesia ya tiene un encargado activo. La Coordinación debe desactivarlo o cambiarle el rol antes de nombrar a otro.';
 const HORAS_INVITACION = 48;
 
 async function verificarEmailLibre(email: string, exceptoId?: string) {
@@ -40,17 +42,39 @@ async function obtenerOFallar(id: string, actor: Actor) {
   return usuario;
 }
 
-/** Lanza 422 si el cambio dejaría a la iglesia sin administradores activos. */
-async function protegerUltimoAdmin(usuario: {
-  rol: RolUsuario;
-  activo: boolean;
-  iglesiaId: string | null;
-}) {
+/**
+ * Lanza 422 si el cambio dejaría a la iglesia sin administradores activos.
+ * La Coordinación sí puede dejarla un momento sin encargado: es quien lo reemplaza (E1-09).
+ */
+async function protegerUltimoAdmin(
+  usuario: { rol: RolUsuario; activo: boolean; iglesiaId: string | null },
+  actor: Actor,
+) {
+  if (actor.rol === 'COORDINACION') return;
   if (usuario.rol !== 'ADMIN_IGLESIA' || !usuario.activo) return;
   const activos = await prisma.usuario.count({
     where: { rol: 'ADMIN_IGLESIA', activo: true, iglesiaId: usuario.iglesiaId },
   });
   if (activos <= 1) throw AppError.reglaNegocio(ULTIMO_ADMIN);
+}
+
+/**
+ * E1-09: cada iglesia tiene un solo encargado (ADMIN_IGLESIA) activo. Lanza 409 si ya hay otro.
+ * La BD lo garantiza también con el índice parcial `usuarios_un_encargado_por_iglesia`.
+ */
+async function verificarEncargadoLibre(iglesiaId: string | null, exceptoId?: string) {
+  if (!iglesiaId) return;
+  const otro = await prisma.usuario.findFirst({
+    where: {
+      rol: 'ADMIN_IGLESIA',
+      activo: true,
+      iglesiaId,
+      ...(exceptoId && { NOT: { id: exceptoId } }),
+    },
+    select: { id: true },
+  });
+  if (otro)
+    throw AppError.conflicto(ENCARGADO_OCUPADO, [{ campo: 'rol', mensaje: ENCARGADO_OCUPADO }]);
 }
 
 async function enviarInvitacion(usuario: { id: string; nombre: string; email: string }) {
@@ -153,6 +177,7 @@ async function resolverIglesia(
 export async function crear(datos: CrearUsuario, actor: Actor) {
   const iglesiaId = await resolverIglesia(datos.rol, datos.iglesiaId, actor);
   await verificarEmailLibre(datos.email);
+  if (datos.rol === 'ADMIN_IGLESIA') await verificarEncargadoLibre(iglesiaId);
   const usuario = await prisma.usuario.create({
     data: {
       nombre: datos.nombre,
@@ -179,7 +204,11 @@ export async function editar(id: string, datos: EditarUsuario, actor: Actor) {
     datos.rol || datos.iglesiaId
       ? await resolverIglesia(rol, datos.iglesiaId, actor, actual.iglesiaId)
       : actual.iglesiaId;
-  if (datos.rol && datos.rol !== 'ADMIN_IGLESIA') await protegerUltimoAdmin(actual);
+  if (datos.rol && datos.rol !== 'ADMIN_IGLESIA') await protegerUltimoAdmin(actual, actor);
+  // Pasa a ser encargado (por rol o por iglesia) estando activo: la iglesia destino no debe tener otro
+  const seVuelveEncargado =
+    rol === 'ADMIN_IGLESIA' && (actual.rol !== 'ADMIN_IGLESIA' || iglesiaId !== actual.iglesiaId);
+  if (actual.activo && seVuelveEncargado) await verificarEncargadoLibre(iglesiaId, id);
   const { iglesiaId: _pedida, ...cambios } = datos;
   return prisma.usuario.update({
     where: { id },
@@ -192,7 +221,10 @@ export async function cambiarEstado(id: string, activo: boolean, actor: Actor) {
   const actual = await obtenerOFallar(id, actor);
   if (!activo) {
     if (id === actor.id) throw AppError.reglaNegocio('No puedes desactivar tu propia cuenta.');
-    await protegerUltimoAdmin(actual);
+    await protegerUltimoAdmin(actual, actor);
+  } else if (!actual.activo && actual.rol === 'ADMIN_IGLESIA') {
+    // Reactivar a un encargado anterior: solo si la iglesia no tiene ya otro
+    await verificarEncargadoLibre(actual.iglesiaId, id);
   }
   return prisma.$transaction(async (tx) => {
     const usuario = await tx.usuario.update({

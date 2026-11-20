@@ -50,6 +50,7 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
+| E1-09 | Un solo encargado (`ADMIN_IGLESIA`) activo por iglesia; lo reemplaza la Coordinación (pedido del docente, 2026-11-19) | §12.3 | E1-01 | Hecho (rama `feat/E1-09-un-encargado-por-iglesia`) |
 | E1-08 | dependency-cruiser en el CI sobre `backend/src` y bajar las 9 violaciones heredadas | RNF-19 | — | CI hecho (`pnpm arquitectura`); quedan 8 heredadas, de otros dueños (ver abajo) |
 
 ## Lo que E1-01 deja a otros

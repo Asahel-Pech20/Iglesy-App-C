@@ -63,15 +63,15 @@ describe('listar y consultar usuarios', () => {
   });
 });
 
-describe('crear usuarios', () => {
-  const nuevo = (rol: string, extra: object = {}) => ({
-    nombre: 'Persona Nueva',
-    email: `nuevo-${rol.toLowerCase()}-${Math.random().toString(36).slice(2, 8)}@prueba.local`,
-    rol,
-    password: 'Segura123',
-    ...extra,
-  });
+const nuevo = (rol: string, extra: object = {}) => ({
+  nombre: 'Persona Nueva',
+  email: `nuevo-${rol.toLowerCase()}-${Math.random().toString(36).slice(2, 8)}@prueba.local`,
+  rol,
+  password: 'Segura123',
+  ...extra,
+});
 
+describe('crear usuarios', () => {
   it('el administrador crea personal en su propia iglesia', async () => {
     const { adminA, a } = await dosIglesias();
     const res = await api(adminA.auth).post('/usuarios', nuevo('TESORERO'));
@@ -113,14 +113,15 @@ describe('crear usuarios', () => {
     expect(res.status).toBe(403);
   });
 
-  it('la Coordinación crea un administrador indicando la iglesia', async () => {
-    const { coordinacion, b } = await dosIglesias();
+  it('la Coordinación crea un administrador indicando una iglesia sin encargado', async () => {
+    const { coordinacion } = await dosIglesias();
+    const nueva = await crearIglesia();
     const res = await api(coordinacion.auth).post(
       '/usuarios',
-      nuevo('ADMIN_IGLESIA', { iglesiaId: b.id }),
+      nuevo('ADMIN_IGLESIA', { iglesiaId: nueva.id }),
     );
     expect(res.status).toBe(201);
-    expect(res.body.data).toMatchObject({ rol: 'ADMIN_IGLESIA', iglesiaId: b.id });
+    expect(res.body.data).toMatchObject({ rol: 'ADMIN_IGLESIA', iglesiaId: nueva.id });
   });
 
   it('la Coordinación debe indicar una iglesia que exista para el personal de iglesia (400)', async () => {
@@ -162,14 +163,98 @@ describe('crear usuarios', () => {
 });
 
 describe('último administrador de cada iglesia', () => {
-  it('desactivar al único administrador de una iglesia es 422 aunque otras iglesias tengan', async () => {
-    const { coordinacion, adminB } = await dosIglesias();
-    const res = await api(coordinacion.auth).patch(`/usuarios/${adminB.usuario.id}/estado`, {
+  it('el encargado no deja a su iglesia sin encargado (422), aunque otras iglesias tengan', async () => {
+    const { adminB } = await dosIglesias();
+    const res = await api(adminB.auth).patch(`/usuarios/${adminB.usuario.id}`, { rol: 'PASTOR' });
+    expect(res.status).toBe(422);
+    expect((await prisma.usuario.findUniqueOrThrow({ where: { id: adminB.usuario.id } })).rol).toBe(
+      'ADMIN_IGLESIA',
+    );
+  });
+});
+
+describe('un solo encargado activo por iglesia (E1-09)', () => {
+  it('no se crea un segundo encargado en la misma iglesia (409), ni por la Coordinación ni por el propio', async () => {
+    const { b, adminB, coordinacion } = await dosIglesias();
+    const porCoordinacion = await api(coordinacion.auth).post(
+      '/usuarios',
+      nuevo('ADMIN_IGLESIA', { iglesiaId: b.id }),
+    );
+    expect(porCoordinacion.status).toBe(409);
+    expect(porCoordinacion.body.error.code).toBe('CONFLICT');
+    const porElPropio = await api(adminB.auth).post('/usuarios', nuevo('ADMIN_IGLESIA'));
+    expect(porElPropio.status).toBe(409);
+  });
+
+  it('no se asciende a encargado a alguien de una iglesia que ya tiene uno (409)', async () => {
+    const { tesoreroB, coordinacion } = await dosIglesias();
+    const res = await api(coordinacion.auth).patch(`/usuarios/${tesoreroB.usuario.id}`, {
+      rol: 'ADMIN_IGLESIA',
+    });
+    expect(res.status).toBe(409);
+  });
+
+  it('no se mueve a un encargado a una iglesia que ya tiene uno (409)', async () => {
+    const { a, adminB, coordinacion } = await dosIglesias();
+    const res = await api(coordinacion.auth).patch(`/usuarios/${adminB.usuario.id}`, {
+      iglesiaId: a.id,
+    });
+    expect(res.status).toBe(409);
+  });
+
+  it('la Coordinación reemplaza al encargado: lo desactiva, nombra a otro y el anterior no se reactiva', async () => {
+    const { b, adminB, coordinacion } = await dosIglesias();
+    const baja = await api(coordinacion.auth).patch(`/usuarios/${adminB.usuario.id}/estado`, {
       activo: false,
     });
-    expect(res.status).toBe(422);
-    expect(
-      (await prisma.usuario.findUniqueOrThrow({ where: { id: adminB.usuario.id } })).activo,
-    ).toBe(true);
+    expect(baja.status).toBe(200);
+    const nuevoEncargado = await api(coordinacion.auth).post(
+      '/usuarios',
+      nuevo('ADMIN_IGLESIA', { iglesiaId: b.id }),
+    );
+    expect(nuevoEncargado.status).toBe(201);
+    // Un encargado desactivado no cuenta, pero tampoco puede volver mientras haya otro
+    const reactivar = await api(coordinacion.auth).patch(`/usuarios/${adminB.usuario.id}/estado`, {
+      activo: true,
+    });
+    expect(reactivar.status).toBe(409);
+  });
+
+  it('la Coordinación también reemplaza cambiando el rol del encargado actual', async () => {
+    const { adminB, tesoreroB, coordinacion } = await dosIglesias();
+    const degradar = await api(coordinacion.auth).patch(`/usuarios/${adminB.usuario.id}`, {
+      rol: 'PASTOR',
+    });
+    expect(degradar.status).toBe(200);
+    const ascender = await api(coordinacion.auth).patch(`/usuarios/${tesoreroB.usuario.id}`, {
+      rol: 'ADMIN_IGLESIA',
+    });
+    expect(ascender.status).toBe(200);
+  });
+
+  it('la BD rechaza un segundo encargado activo aunque se salte la API', async () => {
+    const { b } = await dosIglesias();
+    await expect(
+      prisma.usuario.create({
+        data: {
+          nombre: 'Otro',
+          email: 'otro-encargado@prueba.local',
+          rol: 'ADMIN_IGLESIA',
+          iglesiaId: b.id,
+        },
+      }),
+    ).rejects.toThrow(/usuarios_un_encargado_por_iglesia|Unique constraint/);
+    // Inactivo sí se puede guardar: conserva la historia de encargados anteriores
+    await expect(
+      prisma.usuario.create({
+        data: {
+          nombre: 'Anterior',
+          email: 'anterior@prueba.local',
+          rol: 'ADMIN_IGLESIA',
+          iglesiaId: b.id,
+          activo: false,
+        },
+      }),
+    ).resolves.toMatchObject({ activo: false });
   });
 });
