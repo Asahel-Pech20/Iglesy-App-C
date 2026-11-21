@@ -38,26 +38,26 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 | E4-07 | Migración de los modelos de espacios | RN-47, RN-49 | Revisión de Santiago, `Iglesia` | Hecha |
 | E4-08 | Tipos de espacio: administrar y consultar en público, sin precios | RF-70, RF-71, RN-47, RN-48, CA-26 | E4-07, ficha de Nataly | Hecha |
 | E4-09 | Solicitud pública: crear, folio y clave con hash, consulta y límite de intentos | RF-72–74, RN-49, RNF-14, CA-26 | E4-07 | Hecha |
-| E4-10 | Panel: ver solicitudes, avisar que no hay lugar y cotizar | RF-75–77, RN-50, RN-53, CA-27, CA-28 | E4-06, `alcanceIglesia` | Parcial: diezmo hecho; falta espacios |
-| E4-11 | Respuesta de la persona: aceptar, rechazar, cancelar y vencimiento | RF-78–80, RN-51, RN-52, CA-28, CA-29 | E4-06, E4-09, E4-10 | Parcial: diezmo hecho; falta espacios |
+| E4-10 | Panel: ver solicitudes, avisar que no hay lugar y cotizar | RF-75–77, RN-50, RN-53, CA-27, CA-28 | E4-06, `alcanceIglesia` | Hecha: diezmo hecho; falta espacios |
+| E4-11 | Respuesta de la persona: aceptar, rechazar, cancelar y vencimiento | RF-78–80, RN-51, RN-52, CA-28, CA-29 | E4-06, E4-09, E4-10 | Hecha: diezmo hecho; falta espacios |
 
 ### Fase 2 · Diezmo (Entrega 3)
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E4-12 | Acordar con Genaro qué expone `MisaCelebrada` (ID, iglesia, fecha, hora, horario, padre que ofició) | RF-48, RF-60, P-17, P-22 | Genaro | Pendiente |
-| E4-13 | Migración de los modelos de diezmo, con una captura única por misa | RN-41, RNF-06 | E4-12, revisión de Santiago | Pendiente |
-| E4-14 | Captura: solo misa celebrada de su iglesia y una sola vez | RF-60, RF-61, RN-40, RN-41, CA-20, CA-21 | E4-13, `alcanceIglesia` | Pendiente |
-| E4-15 | Corrección en transacción con historial de solo inserción | RF-62, RF-63, RN-42, RN-43, CA-22 | E4-14 | Pendiente |
+| E4-12 | Acordar con Genaro qué expone `MisaCelebrada` (ID, iglesia, fecha, hora, horario, padre que ofició) | RF-48, RF-60, P-17, P-22 | Genaro | Hecha |
+| E4-13 | Migración de los modelos de diezmo, con una captura única por misa | RN-41, RNF-06 | E4-12, revisión de Santiago | Hecha |
+| E4-14 | Captura: solo misa celebrada de su iglesia y una sola vez | RF-60, RF-61, RN-40, RN-41, CA-20, CA-21 | E4-13, `alcanceIglesia` | Hecha |
+| E4-15 | Corrección en transacción con historial de solo inserción | RF-62, RF-63, RN-42, RN-43, CA-22 | E4-14 | Hecha |
 
 ### Fase 3 · Reportes e interfaz (Entrega 4)
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E4-16 | Reportes: total, promedio y extremos, con sumas en SQL | RF-64, RF-65, RN-44, RN-45, CA-23 | E4-14, P-23 | Pendiente |
+| E4-16 | Reportes: total, promedio y extremos, con sumas en SQL | RF-64, RF-65, RN-44, RN-45, CA-23 | E4-14, P-23 | Hecha |
 | E4-17 | Agrupar por día, semana, mes, horario y padre | RF-66–68, CA-24 | E4-16 | Pendiente |
 | E4-18 | Permisos de reportes y datos privados, con pruebas de otra iglesia y sin sesión | RF-69, RF-82, RN-46, RN-53, RN-54, CA-25 | E4-16, P-21, Santiago | Pendiente |
-| E4-19 | Pantallas públicas: tipos en la ficha, solicitud y seguimiento, a 360 px | RF-71–74, RF-78, RF-80 | E4-09, E4-11 | Pendiente |
+| E4-19 | Pantallas públicas: tipos en la ficha, solicitud y seguimiento, a 360 px | RF-71–74, RF-78, RF-80 | E4-09, E4-11 | Parcial: solicitud y seguimiento hechos; falta mostrar los tipos en la ficha de Nataly (PR #20) |
 | E4-20 | Panel: solicitudes y cotización; captura, corrección e historial de diezmo; reportes | RF-60–69, RF-75–77 | Tareas de backend | Pendiente |
 
 ### Fase 3 y 4 · Cierre
