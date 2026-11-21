@@ -39,7 +39,7 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   styles: `
     .filtros {
       display: grid;
-      gap: 0 12px;
+      gap: 8px 12px;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
     }
     .lista {

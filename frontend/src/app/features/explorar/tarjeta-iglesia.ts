@@ -53,6 +53,7 @@ export function varianteDistincion(distincion: string | null): VarianteBadge {
     .indice {
       font-size: 14px;
       margin-left: 8px;
+      white-space: nowrap;
     }
   `,
   template: `

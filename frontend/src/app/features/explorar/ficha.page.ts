@@ -159,8 +159,11 @@ export class FichaPage {
   protected readonly ficha = computed(() => valorDe(this.consulta) ?? null);
   protected readonly lugar = computed(() => {
     const u = this.ficha()?.ubicacion;
-    return [u?.localidad?.nombre, u?.municipio?.nombre, u?.estado?.nombre]
-      .filter((n) => Boolean(n))
-      .join(', ');
+    return (
+      [u?.localidad?.nombre, u?.municipio?.nombre, u?.estado?.nombre]
+        // Sin repetir un nombre igual al anterior («Puebla, Puebla»)
+        .filter((n, i, lista) => Boolean(n) && n !== lista[i - 1])
+        .join(', ')
+    );
   });
 }

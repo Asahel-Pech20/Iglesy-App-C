@@ -29,12 +29,15 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   styles: `
     .filtros {
       display: grid;
-      gap: 0 12px;
+      gap: 8px 12px;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
     }
     .lista {
       display: grid;
       gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
     h1 {
       font-size: 24px;
@@ -69,7 +72,7 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     } @else {
       <ol class="lista" aria-label="Ranking de iglesias">
         @for (i of ranking(); track i.id) {
-          <li style="list-style: none">
+          <li>
             <app-tarjeta-iglesia
               [id]="i.id"
               [nombre]="i.nombre"
