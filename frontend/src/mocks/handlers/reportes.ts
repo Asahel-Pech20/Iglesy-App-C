@@ -143,8 +143,12 @@ function reporteAsistencia(usuario: Usuario, p: URLSearchParams): Reporte | Resp
   const periodo = p.get('periodo') === 'mensual' ? 'mensual' : 'semanal';
   const desde = p.get('desde');
   const hasta = p.get('hasta');
+  // Como el backend: con `ministerioId` solo cuentan los eventos de ese ministerio (PR #2)
+  const ministerioId = p.get('ministerioId');
+  const ministerio = ministerioId ? db.ministerios.find((m) => m.id === ministerioId) : undefined;
   const eventos = db.eventos
     .filter((e) => e.estado !== 'CANCELADO')
+    .filter((e) => !ministerioId || e.ministerioId === ministerioId)
     .filter((e) => !desde || e.fechaInicio.slice(0, 10) >= desde)
     .filter((e) => !hasta || e.fechaInicio.slice(0, 10) <= hasta)
     .map((e) => {
@@ -168,6 +172,7 @@ function reporteAsistencia(usuario: Usuario, p: URLSearchParams): Reporte | Resp
     titulo: 'Reporte de asistencia',
     filtros: [
       { etiqueta: 'Periodo', valor: periodo === 'semanal' ? 'Semanal' : 'Mensual' },
+      ...(ministerio ? [{ etiqueta: 'Ministerio', valor: ministerio.nombre }] : []),
       ...filtroRango(desde, hasta),
     ],
     resumen: [
