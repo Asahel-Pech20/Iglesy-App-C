@@ -4,12 +4,14 @@ import {
   ClipboardCheck,
   Church,
   FileBarChart,
+  Gem,
   HandCoins,
   Home,
   type LucideIconData,
   Megaphone,
   Network,
   Settings,
+  SlidersHorizontal,
   UserCog,
   Users,
 } from 'lucide-angular';
@@ -58,6 +60,14 @@ export const MENU: EntradaMenu[] = [
     permiso: 'donaciones:leer',
   },
   { etiqueta: 'Iglesias', ruta: '/iglesias', icono: Church, permiso: 'iglesias:leer' },
+  // E2-15 (Nataly): el administrador captura el patrimonio de su iglesia
+  { etiqueta: 'Patrimonio', ruta: '/patrimonio', icono: Gem, permiso: 'patrimonio:gestionar' },
+  {
+    etiqueta: 'Criterios del índice',
+    ruta: '/criterios-indice',
+    icono: SlidersHorizontal,
+    permiso: 'criterios:leer',
+  },
   {
     etiqueta: 'Diezmo',
     ruta: '/diezmo',

@@ -14,7 +14,14 @@ import { ConfiguracionPage } from './features/configuracion/configuracion.page';
 import { EventoDetallePage } from './features/eventos/evento-detalle.page';
 import { EventoFormPage } from './features/eventos/evento-form.page';
 import { EventosPage } from './features/eventos/eventos.page';
+import { BusquedaPage } from './features/explorar/busqueda.page';
+import { ExplorarLayout } from './features/explorar/explorar-layout';
+import { FichaPage } from './features/explorar/ficha.page';
+import { ReconocidasPage } from './features/explorar/reconocidas.page';
+import { TemplosPage } from './features/explorar/templos.page';
 import { IglesiasPage } from './features/iglesias/iglesias.page';
+import { CriteriosPage } from './features/patrimonio/criterios.page';
+import { PatrimonioPage } from './features/patrimonio/patrimonio.page';
 import { InicioPage } from './features/inicio/inicio.page';
 import { DiezmoPage } from './features/diezmo/diezmo.page';
 import { DonacionesPage } from './features/donaciones/donaciones.page';
@@ -48,9 +55,25 @@ function publica(
   };
 }
 
+/** Pantallas públicas de Ecclesia dentro de su propio marco (E2-14). */
+function explorar(path: string, children: Routes): Route {
+  return { path, component: ExplorarLayout, children };
+}
+
 export const routes: Routes = [
   // F3-13: cartelera pública, sin sesión ni layout administrativo
   { path: 'cartelera', component: CarteleraPage, title: 'Cartelera' },
+  // E2-14 (Nataly): consultas públicas de Ecclesia, sin sesión y para el celular
+  explorar('templos', [
+    { path: '', component: TemplosPage, title: 'Iglesias de México' },
+    { path: ':id', component: FichaPage, title: 'Ficha de la iglesia' },
+  ]),
+  explorar('reconocidas', [
+    { path: '', component: ReconocidasPage, title: 'Iglesias más reconocidas' },
+  ]),
+  explorar('busqueda-patrimonio', [
+    { path: '', component: BusquedaPage, title: 'Búsqueda por patrimonio' },
+  ]),
   publica('login', LoginPage, 'Iniciar sesión', true),
   publica('recuperar', RecuperarPage, 'Recuperar contraseña'),
   publica('restablecer', RestablecerPage, 'Nueva contraseña'),
@@ -170,6 +193,25 @@ export const routes: Routes = [
         component: IglesiasPage,
         data: { permiso: 'iglesias:leer' },
         title: 'Iglesias',
+      },
+      // E2-15 (Nataly): patrimonio de una iglesia y criterios del índice
+      {
+        path: 'iglesias/:id/patrimonio',
+        component: PatrimonioPage,
+        data: { permiso: 'patrimonio:leer' },
+        title: 'Patrimonio',
+      },
+      {
+        path: 'patrimonio',
+        component: PatrimonioPage,
+        data: { permiso: 'patrimonio:gestionar' },
+        title: 'Patrimonio',
+      },
+      {
+        path: 'criterios-indice',
+        component: CriteriosPage,
+        data: { permiso: 'criterios:leer' },
+        title: 'Criterios del índice',
       },
       // Ecclesia: diezmo de las misas (solo personal de iglesia)
       {

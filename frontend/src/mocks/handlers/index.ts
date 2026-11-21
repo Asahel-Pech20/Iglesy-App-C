@@ -8,6 +8,8 @@ import { dashboardHandlers } from './dashboard';
 import { diezmoHandlers } from './diezmo';
 import { donacionesHandlers } from './donaciones';
 import { iglesiasHandlers } from './iglesias';
+import { explorarHandlers } from './explorar';
+import { patrimonioHandlers } from './patrimonio';
 import { eventosHandlers } from './eventos';
 import { miembrosHandlers } from './miembros';
 import { ministeriosHandlers } from './ministerios';
@@ -30,4 +32,7 @@ export const handlers = [
   ...reportesHandlers,
   ...diezmoHandlers,
   ...iglesiasHandlers,
+  // E2 (Nataly): objetos, criterios y consultas públicas
+  ...patrimonioHandlers,
+  ...explorarHandlers,
 ];

@@ -4,6 +4,7 @@ import type { PrioridadAnuncio } from '@/app/tipos/anuncios';
 import type { Rol } from '@/app/tipos/comunes';
 import type { AgrupacionIngresos, ConceptoDonacion, MetodoPago } from '@/app/tipos/donaciones';
 import type { TipoIglesia } from '@/app/tipos/iglesias';
+import type { EstadoObjeto, GrupoObjeto, TipoObjeto } from '@/app/tipos/patrimonio';
 import type { CategoriaEvento, EstadoEvento, TipoEvento } from '@/app/tipos/eventos';
 
 // Helpers de formato de AGENTS.md §4 (UX). Todas las fechas se muestran en español.
@@ -62,6 +63,40 @@ export const ETIQUETAS_TIPO_IGLESIA: Record<TipoIglesia, string> = {
   CAPILLA: 'Capilla',
   SANTUARIO: 'Santuario',
 };
+
+// E2-08 (Nataly): patrimonio
+export const ETIQUETAS_TIPO_OBJETO: Record<TipoObjeto, string> = {
+  IMAGEN: 'Imagen (santo, virgen o cristo)',
+  RETABLO: 'Retablo',
+  PINTURA: 'Pintura',
+  MURAL: 'Mural',
+  ORGANO: 'Órgano',
+  PIANO: 'Piano',
+  ORFEBRERIA: 'Orfebrería',
+  MOBILIARIO_LITURGICO: 'Mobiliario litúrgico',
+  DOCUMENTO: 'Documento',
+  OTRO: 'Otra pieza',
+};
+
+export const ETIQUETAS_GRUPO_OBJETO: Record<GrupoObjeto, string> = {
+  IMAGEN: 'Imágenes',
+  RETABLO_PINTURA_MURAL: 'Retablos, pinturas y murales',
+  ORGANO_PIANO: 'Órganos y pianos',
+  ORFEBRERIA_MOBILIARIO_DOCUMENTO: 'Orfebrería, mobiliario y documentos',
+  OTRO: 'Otras piezas',
+};
+
+export const ETIQUETAS_ESTADO_OBJETO: Record<EstadoObjeto, string> = {
+  VIGENTE: 'Vigente',
+  PERDIDO: 'Perdido',
+  PRESTADO: 'Prestado',
+  BAJA: 'Dado de baja',
+};
+
+/** Índice patrimonial con un decimal (35.5). */
+export function formatearIndice(indice: number): string {
+  return indice.toLocaleString('es-MX', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+}
 
 export const ETIQUETAS_ROL: Record<Rol, string> = {
   COORDINACION: 'Coordinación nacional',
