@@ -18,7 +18,7 @@ export interface Supuestos {
   msPorDiaDeVigencia: number;
   /**
    * SUPUESTO (P-26): en el instante exacto en que se cumplen los 15 días la cotización ya está
-   * vencida (CA-29: «emitida hace 15 días» queda «Vencida»). Con `false` seguiría vigente hasta
+   * vencida (el caso no lo fija; CA-29 solo prueba 16 días). Con `false` seguiría vigente hasta
    * pasar ese instante.
    */
   vencidaEnElInstanteLimite: boolean;

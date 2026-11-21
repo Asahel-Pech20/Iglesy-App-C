@@ -24,22 +24,22 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E4-01 | Llevar P-21–P-29 a la sesión con el docente y anotar las respuestas | Sección 8 | Sesión con el docente | Pendiente |
-| E4-02 | Ajustar requerimientos y diagrama de estados con esas respuestas | Secciones 2.3 y 7 | E4-01 | Pendiente |
-| E4-03 | Definir `Diezmo`, `DiezmoCorreccion`, `TipoEspacio`, `SolicitudEspacio` y `Cotizacion` para `docs/modelo-datos.md` | RN-40–54 | Santiago integra el modelo | Pendiente |
-| E4-04 | Diseñar las rutas de diezmo y espacios | RF-60–82 | E4-03 | Pendiente |
-| E4-05 | Reunir el diseño de la API de todos en OpenAPI y Postman | `specs.md §12.6` | Rutas de cada integrante | Pendiente |
+| E4-01 | Llevar P-21–P-29 a la sesión con el docente y anotar las respuestas | Sección 8 | Sesión con el docente | Hecha |
+| E4-02 | Ajustar requerimientos y diagrama de estados con esas respuestas | Secciones 2.3 y 7 | E4-01 | Hecha |
+| E4-03 | Definir `Diezmo`, `DiezmoCorreccion`, `TipoEspacio`, `SolicitudEspacio` y `Cotizacion` para `docs/modelo-datos.md` | RN-40–54 | Santiago integra el modelo | Hecha |
+| E4-04 | Diseñar las rutas de diezmo y espacios | RF-60–82 | E4-03 | Hecha |
+| E4-05 | Reunir el diseño de la API de todos en OpenAPI y Postman | `specs.md §12.6` | Rutas de cada integrante | Hecha |
 
 ### Fase 2 · Espacios (Entrega 3)
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E4-06 | Dominio puro: transiciones de la solicitud y vigencia de la cotización, con el «ahora» como parámetro | Sección 7, RN-51, RN-52 | E4-02 | Pendiente |
-| E4-07 | Migración de los modelos de espacios | RN-47, RN-49 | Revisión de Santiago, `Iglesia` | Pendiente |
-| E4-08 | Tipos de espacio: administrar y consultar en público, sin precios | RF-70, RF-71, RN-47, RN-48, CA-26 | E4-07, ficha de Nataly | Pendiente |
-| E4-09 | Solicitud pública: crear, folio y clave con hash, consulta y límite de intentos | RF-72–74, RN-49, RNF-14, CA-26 | E4-07 | Pendiente |
-| E4-10 | Panel: ver solicitudes, avisar que no hay lugar y cotizar | RF-75–77, RN-50, RN-53, CA-27, CA-28 | E4-06, `alcanceIglesia` | Pendiente |
-| E4-11 | Respuesta de la persona: aceptar, rechazar, cancelar y vencimiento | RF-78–80, RN-51, RN-52, CA-28, CA-29 | E4-06, E4-09, E4-10 | Pendiente |
+| E4-06 | Dominio puro: transiciones de la solicitud y vigencia de la cotización, con el «ahora» como parámetro | Sección 7, RN-51, RN-52 | E4-02 | Hecha |
+| E4-07 | Migración de los modelos de espacios | RN-47, RN-49 | Revisión de Santiago, `Iglesia` | Hecha |
+| E4-08 | Tipos de espacio: administrar y consultar en público, sin precios | RF-70, RF-71, RN-47, RN-48, CA-26 | E4-07, ficha de Nataly | Hecha |
+| E4-09 | Solicitud pública: crear, folio y clave con hash, consulta y límite de intentos | RF-72–74, RN-49, RNF-14, CA-26 | E4-07 | Hecha |
+| E4-10 | Panel: ver solicitudes, avisar que no hay lugar y cotizar | RF-75–77, RN-50, RN-53, CA-27, CA-28 | E4-06, `alcanceIglesia` | Parcial: diezmo hecho; falta espacios |
+| E4-11 | Respuesta de la persona: aceptar, rechazar, cancelar y vencimiento | RF-78–80, RN-51, RN-52, CA-28, CA-29 | E4-06, E4-09, E4-10 | Parcial: diezmo hecho; falta espacios |
 
 ### Fase 2 · Diezmo (Entrega 3)
 
