@@ -25,6 +25,7 @@ tags:
   - name: Catálogos
   - name: Misas
   - name: Diezmo
+  - name: Espacios
 
 components:
   securitySchemes:
@@ -2193,3 +2194,276 @@ paths:
         '200': { description: 'OK: desde, hasta, por y grupos con clave, etiqueta, misas y total' }
         '400': { $ref: '#/components/responses/Validacion' }
         '403': { $ref: '#/components/responses/Prohibido' }
+
+  # ───────── Espacios: criptas, nichos, columbarios y osarios (E4-08 a E4-11) ─────────
+
+  /public/iglesias/{iglesiaId}/espacios:
+    get:
+      tags: [Espacios]
+      summary: Tipos de espacio que ofrece la iglesia, SIN precios (sin sesión; 60/min por IP)
+      description: >
+        Solo los tipos activos y disponibles. Una iglesia cerrada responde 200 con la lista vacía.
+        RF-71, RN-47, RN-48.
+      security: []
+      parameters:
+        - { name: iglesiaId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: 'OK: iglesia { id, nombre } y tipos [{ id, clase }]' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /public/iglesias/{iglesiaId}/solicitudes-espacio:
+    post:
+      tags: [Espacios]
+      summary: Solicitar un espacio sin cuenta (sin sesión; 10/min por IP)
+      description: >
+        Devuelve el folio (ESP-2026-000123) y la clave (10 caracteres, «ABCDE-FGHJK») UNA sola vez; la
+        clave solo se guarda como hash SHA-256. Hace falta un teléfono o un correo (supuesto P-25).
+        422 si la iglesia está cerrada o el tipo no está activo y disponible. RF-72, RF-73, RN-49.
+      security: []
+      parameters:
+        - { name: iglesiaId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tipoEspacioId, contacto]
+              properties:
+                tipoEspacioId: { type: string, format: uuid }
+                contacto:
+                  type: object
+                  required: [nombre]
+                  properties:
+                    nombre: { type: string, maxLength: 150 }
+                    telefono: { type: string }
+                    correo: { type: string, format: email }
+                comentarios: { type: string, maxLength: 1000 }
+      responses:
+        '201': { description: 'Creada: folio, clave, estado, iglesia { nombre } y aviso' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+        '429': { description: Demasiadas solicitudes desde esta IP }
+
+  /public/solicitudes-espacio/{folio}/consulta:
+    post:
+      tags: [Espacios]
+      summary: Consultar el estado y la cotización con folio y clave (sin sesión; 30/min por IP)
+      description: >
+        El estado es el efectivo: una cotización vencida se ve «VENCIDA». Incluye con quién se hace
+        (nombre, teléfono y correo de la iglesia) y las fechas en la hora local de la iglesia. Un folio
+        inexistente y una clave incorrecta dan el mismo 404. Tras 5 claves incorrectas el folio se
+        bloquea 15 minutos (429). Nunca devuelve la clave. RF-74.
+      security: []
+      parameters:
+        - { name: folio, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [clave]
+              properties:
+                clave: { type: string }
+      responses:
+        '200':
+          {
+            description: 'OK: folio, estado, tipo { clase }, iglesia, creadaEn, creadaLocal y cotizacion',
+          }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '429': { description: Folio bloqueado temporalmente o demasiadas solicitudes }
+
+  /public/solicitudes-espacio/{folio}/aceptar:
+    post:
+      tags: [Espacios]
+      summary: Aceptar el precio de la cotización (folio y clave)
+      description: >
+        422 si la cotización venció (el vencimiento queda guardado), si no hay cotización o si la
+        iglesia está cerrada. RF-78, RN-52, CA-28, CA-29.
+      security: []
+      parameters:
+        - { name: folio, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [clave], properties: { clave: { type: string } } }
+      responses:
+        '200': { description: 'OK: la solicitud en estado ACEPTADA' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+        '429': { description: Folio bloqueado temporalmente o demasiadas solicitudes }
+
+  /public/solicitudes-espacio/{folio}/rechazar:
+    post:
+      tags: [Espacios]
+      summary: Rechazar el precio de la cotización (folio y clave)
+      security: []
+      parameters:
+        - { name: folio, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [clave], properties: { clave: { type: string } } }
+      responses:
+        '200': { description: 'OK: la solicitud en estado RECHAZADA' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+        '429': { description: Folio bloqueado temporalmente o demasiadas solicitudes }
+
+  /public/solicitudes-espacio/{folio}/cancelar:
+    post:
+      tags: [Espacios]
+      summary: Cancelar la solicitud mientras no se haya aceptado (folio y clave)
+      description: 422 si ya se aceptó (RN-52), si la cotización venció o si la iglesia está cerrada. RF-80.
+      security: []
+      parameters:
+        - { name: folio, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [clave], properties: { clave: { type: string } } }
+      responses:
+        '200': { description: 'OK: la solicitud en estado CANCELADA (conserva su historial)' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+        '429': { description: Folio bloqueado temporalmente o demasiadas solicitudes }
+
+  /iglesias/{iglesiaId}/tipos-espacio:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Espacios]
+      summary: Tipos de espacio de la iglesia, activos o no (espacios:leer)
+      responses:
+        '200': { description: 'OK: [{ id, clase, activo, disponible }]' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+    post:
+      tags: [Espacios]
+      summary: Agregar un tipo de espacio (espacios:gestionar)
+      description: La Coordinación no entra (datos privados de la iglesia). 409 si ya tiene esa clase.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [clase]
+              properties:
+                clase: { type: string, enum: [CRIPTA, NICHO, COLUMBARIO, OSARIO] }
+                disponible: { type: boolean }
+      responses:
+        '201': { description: Creado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/tipos-espacio/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { $ref: '#/components/parameters/Id' }
+    patch:
+      tags: [Espacios]
+      summary: Activar, desactivar o marcar sin lugar un tipo (espacios:gestionar)
+      description: No se borra, para conservar sus solicitudes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activo: { type: boolean }
+                disponible: { type: boolean }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/solicitudes-espacio:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Espacios]
+      summary: Solicitudes de la iglesia, con datos de contacto (espacios:leer)
+      description: >
+        `estado` filtra por el estado efectivo (una cotizada vencida cuenta como VENCIDA).
+        La respuesta nunca incluye la clave ni su hash. RF-75, RN-53.
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - name: estado
+          in: query
+          schema:
+            type: string
+            enum: [RECIBIDA, SIN_LUGAR, COTIZADA, ACEPTADA, RECHAZADA, VENCIDA, CANCELADA]
+      responses:
+        '200': { description: Lista paginada }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+
+  /iglesias/{iglesiaId}/solicitudes-espacio/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { $ref: '#/components/parameters/Id' }
+    get:
+      tags: [Espacios]
+      summary: Detalle de una solicitud con contacto y cotización (espacios:leer)
+      description: Una solicitud de otra iglesia responde 404 con la ruta propia (RN-54).
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /iglesias/{iglesiaId}/solicitudes-espacio/{id}/cotizacion:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { $ref: '#/components/parameters/Id' }
+    post:
+      tags: [Espacios]
+      summary: Cotizar una solicitud recibida (espacios:gestionar)
+      description: >
+        El monto viaja como texto con hasta 2 decimales y mayor que cero. Vale 15 días desde que se
+        emite. 422 si la solicitud no está «Recibida». RF-77, RN-50, RN-51, CA-28.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monto, condiciones]
+              properties:
+                monto: { type: string, example: '12500.50' }
+                condiciones: { type: string, maxLength: 2000 }
+      responses:
+        '201': { description: 'Creada: la solicitud en estado COTIZADA con su cotización' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/solicitudes-espacio/{id}/sin-lugar:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { $ref: '#/components/parameters/Id' }
+    post:
+      tags: [Espacios]
+      summary: Avisar que no hay lugar (espacios:gestionar)
+      description: 422 si la solicitud no está «Recibida». RF-76, CA-27.
+      responses:
+        '200': { description: 'OK: la solicitud en estado SIN_LUGAR' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
