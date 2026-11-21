@@ -78,6 +78,17 @@ export const usuariosIniciales = (): Usuario[] => [
     updatedAt: fecha,
   },
   {
+    id: 'u-admin2',
+    nombre: 'Encargado de otra iglesia',
+    email: 'admin2@iglesia.local',
+    rol: 'ADMIN_IGLESIA',
+    iglesiaId: OTRA_IGLESIA_MOCK,
+    activo: true,
+    ultimoAcceso: null,
+    createdAt: fecha,
+    updatedAt: fecha,
+  },
+  {
     id: 'u-coordinador',
     nombre: 'María Chan',
     email: 'coordinador@iglesia.local',
