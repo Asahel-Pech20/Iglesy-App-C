@@ -9,7 +9,7 @@ let app: ReturnType<typeof crearApp>;
 let admin: Awaited<ReturnType<typeof loginComo>>;
 beforeEach(async () => {
   app = crearApp();
-  admin = await loginComo('ADMIN');
+  admin = await loginComo('ADMIN_IGLESIA');
 });
 
 const api = () => ({
@@ -266,7 +266,7 @@ describe('PUT /eventos/:id/asistencia (B3-08)', () => {
     expect(res.status).toBe(422);
     expect(res.body.error.details[0].mensaje).toContain('Luis Ajeno no pertenece');
     expect(await prisma.asistencia.count()).toBe(0);
-    // ADMIN sí puede registrar a un miembro de fuera (p. ej. un visitante de otro ministerio)
+    // ADMIN_IGLESIA sí puede registrar a un miembro de fuera (p. ej. un visitante de otro ministerio)
     expect(
       (await api().put(url, { registros: [{ miembroId: ajeno.id, presente: true }] })).status,
     ).toBe(200);

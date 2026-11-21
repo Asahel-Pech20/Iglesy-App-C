@@ -2,6 +2,24 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones con [SemVer](https://semver.org/lang/es/).
 
+## [0.3.1] — 2026-11-20
+
+### Corregido
+- `commit-msg` acepta los mensajes automáticos de merge de git y de GitHub (`Merge branch…`, `Merge remote-tracking branch…`, `Merge pull request…`); antes había que reescribirlos con `-m`. Las reglas viven en `hooks/reglas-mensaje.mjs`, con pruebas.
+
+## [0.3.0] — 2026-11-18
+
+### Agregado
+- Activación automática de los hooks con un script `prepare` (`scripts/activar-hooks.mjs` en AppIglesia): todo el equipo los tiene al hacer `pnpm install`; en el CI se omite.
+
+### Cambiado
+- El pre-commit aplica las reglas de dependencias a todo `backend/src` con la lista de violaciones conocidas (`CONOCIDAS_DEPENDENCIAS`), igual que el CI; antes solo revisaba el módulo de referencia.
+
+## [0.2.0] — 2026-11-11
+
+### Agregado
+- Stack Express: guía para proyectos con violaciones heredadas (lista de conocidas con `--ignore-known`), usada en el CI de AppIglesia con `pnpm arquitectura`.
+
 ## [0.1.0] — 2026-11-06
 
 ### Agregado

@@ -19,6 +19,8 @@ export class SesionService {
 
   readonly estado = signal<EstadoSesion>('cargando');
   readonly usuario = computed(() => this.sesion()?.usuario ?? null);
+  /** Iglesia del personal (E1-02); null en la Coordinación o sin sesión */
+  readonly iglesia = computed(() => this.sesion()?.iglesia ?? null);
   readonly permisos = computed<readonly Permiso[]>(() => this.sesion()?.permisos ?? []);
 
   constructor() {

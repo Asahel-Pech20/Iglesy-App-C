@@ -14,10 +14,16 @@ export const autenticar: RequestHandler = async function autenticar(req, _res, n
   const { sub } = verificarAccessToken(cabecera.slice(7));
   const usuario = await prisma.usuario.findUnique({
     where: { id: sub },
-    select: { id: true, nombre: true, email: true, rol: true, activo: true },
+    select: { id: true, nombre: true, email: true, rol: true, iglesiaId: true, activo: true },
   });
   if (!usuario?.activo) throw AppError.noAutenticado();
-  req.usuario = { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol };
+  req.usuario = {
+    id: usuario.id,
+    nombre: usuario.nombre,
+    email: usuario.email,
+    rol: usuario.rol,
+    iglesiaId: usuario.iglesiaId,
+  };
   next();
 };
 

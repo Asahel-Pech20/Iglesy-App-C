@@ -181,7 +181,7 @@ export class HorarioFormDialogo {
   }
 }
 
-/** Pestaña Horarios: lista agrupada por día; solo ADMIN agrega, edita y elimina. */
+/** Pestaña Horarios: lista agrupada por día; solo ADMIN_IGLESIA agrega, edita y elimina. */
 @Component({
   selector: 'app-horarios',
   imports: [

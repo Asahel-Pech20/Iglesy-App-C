@@ -11,7 +11,7 @@ import {
   hashToken,
   verificarPassword,
 } from '../../lib/seguridad';
-import { SELECT_USUARIO } from '../usuarios/usuarios.select';
+import { SELECT_USUARIO } from '../usuarios/usuarios.tipos';
 
 const CREDENCIALES_INVALIDAS = 'Correo o contraseña incorrectos.';
 const ENLACE_INVALIDO = 'El enlace no es válido o ya expiró.';
@@ -20,13 +20,18 @@ let hashSenuelo: Promise<string> | null = null;
 
 type Cliente = Pick<typeof prisma, 'refreshToken' | 'passwordResetToken' | 'usuario'>;
 
+/**
+ * Usuario, permisos e iglesia del personal (E1-02). `iglesia` es null solo en la Coordinación.
+ * Se lee por la relación de Usuario: el frontend la muestra sin pedir permisos de iglesias.
+ */
 export async function obtenerSesion(usuarioId: string) {
-  const usuario = await prisma.usuario.findUnique({
+  const encontrado = await prisma.usuario.findUnique({
     where: { id: usuarioId },
-    select: SELECT_USUARIO,
+    select: { ...SELECT_USUARIO, iglesia: { select: { id: true, nombre: true, activa: true } } },
   });
-  if (!usuario?.activo) throw AppError.noAutenticado();
-  return { usuario, permisos: permisosDe(usuario.rol) };
+  if (!encontrado?.activo) throw AppError.noAutenticado();
+  const { iglesia, ...usuario } = encontrado;
+  return { usuario, permisos: permisosDe(usuario.rol), iglesia };
 }
 
 /** Crea un refresh token nuevo; en BD solo queda su hash. */

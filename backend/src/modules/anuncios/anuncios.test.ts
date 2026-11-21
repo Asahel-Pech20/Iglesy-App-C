@@ -9,7 +9,7 @@ let app: ReturnType<typeof crearApp>;
 let admin: Awaited<ReturnType<typeof loginComo>>;
 beforeEach(async () => {
   app = crearApp();
-  admin = await loginComo('ADMIN');
+  admin = await loginComo('ADMIN_IGLESIA');
 });
 
 const api = () => ({
@@ -179,7 +179,7 @@ describe('GET/PATCH/DELETE /anuncios (B3-13)', () => {
     expect(res.body.data.map((a: { titulo: string }) => a.titulo)).toEqual(['Reunión de padres']);
   });
 
-  it('lectura para todos los roles; escritura solo ADMIN, PASTOR y SECRETARIO', async () => {
+  it('lectura para todos los roles; escritura solo ADMIN_IGLESIA, PASTOR y SECRETARIO', async () => {
     const anuncio = await crearAnuncio({ titulo: 'Aviso' });
     for (const rol of ['TESORERO', 'COORDINADOR'] as const) {
       const sesion = await loginComo(rol);

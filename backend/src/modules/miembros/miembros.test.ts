@@ -9,7 +9,7 @@ let app: ReturnType<typeof crearApp>;
 let admin: Awaited<ReturnType<typeof loginComo>>;
 beforeEach(async () => {
   app = crearApp();
-  admin = await loginComo('ADMIN');
+  admin = await loginComo('ADMIN_IGLESIA');
 });
 
 const api = () => ({

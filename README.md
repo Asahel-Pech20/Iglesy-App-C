@@ -24,7 +24,7 @@ Aplicación web para la administración interna de una iglesia: usuarios con rol
 
 ```bash
 docker compose up -d     # postgres (5432), postgres-test (5433), mailpit (1025 / 8025)
-pnpm install             # instala backend y frontend (workspaces)
+pnpm install             # instala backend y frontend (workspaces) y activa los hooks de git del arnés
 pnpm dev                 # backend + frontend en paralelo
 ```
 

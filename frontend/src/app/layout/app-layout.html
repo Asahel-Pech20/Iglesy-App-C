@@ -58,7 +58,12 @@
           @if (usuario(); as u) {
             <span class="datos-cuenta">
               <span class="nombre">{{ u.nombre }}</span>
-              <span class="rol">{{ etiquetasRol[u.rol] }}</span>
+              <span class="rol">
+                {{ etiquetasRol[u.rol] }}
+                @if (iglesia(); as ig) {
+                  · <span class="iglesia">{{ ig.nombre }}</span>
+                }
+              </span>
             </span>
           }
           <lucide-icon [img]="iconos.ChevronDown" [size]="16" aria-hidden="true" />
@@ -69,6 +74,16 @@
             <div class="cabecera-menu">
               <span class="nombre">{{ u.nombre }}</span>
               <span class="texto-suave correo">{{ u.email }}</span>
+              @if (iglesia(); as ig) {
+                <span class="texto-suave correo" data-prueba="iglesia-sesion">
+                  {{ ig.nombre }}
+                  @if (!ig.activa) {
+                    <span class="cerrada">(cerrada: solo consulta)</span>
+                  }
+                </span>
+              } @else {
+                <span class="texto-suave correo">Alcance nacional</span>
+              }
             </div>
           }
           <mat-divider />

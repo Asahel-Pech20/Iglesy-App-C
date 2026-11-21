@@ -10,10 +10,13 @@
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "lint": "eslint .",
+    "arquitectura": "depcruise backend/src --config arnes-ia/stacks/express/.dependency-cruiser.cjs --ignore-known backend/arquitectura-conocidas.json",
+    "arquitectura:conocidas": "depcruise backend/src --config arnes-ia/stacks/express/.dependency-cruiser.cjs --output-type baseline --output-to backend/arquitectura-conocidas.json",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verificar-equipo": "node scripts/verificar-equipo.mjs"
+    "verificar-equipo": "node scripts/verificar-equipo.mjs",
+    "prepare": "node scripts/activar-hooks.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

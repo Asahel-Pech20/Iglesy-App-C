@@ -14,7 +14,9 @@ import { ConfiguracionPage } from './features/configuracion/configuracion.page';
 import { EventoDetallePage } from './features/eventos/evento-detalle.page';
 import { EventoFormPage } from './features/eventos/evento-form.page';
 import { EventosPage } from './features/eventos/eventos.page';
-import { DashboardPage } from './features/dashboard/dashboard.page';
+import { IglesiasPage } from './features/iglesias/iglesias.page';
+import { InicioPage } from './features/inicio/inicio.page';
+import { DiezmoPage } from './features/diezmo/diezmo.page';
 import { DonacionesPage } from './features/donaciones/donaciones.page';
 import { MiembroFormPage } from './features/miembros/miembro-form.page';
 import { MiembroPerfilPage } from './features/miembros/miembro-perfil.page';
@@ -58,7 +60,7 @@ export const routes: Routes = [
     canActivate: [rutaProtegida],
     canActivateChild: [rutaProtegida],
     children: [
-      { path: '', pathMatch: 'full', component: DashboardPage, title: 'Inicio' },
+      { path: '', pathMatch: 'full', component: InicioPage, title: 'Inicio' },
       {
         path: 'usuarios',
         component: UsuariosPage,
@@ -162,6 +164,19 @@ export const routes: Routes = [
         component: DonacionesPage,
         data: { permiso: 'donaciones:leer' },
         title: 'Donaciones',
+      },
+      {
+        path: 'iglesias',
+        component: IglesiasPage,
+        data: { permiso: 'iglesias:leer' },
+        title: 'Iglesias',
+      },
+      // Ecclesia: diezmo de las misas (solo personal de iglesia)
+      {
+        path: 'diezmo',
+        component: DiezmoPage,
+        data: { permiso: 'diezmo:leer' },
+        title: 'Diezmo',
       },
       {
         path: 'reportes',

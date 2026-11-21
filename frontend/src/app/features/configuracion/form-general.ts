@@ -30,7 +30,7 @@ const CAMPOS_TEXTO = [
 
 type Campo = 'nombre' | (typeof CAMPOS_TEXTO)[number]['campo'] | 'moneda' | 'zonaHoraria';
 
-/** Pestaña General. Solo ADMIN edita; los demás roles la ven en modo lectura. */
+/** Pestaña General. Solo ADMIN_IGLESIA edita; los demás roles la ven en modo lectura. */
 @Component({
   selector: 'app-form-general',
   imports: [

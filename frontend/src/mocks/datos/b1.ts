@@ -6,12 +6,28 @@ export const PASSWORD_MOCK = 'Iglesia123';
 
 const fecha = '2026-10-01T15:00:00.000Z';
 
+/** Iglesia de la demo (la de los usuarios de prueba) y otra para probar el aislamiento entre iglesias. */
+export const IGLESIA_MOCK = 'ig-comunidad';
+export const OTRA_IGLESIA_MOCK = 'ig-otra';
+
 export const usuariosIniciales = (): Usuario[] => [
+  {
+    id: 'u-coordinacion',
+    nombre: 'Coordinación Nacional',
+    email: 'coordinacion@iglesia.local',
+    rol: 'COORDINACION',
+    iglesiaId: null,
+    activo: true,
+    ultimoAcceso: null,
+    createdAt: fecha,
+    updatedAt: fecha,
+  },
   {
     id: 'u-admin',
     nombre: 'Administrador General',
     email: 'admin@iglesia.local',
-    rol: 'ADMIN',
+    rol: 'ADMIN_IGLESIA',
+    iglesiaId: IGLESIA_MOCK,
     activo: true,
     ultimoAcceso: fecha,
     createdAt: fecha,
@@ -22,6 +38,7 @@ export const usuariosIniciales = (): Usuario[] => [
     nombre: 'Pastor Daniel Ruiz',
     email: 'pastor@iglesia.local',
     rol: 'PASTOR',
+    iglesiaId: IGLESIA_MOCK,
     activo: true,
     ultimoAcceso: null,
     createdAt: fecha,
@@ -32,6 +49,7 @@ export const usuariosIniciales = (): Usuario[] => [
     nombre: 'Lucía Hernández',
     email: 'secretario@iglesia.local',
     rol: 'SECRETARIO',
+    iglesiaId: IGLESIA_MOCK,
     activo: true,
     ultimoAcceso: null,
     createdAt: fecha,
@@ -42,6 +60,18 @@ export const usuariosIniciales = (): Usuario[] => [
     nombre: 'Jorge Canul',
     email: 'tesorero@iglesia.local',
     rol: 'TESORERO',
+    iglesiaId: IGLESIA_MOCK,
+    activo: true,
+    ultimoAcceso: null,
+    createdAt: fecha,
+    updatedAt: fecha,
+  },
+  {
+    id: 'u-tesorero2',
+    nombre: 'Tesorería de otra iglesia',
+    email: 'tesorero2@iglesia.local',
+    rol: 'TESORERO',
+    iglesiaId: OTRA_IGLESIA_MOCK,
     activo: true,
     ultimoAcceso: null,
     createdAt: fecha,
@@ -52,6 +82,7 @@ export const usuariosIniciales = (): Usuario[] => [
     nombre: 'María Chan',
     email: 'coordinador@iglesia.local',
     rol: 'COORDINADOR',
+    iglesiaId: IGLESIA_MOCK,
     activo: true,
     ultimoAcceso: null,
     createdAt: fecha,
