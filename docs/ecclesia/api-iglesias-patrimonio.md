@@ -25,9 +25,9 @@
 
 | Método | Ruta | Qué hace | Cubre |
 |---|---|---|---|
-| `GET` | `/public/estados` | Los 32 estados `[{ clave, nombre }]`, sin paginar | RF-01, RF-09 |
-| `GET` | `/public/estados/:clave/municipios` | Municipios del estado, sin paginar | RF-02, RF-09 |
-| `GET` | `/public/municipios/:clave/localidades` | Localidades del municipio que tienen iglesias | RF-02, RF-09 |
+| `GET` | `/public/estados` | Los 32 estados `[{ clave, nombre }]`, paginados y con `?q=` (A2-E2-04) | RF-01, RF-09 |
+| `GET` | `/public/estados/:clave/municipios` | Municipios del estado, paginados y con `?q=` (A2-E2-04) | RF-02, RF-09 |
+| `GET` | `/public/municipios/:clave/localidades` | Localidades del municipio, paginadas y con `?q=` (A2-E2-04) | RF-02, RF-09 |
 
 ## Catálogos (panel)
 
@@ -39,7 +39,7 @@
 
 | Método | Ruta | Qué hace | Cubre |
 |---|---|---|---|
-| `GET` | `/public/iglesias?estado&municipio&localidad&tipo&q&capacidadMin&page&limit` | Iglesias activas del estado (obligatorio). Cada una con `id`, `nombre`, `tipo`, municipio, localidad, `indice` y `distincion` | RF-01–RF-05, RF-18, RN-07, CA-02, CA-03 |
+| `GET` | `/public/iglesias?estado&municipio&localidad&tipo&q&capacidadMin&capacidadMax&page&limit` | Iglesias activas del estado (obligatorio). Cada una con `id`, `nombre`, `tipo`, `direccion`, `capacidad`, municipio y localidad; `indice` y `distincion` llegan con E2-10. Hecha en E2-07 | RF-01–RF-05, RF-18, RN-07, CA-02, CA-03 |
 | `GET` | `/public/iglesias/:id` | Ficha completa (ver abajo). 404 si está cerrada | RF-06, RF-16, RF-18, CA-04 |
 | `GET` | `/public/reconocidas?estado&municipio&localidad&page&limit` | Ranking: iglesias activas con objetos, de mayor a menor índice. Sin filtro de lugar es el ranking nacional; acepta un solo nivel de lugar | RF-19–RF-21, RN-12, RN-13, CA-06 |
 | `GET` | `/public/busqueda-patrimonio?tipoObjeto&antiguedadMin&estado\|municipio\|localidad&page&limit` | Iglesias activas del lugar con al menos un objeto vigente de ese tipo y antigüedad. Exige un lugar | RF-23, CA-08 |
