@@ -7,7 +7,9 @@ import { configuracionRouter } from './modules/configuracion/configuracion.route
 import { crearDashboardRouter } from './modules/dashboard/dashboard.routes';
 import { diezmoRouter } from './modules/diezmo/diezmo.routes';
 import { donacionesRouter } from './modules/donaciones/donaciones.routes';
+import { consultasPublicasRouter } from './modules/consultas/consultas.routes';
 import { iglesiasRouter } from './modules/iglesias/iglesias.routes';
+import { criteriosRouter, objetosRouter } from './modules/patrimonio/patrimonio.routes';
 import { eventosRouter } from './modules/eventos/eventos.routes';
 import { miembrosRouter } from './modules/miembros/miembros.routes';
 import { misasRouter } from './modules/misas/misas.routes';
@@ -43,10 +45,16 @@ export function crearModulos(): ModuloApi[] {
     { prefijo: '/iglesias', router: iglesiasRouter },
     // E2-05 (Nataly): catálogo del INEGI; la consulta es pública y la carga, de la Coordinación
     { prefijo: '/public', router: catalogosPublicoRouter },
+    // E2-07, E2-11–E2-13 (Nataly): lista por estado, ficha, reconocidas y búsqueda (sin sesión)
+    { prefijo: '/public', router: consultasPublicasRouter },
+    // E2-10 (Nataly): criterios del índice, solo la Coordinación
+    { prefijo: '/criterios-indice', router: criteriosRouter },
     { prefijo: '/catalogos', router: catalogosRouter },
     // Ecclesia: datos internos de una iglesia; cada ruta pasa por alcanceIglesia
     { prefijo: '/iglesias/:iglesiaId', router: misasRouter },
     { prefijo: '/iglesias/:iglesiaId', router: diezmoRouter },
+    // E2-08 (Nataly): objetos del patrimonio e índice de la iglesia
+    { prefijo: '/iglesias/:iglesiaId', router: objetosRouter },
   ];
 }
 

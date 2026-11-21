@@ -428,3 +428,114 @@ describe('Auditoría 2: edición contra lo guardado', () => {
     expect(await prisma.iglesia.count({ where: { latitud: 0 } })).toBe(0);
   });
 });
+
+// ───────────── E2-07 (Nataly): lista pública por estado ─────────────
+
+describe('GET /public/iglesias?estado= (E2-07)', () => {
+  const publica = (filtros: string) => request(app).get(`/api/v1/public/iglesias?${filtros}`);
+  const nombres = (res: request.Response) => res.body.data.map((i: { nombre: string }) => i.nombre);
+
+  /** Puebla: dos parroquias y una capilla en dos municipios, más una cerrada; Yucatán: una. */
+  async function sembrar() {
+    await catalogosService.importar(FILAS_INEGI);
+    const lugar = (municipio: string, localidad: string) => ({
+      estadoClave: '21',
+      municipioClave: municipio,
+      localidadClave: localidad,
+    });
+    await prisma.iglesia.createMany({
+      data: [
+        {
+          nombre: 'Parroquia de San Miguel',
+          tipo: 'PARROQUIA',
+          capacidad: 400,
+          ...lugar('21114', '211140001'),
+        },
+        {
+          nombre: 'Capilla del Rosario',
+          tipo: 'CAPILLA',
+          capacidad: 80,
+          ...lugar('21114', '211140001'),
+        },
+        {
+          nombre: 'Parroquia de Atlixco',
+          tipo: 'PARROQUIA',
+          capacidad: 250,
+          ...lugar('21019', '210190001'),
+        },
+        { nombre: 'Templo cerrado', tipo: 'TEMPLO', activa: false, ...lugar('21019', '210190001') },
+        {
+          nombre: 'Catedral de Mérida',
+          tipo: 'CATEDRAL',
+          estadoClave: '31',
+          municipioClave: '31050',
+        },
+      ],
+    });
+  }
+
+  it('CA-02: sin sesión, el visitante ve las activas del estado con tipo y municipio, no la cerrada', async () => {
+    await sembrar();
+    const res = await publica('estado=21');
+    expect(res.status).toBe(200);
+    expect(nombres(res)).toEqual([
+      'Capilla del Rosario',
+      'Parroquia de Atlixco',
+      'Parroquia de San Miguel',
+    ]);
+    expect(res.body.meta).toEqual({ page: 1, limit: 20, total: 3, totalPages: 1 });
+    expect(res.body.data[2]).toEqual({
+      id: expect.any(String),
+      nombre: 'Parroquia de San Miguel',
+      tipo: 'PARROQUIA',
+      direccion: null,
+      capacidad: 400,
+      municipio: { clave: '21114', nombre: 'Puebla' },
+      localidad: { clave: '211140001', nombre: 'Heroica Puebla de Zaragoza' },
+      // RF-18: la distinción va junto a cada iglesia (sin objetos: índice 0)
+      indice: 0,
+      distincion: null,
+    });
+  });
+
+  it('CA-03: acota por municipio y tipo; sin filtros vuelve a ver todas', async () => {
+    await sembrar();
+    const acotada = await publica('estado=21&municipio=21114&tipo=PARROQUIA');
+    expect(nombres(acotada)).toEqual(['Parroquia de San Miguel']);
+    expect(nombres(await publica('estado=21&localidad=210190001'))).toEqual([
+      'Parroquia de Atlixco',
+    ]);
+    expect((await publica('estado=21')).body.meta.total).toBe(3);
+  });
+
+  it('RF-04 y RF-05: busca parte del nombre y acota por capacidad mínima o rango', async () => {
+    await sembrar();
+    expect(nombres(await publica('estado=21&q=parroQUIA'))).toEqual([
+      'Parroquia de Atlixco',
+      'Parroquia de San Miguel',
+    ]);
+    expect(nombres(await publica('estado=21&capacidadMin=200'))).toEqual([
+      'Parroquia de Atlixco',
+      'Parroquia de San Miguel',
+    ]);
+    expect(nombres(await publica('estado=21&capacidadMin=50&capacidadMax=300'))).toEqual([
+      'Capilla del Rosario',
+      'Parroquia de Atlixco',
+    ]);
+  });
+
+  it('400 con filtros mal formados y 404 si el estado no está en el catálogo', async () => {
+    await sembrar();
+    for (const url of [
+      'estado=abc',
+      'municipio=21114',
+      'estado=21&municipio=211',
+      'estado=21&tipo=ERMITA',
+      'estado=21&capacidadMin=0',
+      'estado=21&capacidadMin=300&capacidadMax=100',
+      'estado=21&limit=101',
+    ])
+      expect((await publica(url)).status, url).toBe(400);
+    expect((await publica('estado=99')).status).toBe(404);
+  });
+});

@@ -9,6 +9,7 @@ import type {
   CerrarIglesia,
   CrearIglesia,
   EditarIglesia,
+  QueryListaPublica,
   QueryListarIglesias,
 } from './iglesias.schemas';
 
@@ -118,6 +119,128 @@ export async function listar(query: QueryListarIglesias) {
     prisma.iglesia.findMany({ where, select: SELECT, orderBy: { nombre: 'asc' }, skip, take }),
   ]);
   return { datos: datos.map(formatear), meta: crearMeta(total, page, limit) };
+}
+
+/** Lo que ve el visitante en la lista: sin contacto, coordenadas ni datos de cierre. */
+const SELECT_PUBLICO = {
+  id: true,
+  nombre: true,
+  tipo: true,
+  zonaHoraria: true,
+  direccion: true,
+  capacidad: true,
+  municipio: LUGAR,
+  localidad: LUGAR,
+} satisfies Prisma.IglesiaSelect;
+
+/**
+ * E2-07 (RF-01–RF-05, CA-02, CA-03, RN-07): iglesias ACTIVAS de un estado, con filtros.
+ * 404 si el estado no está en el catálogo. La distinción del índice (RF-18) llega con E2-10.
+ */
+export async function listarPublicas(query: QueryListaPublica) {
+  const estadoClave = query.estado;
+  await catalogosService.obtenerEstado(estadoClave);
+  const { page, limit, skip, take } = paginar(query);
+  const hayCapacidad = query.capacidadMin !== undefined || query.capacidadMax !== undefined;
+  const where: Prisma.IglesiaWhereInput = {
+    activa: true,
+    estadoClave,
+    ...(query.municipio && { municipioClave: query.municipio }),
+    ...(query.localidad && { localidadClave: query.localidad }),
+    ...(query.tipo && { tipo: query.tipo }),
+    ...(query.q && { nombre: { contains: query.q, mode: 'insensitive' } }),
+    // Con filtro de capacidad, las iglesias sin capacidad registrada no aparecen
+    ...(hayCapacidad && { capacidad: { gte: query.capacidadMin, lte: query.capacidadMax } }),
+  };
+  const [total, datos] = await Promise.all([
+    prisma.iglesia.count({ where }),
+    prisma.iglesia.findMany({
+      where,
+      select: SELECT_PUBLICO,
+      orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
+      skip,
+      take,
+    }),
+  ]);
+  return { datos, meta: crearMeta(total, page, limit) };
+}
+
+/**
+ * E2-11 (RF-06): datos públicos de una iglesia ACTIVA para su ficha. 404 si no existe o está
+ * cerrada (RN-07). Las coordenadas se omiten si no se conocen.
+ */
+export async function obtenerPublica(id: string) {
+  const i = await prisma.iglesia.findFirst({
+    where: { id, activa: true },
+    select: {
+      id: true,
+      nombre: true,
+      tipo: true,
+      zonaHoraria: true,
+      direccion: true,
+      capacidad: true,
+      anioConstruccion: true,
+      telefono: true,
+      correo: true,
+      latitud: true,
+      longitud: true,
+      estado: LUGAR,
+      municipio: LUGAR,
+      localidad: LUGAR,
+    },
+  });
+  if (!i) throw AppError.noEncontrado('La iglesia no existe.');
+  return {
+    id: i.id,
+    nombre: i.nombre,
+    tipo: i.tipo,
+    zonaHoraria: i.zonaHoraria,
+    ubicacion: {
+      direccion: i.direccion,
+      estado: i.estado,
+      municipio: i.municipio,
+      localidad: i.localidad,
+    },
+    capacidad: i.capacidad,
+    anioConstruccion: i.anioConstruccion,
+    contacto: { telefono: i.telefono, correo: i.correo },
+    ...(i.latitud &&
+      i.longitud && {
+        coordenadas: { latitud: i.latitud.toFixed(6), longitud: i.longitud.toFixed(6) },
+      }),
+  };
+}
+
+/** Un solo nivel de lugar (estado, municipio o localidad). Sin ninguno, todo el país. */
+export interface LugarPublico {
+  estado?: string;
+  municipio?: string;
+  localidad?: string;
+}
+
+/**
+ * E2-12 y E2-13: iglesias ACTIVAS de un lugar con lo que necesitan el ranking y la búsqueda.
+ * Sin paginar: quien llama calcula el índice, ordena y pagina (plan-nataly.md, «Ranking»).
+ */
+export async function activasDelLugar(lugar: LugarPublico) {
+  return prisma.iglesia.findMany({
+    where: {
+      activa: true,
+      ...(lugar.estado && { estadoClave: lugar.estado }),
+      ...(lugar.municipio && { municipioClave: lugar.municipio }),
+      ...(lugar.localidad && { localidadClave: lugar.localidad }),
+    },
+    select: {
+      id: true,
+      nombre: true,
+      tipo: true,
+      zonaHoraria: true,
+      estado: LUGAR,
+      municipio: LUGAR,
+      localidad: LUGAR,
+    },
+    orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
+  });
 }
 
 export async function crear(datos: CrearIglesia) {

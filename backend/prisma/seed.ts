@@ -7,6 +7,7 @@ import { seedB2 } from './seed-b2';
 import { seedB3 } from './seed-b3';
 import { seedDonaciones } from './seed-b4';
 import { seedDiezmo } from './seed-diezmo';
+import { seedPatrimonio } from './seed-patrimonio';
 
 const NOMBRES: Record<(typeof ROLES)[number], string> = {
   COORDINACION: 'Coordinación Nacional de Templos',
@@ -57,11 +58,14 @@ async function main() {
   // Ecclesia: 4 semanas de misas y diezmos en 6 iglesias (datos ficticios)
   const diezmo = await seedDiezmo(iglesia.id, passwordHash);
 
+  // E2-09 (Nataly): catálogo del INEGI, 40 iglesias y 120 objetos del patrimonio (ficticios)
+  const patrimonio = await seedPatrimonio();
+
   // B3: eventos (con asistencia), anuncios y un evento cancelado para la demo
   const b3 = await seedB3({ ministerios });
 
   console.warn(
-    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones y ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias.`,
+    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones y ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos.`,
   );
 }
 

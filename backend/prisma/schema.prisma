@@ -33,6 +33,28 @@ enum TipoIglesia {
   SANTUARIO
 }
 
+// E2-08 (Nataly): tipos de objeto (RN-16). El dominio los agrupa en los cinco grupos del índice.
+enum TipoObjeto {
+  IMAGEN
+  RETABLO
+  PINTURA
+  MURAL
+  ORGANO
+  PIANO
+  ORFEBRERIA
+  MOBILIARIO_LITURGICO
+  DOCUMENTO
+  OTRO
+}
+
+// Solo los VIGENTES cuentan en el índice; los demás se conservan (RN-11)
+enum EstadoObjeto {
+  VIGENTE
+  PERDIDO
+  PRESTADO
+  BAJA
+}
+
 enum TipoEvento {
   RELIGIOSO
   ADMINISTRATIVO
@@ -87,6 +109,8 @@ model Usuario {
   iglesia            Iglesia?           @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
   diezmosCapturados  Diezmo[]           @relation("DiezmoCapturador")
   correccionesDiezmo DiezmoCorreccion[] @relation("DiezmoCorrector")
+  // E2-10 (Nataly): quién guardó cada versión de los criterios del índice
+  criteriosIndice    CriteriosIndice[]
   activo             Boolean            @default(true)
   ultimoAcceso       DateTime?
   createdAt          DateTime           @default(now())
@@ -353,6 +377,7 @@ model Iglesia {
   usuarios Usuario[]
   misas    MisaCelebrada[]
   diezmos  Diezmo[]
+  objetos  ObjetoPatrimonial[]
 
   @@index([estadoClave, activa])
   @@index([municipioClave])
@@ -499,4 +524,49 @@ model HorarioReunion {
 
   @@index([diaSemana, horaInicio])
   @@map("horarios_reunion")
+}
+
+// ───────────── Ecclesia · Patrimonio (E2-08 y E2-10, Nataly) ─────────────
+
+// Objeto patrimonial de una iglesia (RF-13–RF-17). Nunca se borra: cambia de estado (RN-11).
+model ObjetoPatrimonial {
+  id                 String       @id @default(uuid())
+  iglesiaId          String
+  descripcion        String
+  tipo               TipoObjeto
+  // RN-10: año exacto o, si no se conoce, siglo (CHECK objetos_anio_o_siglo en la migración)
+  anio               Int?
+  siglo              Int?
+  material           String
+  estadoConservacion String
+  ubicacionEnTemplo  String
+  catalogadoInah     Boolean      @default(false)
+  estado             EstadoObjeto @default(VIGENTE)
+  fechaEstado        DateTime?    @db.Date
+  motivoEstado       String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  iglesia Iglesia @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+
+  @@index([iglesiaId, estado])
+  @@index([tipo, estado])
+  @@map("objetos_patrimoniales")
+}
+
+// Criterios del índice (RF-22, RN-14, ADR-0005). Cada cambio es una versión nueva; la más reciente
+// es la vigente. Sin filas, el service usa los criterios del caso (CRITERIOS_INICIALES).
+model CriteriosIndice {
+  id              String   @id @default(uuid())
+  rangosEdad      Json
+  multiplicadores Json
+  puntosInah      Decimal  @db.Decimal(5, 1)
+  distinciones    Json
+  creadoPorId     String?
+  createdAt       DateTime @default(now())
+
+  creadoPor Usuario? @relation(fields: [creadoPorId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+  @@map("criterios_indice")
 }

@@ -25,6 +25,7 @@ tags:
   - name: Catálogos
   - name: Misas
   - name: Diezmo
+  - name: Patrimonio
 
 components:
   securitySchemes:
@@ -141,6 +142,125 @@ components:
       properties:
         clave: { type: string }
         nombre: { type: string }
+    TipoObjeto:
+      type: string
+      enum:
+        [
+          IMAGEN,
+          RETABLO,
+          PINTURA,
+          MURAL,
+          ORGANO,
+          PIANO,
+          ORFEBRERIA,
+          MOBILIARIO_LITURGICO,
+          DOCUMENTO,
+          OTRO,
+        ]
+    EstadoObjeto:
+      type: string
+      enum: [VIGENTE, PERDIDO, PRESTADO, BAJA]
+    ObjetoEntrada:
+      type: object
+      description: Año o siglo (al menos uno; con los dos, el año debe ser de ese siglo). En PATCH todo es opcional.
+      required: [descripcion, tipo, material, estadoConservacion, ubicacionEnTemplo, catalogadoInah]
+      properties:
+        descripcion: { type: string, maxLength: 200 }
+        tipo: { $ref: '#/components/schemas/TipoObjeto' }
+        anio: { type: integer, nullable: true, minimum: 1, maximum: 2100 }
+        siglo:
+          {
+            type: integer,
+            nullable: true,
+            minimum: 1,
+            maximum: 21,
+            description: '18 = siglo XVIII',
+          }
+        material: { type: string, maxLength: 120 }
+        estadoConservacion: { type: string, maxLength: 120 }
+        ubicacionEnTemplo: { type: string, maxLength: 150 }
+        catalogadoInah: { type: boolean }
+    ObjetoPatrimonial:
+      allOf:
+        - { $ref: '#/components/schemas/ObjetoEntrada' }
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+            grupo: { type: string, description: Grupo del multiplicador (RN-16) }
+            epoca: { type: string, description: 'El año o «siglo XVIII» (RF-17)' }
+            antiguedad: { type: integer }
+            estado: { $ref: '#/components/schemas/EstadoObjeto' }
+            fechaEstado: { type: string, format: date, nullable: true }
+            motivoEstado: { type: string, nullable: true }
+            puntos: { type: number, description: Lo que suma hoy al índice; 0 si no es vigente }
+    CriteriosIndice:
+      type: object
+      required: [rangosEdad, multiplicadores, puntosInah, distinciones]
+      properties:
+        rangosEdad:
+          type: array
+          items:
+            {
+              type: object,
+              properties: { desdeAnios: { type: integer }, puntos: { type: number } },
+            }
+        multiplicadores:
+          type: object
+          properties:
+            IMAGEN: { type: number }
+            RETABLO_PINTURA_MURAL: { type: number }
+            ORGANO_PIANO: { type: number }
+            ORFEBRERIA_MOBILIARIO_DOCUMENTO: { type: number }
+            OTRO: { type: number }
+        puntosInah: { type: number }
+        distinciones:
+          type: array
+          items:
+            { type: object, properties: { minimo: { type: number }, nombre: { type: string } } }
+    IglesiaReconocida:
+      type: object
+      properties:
+        posicion: { type: integer }
+        id: { type: string, format: uuid }
+        nombre: { type: string }
+        tipo: { type: string }
+        estado: { $ref: '#/components/schemas/LugarInegi' }
+        municipio: { $ref: '#/components/schemas/LugarInegi' }
+        localidad: { $ref: '#/components/schemas/LugarInegi' }
+        indice: { type: number }
+        distincion: { type: string, nullable: true }
+    FichaIglesia:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nombre: { type: string }
+        tipo: { type: string }
+        ubicacion: { type: object }
+        capacidad: { type: integer, nullable: true }
+        anioConstruccion: { type: integer, nullable: true }
+        contacto: { type: object }
+        coordenadas: { type: object, description: Se omite si no se conocen }
+        indice: { type: number }
+        distincion: { type: string, nullable: true }
+        anioCalculo: { type: integer }
+        objetos: { type: array, items: { type: object } }
+        servicios: { type: array, items: { type: object } }
+        platicas: { type: array, items: { type: object } }
+        misas: { type: array, items: { type: object } }
+        tiposEspacio: { type: array, items: { type: object } }
+    IglesiaPublica:
+      type: object
+      description: Lo que ve el visitante en la lista (sin contacto, coordenadas ni datos de cierre)
+      properties:
+        id: { type: string, format: uuid }
+        nombre: { type: string }
+        tipo: { type: string, enum: [CATEDRAL, BASILICA, PARROQUIA, TEMPLO, CAPILLA, SANTUARIO] }
+        direccion: { type: string, nullable: true }
+        capacidad: { type: integer, nullable: true }
+        municipio: { $ref: '#/components/schemas/LugarInegi' }
+        localidad: { $ref: '#/components/schemas/LugarInegi' }
+        indice: { type: number, description: Índice patrimonial (RF-18) }
+        distincion: { type: string, nullable: true }
     Iglesia:
       type: object
       properties:
@@ -873,6 +993,268 @@ paths:
         '200': { description: 'Lista paginada de { clave, nombre }, ordenadas por nombre' }
         '400': { $ref: '#/components/responses/Validacion' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /public/iglesias:
+    get:
+      tags: [Iglesias]
+      security: []
+      summary: Iglesias activas de un estado para el visitante (sin sesión, paginado; E2-07, RF-01–RF-05)
+      description: >-
+        Solo iglesias activas (RN-07), ordenadas por nombre. Supuestos mientras no respondan P-02 y P-03:
+        q busca parte del nombre sin distinguir mayúsculas; capacidadMin y capacidadMax sirven para un
+        mínimo o un rango, y con ellos no aparecen las iglesias sin capacidad registrada.
+      parameters:
+        - {
+            name: estado,
+            in: query,
+            required: true,
+            schema: { type: string, pattern: '^\d{2}$' },
+            description: Clave del estado (RF-01),
+          }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - { name: municipio, in: query, schema: { type: string, pattern: '^\d{5}$' } }
+        - { name: localidad, in: query, schema: { type: string, pattern: '^\d{9}$' } }
+        - name: tipo
+          in: query
+          schema:
+            { type: string, enum: [CATEDRAL, BASILICA, PARROQUIA, TEMPLO, CAPILLA, SANTUARIO] }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string, maxLength: 100 },
+            description: Parte del nombre,
+          }
+        - { name: capacidadMin, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: capacidadMax, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/IglesiaPublica' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /public/iglesias/{iglesiaId}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+    get:
+      tags: [Iglesias]
+      security: []
+      summary: Ficha pública de una iglesia activa (E2-11; RF-06, RF-16, RF-18, CA-04)
+      description: >-
+        Datos, objetos VIGENTES (sin ubicación en el templo ni conservación, supuesto de P-05), índice y
+        distinción con el año de cálculo. servicios, platicas, misas y tiposEspacio van vacíos hasta que
+        Genaro y Oscar publiquen las funciones de sus services. 404 si está cerrada.
+      responses:
+        '200':
+          description: Ficha
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/FichaIglesia' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /public/reconocidas:
+    get:
+      tags: [Iglesias]
+      security: []
+      summary: Iglesias más reconocidas, de mayor a menor índice (E2-12; RF-19–RF-21, CA-06)
+      description: >-
+        Sin lugar es el ranking del país; acepta un solo nivel (estado, municipio o localidad). Excluye
+        cerradas y sin objetos; supuestos de P-07: tampoco entran las que no tienen objetos vigentes y
+        los empates se ordenan por nombre.
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - { name: estado, in: query, schema: { type: string, pattern: '^\d{2}$' } }
+        - { name: municipio, in: query, schema: { type: string, pattern: '^\d{5}$' } }
+        - { name: localidad, in: query, schema: { type: string, pattern: '^\d{9}$' } }
+      responses:
+        '200':
+          description: Lista paginada con `posicion`, `indice` y `distincion`
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/IglesiaReconocida' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+        '400': { $ref: '#/components/responses/Validacion' }
+
+  /public/busqueda-patrimonio:
+    get:
+      tags: [Iglesias]
+      security: []
+      summary: Búsqueda del investigador por tipo de objeto y antigüedad en un lugar (E2-13; RF-23, CA-08)
+      description: >-
+        Iglesias activas del lugar con al menos un objeto vigente del tipo y la antigüedad mínima, con los
+        objetos que cumplen. Supuesto de P-09: un tipo y una antigüedad mínima. Exige un lugar.
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - {
+            name: tipoObjeto,
+            in: query,
+            required: true,
+            schema: { $ref: '#/components/schemas/TipoObjeto' },
+          }
+        - { name: antiguedadMin, in: query, required: true, schema: { type: integer, minimum: 0 } }
+        - { name: estado, in: query, schema: { type: string, pattern: '^\d{2}$' } }
+        - { name: municipio, in: query, schema: { type: string, pattern: '^\d{5}$' } }
+        - { name: localidad, in: query, schema: { type: string, pattern: '^\d{9}$' } }
+      responses:
+        '200':
+          {
+            description: 'Lista paginada de iglesias con `objetos: [{ id, descripcion, epoca, antiguedad }]`',
+          }
+        '400': { $ref: '#/components/responses/Validacion' }
+
+  /iglesias/{iglesiaId}/objetos:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+    get:
+      tags: [Patrimonio]
+      summary: Objetos de la iglesia de cualquier estado, con sus puntos (patrimonio:leer + alcanceIglesia; RF-14, RF-15)
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - { name: estado, in: query, schema: { $ref: '#/components/schemas/EstadoObjeto' } }
+        - { name: tipo, in: query, schema: { $ref: '#/components/schemas/TipoObjeto' } }
+      responses:
+        '200':
+          description: Lista paginada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: '#/components/schemas/ObjetoPatrimonial' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    post:
+      tags: [Patrimonio]
+      summary: Registrar un objeto (patrimonio:gestionar, el administrador de esa iglesia; RF-13, RF-17, RN-10, RN-16)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ObjetoEntrada' }
+      responses:
+        '201': { description: Creado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/objetos/{objetoId}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { name: objetoId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [Patrimonio]
+      summary: Cambiar los datos de un objeto, no su estado (patrimonio:gestionar; RF-14)
+      description: Año y siglo se validan contra lo guardado (400, no 500). Un objeto dado de baja ya no se edita (422).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ObjetoEntrada' }
+      responses:
+        '200': { description: Editado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/objetos/{objetoId}/estado:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { name: objetoId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [Patrimonio]
+      summary: Marcar un objeto como perdido, prestado o dado de baja, o su regreso (patrimonio:gestionar; RF-15, RN-11, CA-05)
+      description: >-
+        VIGENTE → PERDIDO, PRESTADO o BAJA. Un objeto prestado o perdido puede regresar (VIGENTE, supuesto
+        de P-08) o darse de baja; la BAJA es definitiva. Nunca se borra.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado, fecha, motivo]
+              properties:
+                estado: { $ref: '#/components/schemas/EstadoObjeto' }
+                fecha: { type: string, format: date, description: No futura }
+                motivo: { type: string, minLength: 3, maxLength: 500 }
+      responses:
+        '200': { description: Estado cambiado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/indice:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+    get:
+      tags: [Patrimonio]
+      summary: Índice y distinción de la iglesia con los criterios vigentes (patrimonio:leer; RF-18)
+      responses:
+        '200':
+          description: '{ indice, distincion, anioCalculo, objetosRegistrados, objetosVigentes }'
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /criterios-indice:
+    get:
+      tags: [Patrimonio]
+      summary: Criterios vigentes del índice (criterios:leer, la Coordinación; RF-22)
+      description: '`id`, `vigenteDesde` y `creadoPor` son null mientras se usen los criterios del caso.'
+      responses:
+        '200':
+          description: Criterios vigentes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/CriteriosIndice' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+    put:
+      tags: [Patrimonio]
+      summary: Guardar una versión nueva de los criterios (criterios:editar; RF-22, RN-14, CA-07)
+      description: >-
+        Rangos desde 0 años, ordenados y sin repetir; multiplicadores de los cinco grupos; distinciones de
+        mayor a menor mínimo con nombres distintos; todo con un decimal como máximo (ADR-0005).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CriteriosIndice' }
+      responses:
+        '200': { description: Versión guardada; el índice de todas las iglesias cambia }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+
+  /criterios-indice/historial:
+    get:
+      tags: [Patrimonio]
+      summary: Versiones de los criterios, de la más reciente a la más antigua (criterios:leer; RF-22)
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200': { description: Lista paginada de versiones con `vigenteDesde` y `creadoPor` }
+        '403': { $ref: '#/components/responses/Prohibido' }
 
   /catalogos/importacion:
     post:

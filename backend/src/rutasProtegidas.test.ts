@@ -20,6 +20,11 @@ const PUBLICAS = new Set([
   'GET /public/estados',
   'GET /public/estados/:clave/municipios',
   'GET /public/municipios/:clave/localidades',
+  // E2-07, E2-11–E2-13: lista por estado, ficha, reconocidas y búsqueda (RF-01–RF-06, RF-19–RF-23)
+  'GET /public/iglesias',
+  'GET /public/iglesias/:iglesiaId',
+  'GET /public/reconocidas',
+  'GET /public/busqueda-patrimonio',
 ]);
 
 /** Rutas de la propia cuenta: requieren sesión pero no un permiso de módulo. */
