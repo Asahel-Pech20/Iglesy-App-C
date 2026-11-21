@@ -14,6 +14,7 @@
       <a matButton="outlined" routerLink="/ministerios">
         <lucide-icon [img]="iconos.ArrowLeft" [size]="16" aria-hidden="true" /> Ministerios
       </a>
+      <app-boton-exportar tipo="ministerios" [filtros]="{ ministerioId: ministerio.id }" />
       <button
         *appPuede="'ministerios:editar'"
         matButton="outlined"
