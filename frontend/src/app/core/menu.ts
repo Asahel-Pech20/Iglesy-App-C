@@ -5,6 +5,7 @@ import {
   Church,
   FileBarChart,
   HandCoins,
+  Landmark,
   Home,
   type LucideIconData,
   Megaphone,
@@ -58,6 +59,7 @@ export const MENU: EntradaMenu[] = [
     permiso: 'donaciones:leer',
   },
   { etiqueta: 'Iglesias', ruta: '/iglesias', icono: Church, permiso: 'iglesias:leer' },
+  { etiqueta: 'Espacios', ruta: '/espacios', icono: Landmark, permiso: 'espacios:leer' },
   {
     etiqueta: 'Diezmo',
     ruta: '/diezmo',

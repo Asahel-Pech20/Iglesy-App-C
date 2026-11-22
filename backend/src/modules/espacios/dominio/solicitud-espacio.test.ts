@@ -248,8 +248,27 @@ describe('CA-28: cotización aceptada', () => {
   });
 });
 
+// CA-29 tal como está escrito en docs/requerimientos.md: 16 días y 5 días.
 describe('CA-29: vencimiento y cancelación', () => {
-  it('Dado una cotización emitida hace 15 días sin respuesta, Cuando pasan los 15 días, Entonces queda Vencida por el sistema y no se puede aceptar', () => {
+  it('Dado dos solicitudes Cotizadas (emitida hace 16 días y hace 5 días), Cuando la primera intenta aceptarse y la segunda cancela, Entonces la primera aparece Vencida y se rechaza, y la segunda queda Cancelada', () => {
+    const primera = solicitud('COTIZADA', 16 * DIA);
+    const segunda = solicitud('COTIZADA', 5 * DIA);
+    expect(estadoEfectivo(primera, AHORA)).toBe('VENCIDA');
+    expect(evaluarTransicion(primera, 'ACEPTAR', 'SOLICITANTE', AHORA)).toEqual({
+      ok: false,
+      motivo: 'COTIZACION_VENCIDA',
+    });
+    expect(estadoEfectivo(segunda, AHORA)).toBe('COTIZADA');
+    expect(evaluarTransicion(segunda, 'CANCELAR', 'SOLICITANTE', AHORA)).toEqual({
+      ok: true,
+      estadoNuevo: 'CANCELADA',
+    });
+  });
+});
+
+// El límite exacto de los 15 días no lo fija el caso: es el supuesto de P-26 (supuestos.ts).
+describe('vencimiento en el límite de los 15 días (supuesto P-26)', () => {
+  it('Dado una cotización emitida hace 15 días exactos sin respuesta, Cuando pasa el límite, Entonces queda Vencida por el sistema y no se puede aceptar', () => {
     const vencida = solicitud('COTIZADA', 15 * DIA);
     expect(estadoEfectivo(vencida, AHORA)).toBe('VENCIDA');
     expect(evaluarTransicion(vencida, 'ACEPTAR', 'SOLICITANTE', AHORA)).toEqual({
@@ -273,7 +292,7 @@ describe('CA-29: vencimiento y cancelación', () => {
     });
   });
 
-  it('el límite de los 15 días: un milisegundo antes se acepta, en el instante exacto ya no', () => {
+  it('supuesto P-26: un milisegundo antes del límite se acepta, en el instante exacto ya no', () => {
     const unMsAntes = solicitud('COTIZADA', 15 * DIA - 1);
     expect(evaluarTransicion(unMsAntes, 'ACEPTAR', 'SOLICITANTE', AHORA)).toEqual({
       ok: true,

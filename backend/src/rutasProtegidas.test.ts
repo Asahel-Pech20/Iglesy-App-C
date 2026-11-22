@@ -20,6 +20,13 @@ const PUBLICAS = new Set([
   'GET /public/estados',
   'GET /public/estados/:clave/municipios',
   'GET /public/municipios/:clave/localidades',
+  // E4-08 a E4-11: espacios sin cuenta; se identifican con folio y clave, y revisan la iglesia en el service
+  'GET /public/iglesias/:iglesiaId/espacios',
+  'POST /public/iglesias/:iglesiaId/solicitudes-espacio',
+  'POST /public/solicitudes-espacio/:folio/consulta',
+  'POST /public/solicitudes-espacio/:folio/aceptar',
+  'POST /public/solicitudes-espacio/:folio/rechazar',
+  'POST /public/solicitudes-espacio/:folio/cancelar',
 ]);
 
 /** Rutas de la propia cuenta: requieren sesión pero no un permiso de módulo. */

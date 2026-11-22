@@ -8,6 +8,8 @@ import { crearDashboardRouter } from './modules/dashboard/dashboard.routes';
 import { diezmoRouter } from './modules/diezmo/diezmo.routes';
 import { donacionesRouter } from './modules/donaciones/donaciones.routes';
 import { iglesiasRouter } from './modules/iglesias/iglesias.routes';
+import { crearEspaciosPublicRouter } from './modules/espacios/espacios.public.routes';
+import { espaciosRouter } from './modules/espacios/espacios.routes';
 import { eventosRouter } from './modules/eventos/eventos.routes';
 import { miembrosRouter } from './modules/miembros/miembros.routes';
 import { misasRouter } from './modules/misas/misas.routes';
@@ -47,6 +49,9 @@ export function crearModulos(): ModuloApi[] {
     // Ecclesia: datos internos de una iglesia; cada ruta pasa por alcanceIglesia
     { prefijo: '/iglesias/:iglesiaId', router: misasRouter },
     { prefijo: '/iglesias/:iglesiaId', router: diezmoRouter },
+    { prefijo: '/iglesias/:iglesiaId', router: espaciosRouter },
+    // Espacios: solicitudes sin cuenta, con folio y clave (E4-08 a E4-11)
+    { prefijo: '/public', router: crearEspaciosPublicRouter() },
   ];
 }
 
