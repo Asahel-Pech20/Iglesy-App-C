@@ -5,8 +5,8 @@ import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
 import { env } from '../../config/env';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 
 let app: ReturnType<typeof crearApp>;
 let admin: string;
@@ -215,5 +215,48 @@ describe('horarios (B1-17)', () => {
       .set('Authorization', auth)
       .send({ nombre: 'X', diaSemana: 1, horaInicio: '10:00' });
     expect(res.status).toBe(403);
+  });
+});
+
+describe('horarios por iglesia (E1-06)', () => {
+  it('el personal ve los de su iglesia; sin sesión, los de la iglesia inicial', async () => {
+    const otra = await deOtraIglesia();
+    const deLaOtra = await loginComo('ADMIN_IGLESIA', { iglesiaId: otra.iglesiaId });
+    const crearCon = (auth: string, nombre: string) =>
+      request(app)
+        .post('/api/v1/configuracion/horarios')
+        .set('Authorization', auth)
+        .send({ nombre, diaSemana: 0, horaInicio: '10:00' });
+    expect((await crearCon(admin, 'Culto de la inicial')).status).toBe(201);
+    expect((await crearCon(deLaOtra.auth, 'Culto de otra')).status).toBe(201);
+
+    const nombres = (res: request.Response) =>
+      res.body.data.map((h: { nombre: string }) => h.nombre);
+    const conSesion = await request(app)
+      .get('/api/v1/configuracion/horarios')
+      .set('Authorization', deLaOtra.auth);
+    expect(nombres(conSesion)).toEqual(['Culto de otra']);
+    expect(nombres(await request(app).get('/api/v1/configuracion/horarios'))).toEqual([
+      'Culto de la inicial',
+    ]);
+  });
+
+  it('editar o borrar un horario de otra iglesia → 404', async () => {
+    const otra = await deOtraIglesia();
+    const ajeno = await prisma.horarioReunion.create({
+      data: { nombre: 'Ajeno', diaSemana: 1, horaInicio: '09:00', iglesiaId: otra.iglesiaId },
+    });
+    const url = `/api/v1/configuracion/horarios/${ajeno.id}`;
+    expect(
+      (await request(app).patch(url).set('Authorization', admin).send({ nombre: 'x' })).status,
+    ).toBe(404);
+    expect((await request(app).delete(url).set('Authorization', admin)).status).toBe(404);
+  });
+
+  it('un token inválido en la ruta pública de horarios sigue siendo 401', async () => {
+    const res = await request(app)
+      .get('/api/v1/configuracion/horarios')
+      .set('Authorization', 'Bearer no-es-un-token');
+    expect(res.status).toBe(401);
   });
 });

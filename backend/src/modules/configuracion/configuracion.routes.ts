@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { autenticar, autorizar } from '../../middlewares/auth';
+import { autenticar, autenticarOpcional, autorizar } from '../../middlewares/auth';
 import { validar } from '../../middlewares/validar';
 import * as c from './configuracion.controller';
 import {
@@ -25,7 +25,7 @@ configuracionRouter.get('/', c.obtener);
 configuracionRouter.put('/', ...editar, validar({ body: esquemaConfiguracion }), c.actualizar);
 configuracionRouter.post('/logo', ...editar, subida.single('logo'), c.subirLogo);
 
-configuracionRouter.get('/horarios', c.listarHorarios);
+configuracionRouter.get('/horarios', autenticarOpcional, c.listarHorarios);
 configuracionRouter.post(
   '/horarios',
   ...editar,
