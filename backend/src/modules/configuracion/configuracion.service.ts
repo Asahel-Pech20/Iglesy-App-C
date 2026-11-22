@@ -2,46 +2,115 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { env } from '../../config/env';
-import type { ConfiguracionIglesia } from '../../generated/prisma/client';
 import { AppError } from '../../lib/appError';
 import { conIglesia, iglesiaDelContexto } from '../../lib/contextoIglesia';
 import { prisma } from '../../lib/prisma';
 import type { CrearHorario, DatosConfiguracion, EditarHorario } from './configuracion.schemas';
 
-const ID_CONFIG = 1;
 export const RUTA_UPLOADS = '/uploads';
 export const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
 const urlPublica = () => env.API_PUBLIC_URL ?? `http://localhost:${env.PORT}`;
 
+// E1-06b: la configuración es la de la IGLESIA del contexto (antes, una fila única para todas).
+// El contrato de la respuesta no cambia: nombre, logoUrl, direccion, ciudad, telefono, email,
+// sitioWeb, moneda y zonaHoraria.
+const SELECT_INSTITUCIONAL = {
+  id: true,
+  nombre: true,
+  logoUrl: true,
+  direccion: true,
+  telefono: true,
+  correo: true,
+  sitioWeb: true,
+  moneda: true,
+  zonaHoraria: true,
+  municipio: { select: { nombre: true } },
+} as const;
+
+type FilaInstitucional = {
+  nombre: string;
+  logoUrl: string | null;
+  direccion: string | null;
+  telefono: string | null;
+  correo: string | null;
+  sitioWeb: string | null;
+  moneda: string;
+  zonaHoraria: string;
+  municipio: { nombre: string } | null;
+};
+
 /** En BD se guarda la ruta relativa (/uploads/x.png); la API devuelve la URL absoluta. */
-function aRespuesta({ id: _id, createdAt: _c, updatedAt: _u, ...config }: ConfiguracionIglesia) {
+function aRespuesta(fila: FilaInstitucional) {
   return {
-    ...config,
-    logoUrl: config.logoUrl ? new URL(config.logoUrl, urlPublica()).href : null,
+    nombre: fila.nombre,
+    logoUrl: fila.logoUrl ? new URL(fila.logoUrl, urlPublica()).href : null,
+    direccion: fila.direccion,
+    // La ciudad sale del municipio del catálogo del INEGI (ficha de la iglesia, Nataly)
+    ciudad: fila.municipio?.nombre ?? null,
+    telefono: fila.telefono,
+    email: fila.correo,
+    sitioWeb: fila.sitioWeb,
+    moneda: fila.moneda,
+    zonaHoraria: fila.zonaHoraria,
   };
 }
 
-async function obtenerFila() {
-  // Si el seed no se corrió, la fila se crea con los valores por defecto
-  return prisma.configuracionIglesia.upsert({
-    where: { id: ID_CONFIG },
-    create: { id: ID_CONFIG, nombre: 'Mi Iglesia' },
-    update: {},
+export type Configuracion = ReturnType<typeof aRespuesta>;
+
+/** Valores por omisión cuando todavía no hay ninguna iglesia (instalación nueva sin seed). */
+export const CONFIGURACION_SIN_IGLESIAS: Configuracion = {
+  nombre: 'Mi Iglesia',
+  logoUrl: null,
+  direccion: null,
+  ciudad: null,
+  telefono: null,
+  email: null,
+  sitioWeb: null,
+  moneda: 'MXN',
+  zonaHoraria: 'America/Mexico_City',
+};
+
+async function filaDeLaIglesia() {
+  const iglesia = await prisma.iglesia.findUnique({
+    where: { id: iglesiaDelContexto('configuración') },
+    select: SELECT_INSTITUCIONAL,
   });
+  if (!iglesia) throw AppError.noEncontrado('La iglesia no existe.');
+  return iglesia;
 }
 
+/**
+ * Configuración de la iglesia del CONTEXTO (la del usuario en una petición). Sin contexto de
+ * iglesia lanza: nunca cae en silencio en la iglesia inicial. Las rutas públicas eligen la iglesia
+ * de forma explícita (`enIglesiaInicial` o `obtenerDe`).
+ * La usan otros módulos para la moneda y la zona horaria (`zonaIglesia`, `hoyIglesia`).
+ */
 export async function obtener() {
-  return aRespuesta(await obtenerFila());
+  return aRespuesta(await filaDeLaIglesia());
 }
 
-export async function actualizar(datos: DatosConfiguracion) {
-  await obtenerFila();
-  const config = await prisma.configuracionIglesia.update({
-    where: { id: ID_CONFIG },
-    data: datos,
+/** Ejecuta `fn` en una iglesia indicada (Coordinación o visitante); 404 si no existe. */
+export async function enIglesia<T>(iglesiaId: string, fn: () => Promise<T>): Promise<T> {
+  const existe = await prisma.iglesia.findUnique({
+    where: { id: iglesiaId },
+    select: { id: true },
   });
-  return aRespuesta(config);
+  if (!existe) throw AppError.noEncontrado('La iglesia no existe.');
+  return conIglesia(iglesiaId, fn);
+}
+
+/**
+ * PUT /configuracion (E1-06b): solo lo institucional de la iglesia del usuario. Nombre, dirección y
+ * contacto se editan en la ficha de la iglesia (PATCH /iglesias/:id, Nataly); el esquema los rechaza.
+ */
+export async function actualizar(datos: DatosConfiguracion) {
+  const iglesia = await prisma.iglesia.update({
+    where: { id: iglesiaDelContexto('configuración') },
+    data: datos,
+    select: SELECT_INSTITUCIONAL,
+  });
+  return aRespuesta(iglesia);
 }
 
 // ───────── Logotipo ─────────
@@ -90,10 +159,11 @@ export async function guardarLogo(archivo: { mimetype: string; buffer: Buffer } 
   const nombre = `${randomUUID()}.${tipo.ext}`;
   await writeFile(path.join(carpeta, nombre), archivo.buffer);
 
-  const anterior = (await obtenerFila()).logoUrl;
-  const config = await prisma.configuracionIglesia.update({
-    where: { id: ID_CONFIG },
+  const anterior = (await filaDeLaIglesia()).logoUrl;
+  const config = await prisma.iglesia.update({
+    where: { id: iglesiaDelContexto('logo') },
     data: { logoUrl: `${RUTA_UPLOADS}/${nombre}` },
+    select: SELECT_INSTITUCIONAL,
   });
   if (anterior?.startsWith(`${RUTA_UPLOADS}/`)) {
     await unlink(path.join(carpeta, path.basename(anterior))).catch(() => undefined);
@@ -113,6 +183,15 @@ export async function iglesiaInicial(): Promise<string | null> {
     select: { id: true },
   });
   return iglesia?.id ?? null;
+}
+
+/** ¿Existe y está abierta? Las cerradas no aparecen en lo público (RN-07). */
+export async function esIglesiaPublica(iglesiaId: string): Promise<boolean> {
+  const iglesia = await prisma.iglesia.findUnique({
+    where: { id: iglesiaId },
+    select: { activa: true },
+  });
+  return iglesia?.activa === true;
 }
 
 /** Ejecuta `fn` con la gestión interna de la iglesia inicial; sin iglesias, devuelve `vacio`. */

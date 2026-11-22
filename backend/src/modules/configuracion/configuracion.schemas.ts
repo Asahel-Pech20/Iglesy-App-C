@@ -29,19 +29,12 @@ const opcional = (max: number) =>
     .nullish()
     .transform((v) => v || null);
 
+/**
+ * PUT /configuracion (E1-06b): solo lo institucional de la iglesia del usuario. Es estricto: nombre,
+ * dirección, ciudad, teléfono o correo responden 400, porque se editan en la ficha de la iglesia
+ * (PATCH /iglesias/:id, módulo de Nataly) con sus reglas (nombre único por municipio, INEGI).
+ */
 export const esquemaConfiguracion = z.strictObject({
-  nombre: z.string().trim().min(1, 'Escribe el nombre de la iglesia.').max(150),
-  direccion: opcional(250),
-  ciudad: opcional(120),
-  telefono: opcional(40),
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .pipe(z.email('Correo no válido.'))
-    .or(z.literal(''))
-    .nullish()
-    .transform((v) => v || null),
   sitioWeb: z
     .url('URL no válida (incluye https://).')
     .or(z.literal(''))
@@ -49,6 +42,11 @@ export const esquemaConfiguracion = z.strictObject({
     .transform((v) => v || null),
   moneda: z.enum(MONEDAS, { error: 'Moneda no válida.' }),
   zonaHoraria: z.enum(ZONAS_HORARIAS, { error: 'Zona horaria no válida.' }),
+});
+
+/** GET /configuracion: solo la Coordinación (o un visitante) indica la iglesia. */
+export const esquemaQueryConfiguracion = z.strictObject({
+  iglesiaId: z.uuid('Iglesia no válida.').optional(),
 });
 
 const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Formato HH:mm.');

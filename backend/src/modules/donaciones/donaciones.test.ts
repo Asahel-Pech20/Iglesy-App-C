@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { iglesiaDePrueba, prisma } from '../../test/bd';
+import { enIglesiaDePrueba, iglesiaDePrueba, prisma } from '../../test/bd';
 import { deOtraIglesia, loginComo } from '../../test/helpers';
 import { hoyIglesia } from '../miembros/miembros.service';
 import * as donacionesService from './donaciones.service';
@@ -112,7 +112,7 @@ describe('POST /donaciones (B4-01)', () => {
   });
 
   it('fecha futura → 400', async () => {
-    const hoy = await hoyIglesia();
+    const hoy = await enIglesiaDePrueba(hoyIglesia);
     const manana = new Date(Date.parse(`${hoy}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
     const res = await api().post('/donaciones', { ...base, fecha: manana });
     expect(res.status).toBe(400);

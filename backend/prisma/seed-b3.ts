@@ -104,7 +104,11 @@ export async function seedB3({
   ministerios: Map<string, string>;
   iglesiaId: string;
 }) {
-  const config = await prisma.configuracionIglesia.findUniqueOrThrow({ where: { id: 1 } });
+  // E1-06b: la zona horaria es la de la iglesia (antes, la de la configuración única)
+  const config = await prisma.iglesia.findUniqueOrThrow({
+    where: { id: iglesiaId },
+    select: { zonaHoraria: true },
+  });
   const secretaria = await prisma.usuario.findUniqueOrThrow({
     where: { email: 'secretario@iglesia.local' },
   });

@@ -17,7 +17,7 @@ const get = (auth: string) => request(app).get('/api/v1/dashboard').set('Authori
 const DIA = 86_400_000;
 
 async function datosDePrueba(usuarioId: string) {
-  const hoy = await hoyIglesia();
+  const hoy = await enIglesiaDePrueba(hoyIglesia);
   const [ana, beto] = await Promise.all(
     ['Ana', 'Beto'].map(async (nombre) =>
       prisma.miembro.create({

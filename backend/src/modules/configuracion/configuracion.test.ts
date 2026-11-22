@@ -5,7 +5,9 @@ import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
 import { env } from '../../config/env';
-import { prisma } from '../../test/bd';
+import { iglesiaDePrueba, prisma } from '../../test/bd';
+import { conIglesia } from '../../lib/contextoIglesia';
+import { fechaEnZona, hoyIglesia } from '../miembros/miembros.service';
 import { deOtraIglesia, loginComo } from '../../test/helpers';
 
 let app: ReturnType<typeof crearApp>;
@@ -16,25 +18,33 @@ beforeEach(async () => {
 });
 afterAll(() => rm(path.resolve(env.UPLOAD_DIR), { recursive: true, force: true }));
 
+// E1-06b: PUT /configuracion solo lleva lo institucional (nombre y contacto van en la ficha)
 const CONFIG = {
-  nombre: 'Iglesia Nueva Esperanza',
-  direccion: 'Calle 60 #123',
-  ciudad: 'Mérida',
-  telefono: '',
-  email: 'Contacto@Iglesia.mx',
   sitioWeb: 'https://iglesia.mx',
-  moneda: 'MXN',
+  moneda: 'USD',
   zonaHoraria: 'America/Merida',
 };
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
 
 describe('configuración (B1-15)', () => {
-  it('GET es público y crea la fila por defecto si no existe', async () => {
+  it('GET es público: sin sesión, la iglesia inicial con el contrato de siempre', async () => {
     const res = await request(app).get('/api/v1/configuracion');
     expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({ nombre: 'Mi Iglesia', moneda: 'MXN', logoUrl: null });
-    expect(res.body.data).not.toHaveProperty('id');
+    expect(res.body.data).toMatchObject({ moneda: 'MXN', logoUrl: null, ciudad: null });
+    expect(Object.keys(res.body.data).sort()).toEqual(
+      [
+        'ciudad',
+        'direccion',
+        'email',
+        'logoUrl',
+        'moneda',
+        'nombre',
+        'sitioWeb',
+        'telefono',
+        'zonaHoraria',
+      ].sort(),
+    );
   });
 
   it('PUT (ADMIN_IGLESIA) guarda y normaliza', async () => {
@@ -43,12 +53,15 @@ describe('configuración (B1-15)', () => {
       .set('Authorization', admin)
       .send(CONFIG);
     expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({
-      nombre: CONFIG.nombre,
-      email: 'contacto@iglesia.mx',
-      telefono: null,
-    });
-    expect((await request(app).get('/api/v1/configuracion')).body.data.nombre).toBe(CONFIG.nombre);
+    expect(res.body.data).toMatchObject(CONFIG);
+    const leida = await request(app).get('/api/v1/configuracion').set('Authorization', admin);
+    expect(leida.body.data).toMatchObject(CONFIG);
+    // sitioWeb vacío se guarda como null
+    const vacio = await request(app)
+      .put('/api/v1/configuracion')
+      .set('Authorization', admin)
+      .send({ ...CONFIG, sitioWeb: '' });
+    expect(vacio.body.data.sitioWeb).toBeNull();
   });
 
   it('moneda y zona horaria fuera de la lista → 400', async () => {
@@ -258,5 +271,117 @@ describe('horarios por iglesia (E1-06)', () => {
       .get('/api/v1/configuracion/horarios')
       .set('Authorization', 'Bearer no-es-un-token');
     expect(res.status).toBe(401);
+  });
+});
+
+describe('configuración por iglesia (E1-06b)', () => {
+  /** Dos iglesias con moneda y zona distintas; la de pruebas (A) es la del `admin`. */
+  async function dosIglesias() {
+    const a = await iglesiaDePrueba();
+    const otra = await deOtraIglesia();
+    await prisma.iglesia.update({
+      where: { id: a },
+      data: { moneda: 'MXN', zonaHoraria: 'America/Mexico_City' },
+    });
+    await prisma.iglesia.update({
+      where: { id: otra.iglesiaId },
+      data: { moneda: 'USD', zonaHoraria: 'Europe/Madrid' },
+    });
+    const adminB = await loginComo('ADMIN_IGLESIA', { iglesiaId: otra.iglesiaId });
+    return { a, b: otra.iglesiaId, adminB: adminB.auth };
+  }
+  const leer = (auth?: string, query = '') => {
+    const peticion = request(app).get(`/api/v1/configuracion${query}`);
+    return auth ? peticion.set('Authorization', auth) : peticion;
+  };
+
+  it('cada iglesia lee su moneda y su zona; la Coordinación indica cuál', async () => {
+    const { a, b, adminB } = await dosIglesias();
+    expect((await leer(admin)).body.data).toMatchObject({
+      moneda: 'MXN',
+      zonaHoraria: 'America/Mexico_City',
+    });
+    expect((await leer(adminB)).body.data).toMatchObject({
+      moneda: 'USD',
+      zonaHoraria: 'Europe/Madrid',
+    });
+    // El personal no puede pedir otra iglesia: ?iglesiaId se ignora y sale la suya
+    expect((await leer(admin, `?iglesiaId=${b}`)).body.data.moneda).toBe('MXN');
+
+    const { auth: coordinacion } = await loginComo('COORDINACION');
+    expect((await leer(coordinacion, `?iglesiaId=${b}`)).body.data.moneda).toBe('USD');
+    expect((await leer(coordinacion, `?iglesiaId=${a}`)).body.data.moneda).toBe('MXN');
+  });
+
+  it('la Coordinación sin iglesia → 400 (nunca la inicial en silencio); inexistente → 404', async () => {
+    await dosIglesias();
+    const { auth } = await loginComo('COORDINACION');
+    const sinIglesia = await leer(auth);
+    expect(sinIglesia.status).toBe(400);
+    expect(sinIglesia.body.error.details).toEqual([
+      expect.objectContaining({ campo: 'iglesiaId' }),
+    ]);
+    const inexistente = await leer(auth, '?iglesiaId=00000000-0000-4000-8000-000000000000');
+    expect(inexistente.status).toBe(404);
+    expect((await leer(auth, '?iglesiaId=no-es-uuid')).status).toBe(400);
+  });
+
+  it('la zona de cada iglesia se usa en sus módulos (fecha de hoy)', async () => {
+    const { a, b } = await dosIglesias();
+    await prisma.iglesia.update({ where: { id: b }, data: { zonaHoraria: 'Pacific/Kiritimati' } });
+    const ahora = new Date();
+    expect(await conIglesia(a, hoyIglesia)).toBe(fechaEnZona(ahora, 'America/Mexico_City'));
+    expect(await conIglesia(b, hoyIglesia)).toBe(fechaEnZona(ahora, 'Pacific/Kiritimati'));
+  });
+
+  it('PUT cambia solo la iglesia del usuario', async () => {
+    const { b, adminB } = await dosIglesias();
+    const res = await request(app)
+      .put('/api/v1/configuracion')
+      .set('Authorization', adminB)
+      .send({ moneda: 'EUR', zonaHoraria: 'Europe/Madrid', sitioWeb: null });
+    expect(res.status).toBe(200);
+    expect((await prisma.iglesia.findUniqueOrThrow({ where: { id: b } })).moneda).toBe('EUR');
+    expect((await leer(admin)).body.data.moneda).toBe('MXN');
+  });
+
+  it('PUT es estricto: nombre, dirección o contacto → 400 (se editan en la ficha)', async () => {
+    for (const extra of [
+      { nombre: 'Otra' },
+      { direccion: 'Calle 1' },
+      { ciudad: 'Mérida' },
+      { telefono: '999' },
+      { email: 'a@b.mx' },
+    ]) {
+      const res = await request(app)
+        .put('/api/v1/configuracion')
+        .set('Authorization', admin)
+        .send({ ...CONFIG, ...extra });
+      expect(res.status, JSON.stringify(extra)).toBe(400);
+    }
+  });
+
+  it('el nombre, la dirección y el correo salen de la ficha de la iglesia', async () => {
+    await prisma.iglesia.update({
+      where: { id: await iglesiaDePrueba() },
+      data: { nombre: 'Templo de San José', direccion: 'Calle 60', correo: 'sj@iglesia.mx' },
+    });
+    expect((await leer(admin)).body.data).toMatchObject({
+      nombre: 'Templo de San José',
+      direccion: 'Calle 60',
+      email: 'sj@iglesia.mx',
+    });
+  });
+
+  it('el logo se guarda en la iglesia del usuario y no en otra', async () => {
+    const { b, adminB } = await dosIglesias();
+    const res = await request(app)
+      .post('/api/v1/configuracion/logo')
+      .set('Authorization', adminB)
+      .attach('logo', PNG, { filename: 'logo.png', contentType: 'image/png' });
+    expect(res.status).toBe(200);
+    const guardada = await prisma.iglesia.findUniqueOrThrow({ where: { id: b } });
+    expect(guardada.logoUrl).toMatch(/^\/uploads\//);
+    expect((await leer(admin)).body.data.logoUrl).toBeNull();
   });
 });

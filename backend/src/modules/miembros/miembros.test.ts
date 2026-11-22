@@ -102,7 +102,7 @@ describe('POST /miembros (B2-01)', () => {
     const hoy = await api().post('/miembros', {
       nombre: 'Ana',
       apellidos: 'Pérez',
-      fechaIngreso: await miembrosService.hoyIglesia(),
+      fechaIngreso: await enIglesiaDePrueba(miembrosService.hoyIglesia),
     });
     expect(hoy.status).toBe(201);
 
@@ -318,10 +318,10 @@ describe('fecha en la zona horaria de la iglesia (revisión del PR #3)', () => {
   });
 
   it('la fecha de baja usa la zona horaria configurada', async () => {
-    await prisma.configuracionIglesia.upsert({
-      where: { id: 1 },
-      create: { id: 1, nombre: 'Iglesia', zonaHoraria: 'Pacific/Kiritimati' },
-      update: { zonaHoraria: 'Pacific/Kiritimati' },
+    // E1-06b: la zona horaria es la de la iglesia del usuario
+    await prisma.iglesia.update({
+      where: { id: await iglesiaDePrueba() },
+      data: { zonaHoraria: 'Pacific/Kiritimati' },
     });
     const miembro = await crearMiembro();
     const res = await api().patch(`/miembros/${miembro.id}/estado`, { activo: false });
