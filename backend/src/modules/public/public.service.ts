@@ -9,12 +9,22 @@ import * as eventosService from '../eventos/eventos.service';
 const MAX_ELEMENTOS = 10;
 export const CACHE_MS = 60_000;
 
+/**
+ * E1-06: la cartelera muestra la gestión interna de la iglesia INICIAL, fijada aquí de forma
+ * explícita (no hay sesión). E1-06b la vuelve una por iglesia, dentro de su ficha pública.
+ */
 export async function cartelera() {
-  const [config, horarios, anuncios, eventos] = await Promise.all([
+  const [config, [horarios, anuncios, eventos]] = await Promise.all([
     configuracionService.obtener(),
-    configuracionService.listarHorarios(),
-    anunciosService.vigentes({ limit: MAX_ELEMENTOS }),
-    eventosService.proximos(MAX_ELEMENTOS),
+    configuracionService.enIglesiaInicial(
+      () =>
+        Promise.all([
+          configuracionService.listarHorarios(),
+          anunciosService.vigentes({ limit: MAX_ELEMENTOS }),
+          eventosService.proximos(MAX_ELEMENTOS),
+        ]),
+      [[], [], []] as const,
+    ),
   ]);
   return {
     iglesia: {
