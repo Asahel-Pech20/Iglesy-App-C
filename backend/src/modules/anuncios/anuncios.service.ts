@@ -6,7 +6,8 @@
 import { Prisma } from '../../generated/prisma/client';
 import { AppError } from '../../lib/appError';
 import { crearMeta, paginar } from '../../lib/paginacion';
-import { prisma } from '../../lib/prisma';
+import { iglesiaDelContexto } from '../../lib/contextoIglesia';
+import { consultarDeIglesia, exigirMismaIglesia, prisma } from '../../lib/prisma';
 import { condicionSinAcentos } from '../miembros/miembros.service';
 import type { CrearAnuncio, EditarAnuncio, QueryAnuncios } from './anuncios.schemas';
 
@@ -56,15 +57,18 @@ const WHERE_ESTADO = {
 async function idsPorTitulo(q: string) {
   const condicion = condicionSinAcentos(Prisma.sql`titulo`, q);
   if (!condicion) return [];
-  const filas = await prisma.$queryRaw<
-    { id: string }[]
-  >`SELECT id FROM anuncios WHERE ${condicion}`;
+  const filas = await consultarDeIglesia<{ id: string }[]>(
+    (iglesiaId) => Prisma.sql`
+      SELECT id FROM anuncios WHERE "iglesiaId" = ${iglesiaId} AND ${condicion}`,
+  );
   return filas.map((f) => f.id);
 }
 
 /** El evento vinculado debe existir y no estar cancelado → si no, 422. */
 async function verificarEvento(eventoId: string | null | undefined) {
   if (!eventoId) return;
+  // E1-06: el evento vinculado debe ser de la misma iglesia → 422
+  await exigirMismaIglesia('evento', [eventoId], 'eventoId');
   const evento = await prisma.evento.findUnique({
     where: { id: eventoId },
     select: { estado: true },
@@ -104,7 +108,10 @@ export function obtener(id: string) {
 
 export async function crear(datos: CrearAnuncio, autorId: string) {
   await verificarEvento(datos.eventoId);
-  return prisma.anuncio.create({ data: { ...datos, autorId }, select: SELECT_ANUNCIO });
+  return prisma.anuncio.create({
+    data: { ...datos, autorId, iglesiaId: iglesiaDelContexto('Anuncio') },
+    select: SELECT_ANUNCIO,
+  });
 }
 
 export async function editar(id: string, datos: EditarAnuncio) {
