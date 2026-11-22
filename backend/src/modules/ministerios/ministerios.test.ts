@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
-import { crearUsuario, loginComo } from '../../test/helpers';
+import { enIglesiaDePrueba, iglesiaDePrueba, prisma } from '../../test/bd';
+import { crearUsuario, deOtraIglesia, loginComo } from '../../test/helpers';
 import * as ministeriosService from './ministerios.service';
 
 let app: ReturnType<typeof crearApp>;
@@ -27,13 +27,19 @@ const api = () => ({
 
 const ID_INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 
-function crearMinisterio(nombre = 'Jóvenes', activo = true) {
-  return prisma.ministerio.create({ data: { nombre, activo } });
+async function crearMinisterio(nombre = 'Jóvenes', activo = true) {
+  return prisma.ministerio.create({ data: { iglesiaId: await iglesiaDePrueba(), nombre, activo } });
 }
 
-function crearMiembro(nombre = 'Ana', activo = true) {
+async function crearMiembro(nombre = 'Ana', activo = true) {
   return prisma.miembro.create({
-    data: { nombre, apellidos: 'Pérez', fechaIngreso: new Date('2025-01-01'), activo },
+    data: {
+      iglesiaId: await iglesiaDePrueba(),
+      nombre,
+      apellidos: 'Pérez',
+      fechaIngreso: new Date('2025-01-01'),
+      activo,
+    },
   });
 }
 
@@ -345,32 +351,70 @@ describe('integrantes (B2-09, B2-10)', () => {
 });
 
 describe('funciones para otros módulos (B2-11)', () => {
-  it('miembrosDe, ministeriosCoordinadosPor, contarActivos y participacionPorMinisterio', async () => {
-    const jovenes = await crearMinisterio('Jóvenes');
-    const musica = await crearMinisterio('Música');
-    await crearMinisterio('Inactivo', false);
-    const ana = await crearMiembro('Ana');
-    const beto = await crearMiembro('Beto');
-    for (const [miembroId, ministerioId] of [
-      [ana.id, jovenes.id],
-      [beto.id, jovenes.id],
-      [ana.id, musica.id],
-    ] as const) {
-      await prisma.miembroMinisterio.create({ data: { miembroId, ministerioId } });
-    }
-    await prisma.miembro.update({ where: { id: beto.id }, data: { activo: false } });
-    const coord = await coordinadorDe(musica.id);
+  it('miembrosDe, ministeriosCoordinadosPor, contarActivos y participacionPorMinisterio', () =>
+    enIglesiaDePrueba(async () => {
+      const jovenes = await crearMinisterio('Jóvenes');
+      const musica = await crearMinisterio('Música');
+      await crearMinisterio('Inactivo', false);
+      const ana = await crearMiembro('Ana');
+      const beto = await crearMiembro('Beto');
+      for (const [miembroId, ministerioId] of [
+        [ana.id, jovenes.id],
+        [beto.id, jovenes.id],
+        [ana.id, musica.id],
+      ] as const) {
+        await prisma.miembroMinisterio.create({ data: { miembroId, ministerioId } });
+      }
+      await prisma.miembro.update({ where: { id: beto.id }, data: { activo: false } });
+      const coord = await coordinadorDe(musica.id);
 
-    expect(await ministeriosService.miembrosDe(jovenes.id)).toEqual([
-      { id: ana.id, nombre: 'Ana', apellidos: 'Pérez' },
-    ]);
-    expect(await ministeriosService.ministeriosCoordinadosPor(coord.usuario.id)).toEqual([
-      musica.id,
-    ]);
-    expect(await ministeriosService.contarActivos()).toBe(2);
-    expect(await ministeriosService.participacionPorMinisterio()).toEqual([
-      { ministerioId: jovenes.id, ministerio: 'Jóvenes', total: 1 },
-      { ministerioId: musica.id, ministerio: 'Música', total: 1 },
-    ]);
+      expect(await ministeriosService.miembrosDe(jovenes.id)).toEqual([
+        { id: ana.id, nombre: 'Ana', apellidos: 'Pérez' },
+      ]);
+      expect(await ministeriosService.ministeriosCoordinadosPor(coord.usuario.id)).toEqual([
+        musica.id,
+      ]);
+      expect(await ministeriosService.contarActivos()).toBe(2);
+      expect(await ministeriosService.participacionPorMinisterio()).toEqual([
+        { ministerioId: jovenes.id, ministerio: 'Jóvenes', total: 1 },
+        { ministerioId: musica.id, ministerio: 'Música', total: 1 },
+      ]);
+    }));
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('integrantes: vincular un miembro de otra iglesia → 422 y no se vincula nadie', async () => {
+    const otra = await deOtraIglesia();
+    const ministerio = await crearMinisterio();
+    const propio = await crearMiembro();
+    const res = await request(app)
+      .post(`/api/v1/ministerios/${ministerio.id}/miembros`)
+      .set('Authorization', admin.auth)
+      .send({ miembroIds: [propio.id, otra.miembro.id] });
+    expect(res.status).toBe(422);
+    expect(res.body.error.details).toEqual([expect.objectContaining({ campo: 'miembroIds' })]);
+    expect(await prisma.miembroMinisterio.count()).toBe(0);
+  });
+
+  it('coordinadores: asignar un usuario de otra iglesia → 422', async () => {
+    const otra = await deOtraIglesia();
+    const ministerio = await crearMinisterio();
+    const res = await request(app)
+      .put(`/api/v1/ministerios/${ministerio.id}/coordinadores`)
+      .set('Authorization', admin.auth)
+      .send({ usuarioIds: [otra.coordinador.id] });
+    expect(res.status).toBe(422);
+    expect(await prisma.ministerioCoordinador.count()).toBe(0);
+  });
+
+  it('el nombre es único dentro de la iglesia: otra iglesia puede tener «Jóvenes»', async () => {
+    await deOtraIglesia(); // ya tiene «Jóvenes»
+    expect((await api().post('/ministerios', { nombre: 'Jóvenes' })).status).toBe(201);
+    expect((await api().post('/ministerios', { nombre: 'jóvenes' })).status).toBe(409);
+  });
+
+  it('el ministerio de otra iglesia no existe para este usuario', async () => {
+    const otra = await deOtraIglesia();
+    expect((await api().get(`/ministerios/${otra.ministerio.id}`)).status).toBe(404);
   });
 });

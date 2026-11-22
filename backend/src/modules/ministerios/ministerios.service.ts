@@ -9,7 +9,8 @@ import { type RolUsuario, tienePermiso } from '../../config/permisos';
 import { Prisma } from '../../generated/prisma/client';
 import { AppError, type DetalleError } from '../../lib/appError';
 import { crearMeta, ordenar, paginar } from '../../lib/paginacion';
-import { prisma } from '../../lib/prisma';
+import { iglesiaDelContexto } from '../../lib/contextoIglesia';
+import { consultarDeIglesia, exigirMismaIglesia, prisma } from '../../lib/prisma';
 import { esCoordinadorDe } from '../../middlewares/auth';
 import { condicionSinAcentos, idsQueCoinciden } from '../miembros/miembros.service';
 import * as usuariosService from '../usuarios/usuarios.service';
@@ -96,8 +97,10 @@ async function verificarPuedeGestionarIntegrantes(solicitante: Solicitante, mini
 async function idsPorNombre(q: string) {
   const condicion = condicionSinAcentos(Prisma.sql`nombre`, q);
   if (!condicion) return [];
-  const filas = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT id FROM ministerios WHERE ${condicion}`;
+  const filas = await consultarDeIglesia<{ id: string }[]>(
+    (iglesiaId) => Prisma.sql`
+      SELECT id FROM ministerios WHERE "iglesiaId" = ${iglesiaId} AND ${condicion}`,
+  );
   return filas.map((f) => f.id);
 }
 
@@ -121,7 +124,11 @@ export async function obtener(id: string) {
 
 export async function crear(datos: CrearMinisterio) {
   await verificarNombreLibre(datos.nombre);
-  const ministerio = await prisma.ministerio.create({ data: datos, select: SELECT_MINISTERIO });
+  // E1-06: el nombre es único dentro de la iglesia (verificarNombreLibre ya busca solo en ella)
+  const ministerio = await prisma.ministerio.create({
+    data: { ...datos, iglesiaId: iglesiaDelContexto('Ministerio') },
+    select: SELECT_MINISTERIO,
+  });
   return formatear(ministerio);
 }
 
@@ -157,6 +164,8 @@ function usuarioONulo(id: string) {
 /** Reemplaza la lista. Solo usuarios activos con rol COORDINADOR o PASTOR (si no, 422 indicando cuál). */
 export async function asignarCoordinadores(id: string, usuarioIds: string[]) {
   await obtenerOFallar(id);
+  // E1-06: un coordinador de otra iglesia → 422 (Usuario no se filtra por iglesia: se revisa aquí)
+  await exigirMismaIglesia('usuario', usuarioIds, 'usuarioIds');
   const usuarios = await Promise.all(usuarioIds.map(usuarioONulo));
   const invalidos: DetalleError[] = usuarioIds.flatMap((usuarioId, i) => {
     const u = usuarios[i];
@@ -198,6 +207,8 @@ export async function vincularMiembros(id: string, miembroIds: string[], solicit
   if (!ministerio.activo) {
     throw AppError.reglaNegocio('No se pueden agregar integrantes a un ministerio inactivo.');
   }
+  // E1-06: integrante de otra iglesia → 422 (con el filtro parecería no existir)
+  await exigirMismaIglesia('miembro', miembroIds, 'miembroIds');
   await prisma.$transaction(async (tx) => {
     const miembros = await tx.miembro.findMany({
       where: { id: { in: miembroIds } },
