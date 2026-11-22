@@ -1,13 +1,20 @@
 // B2-12: el seed de miembros y ministerios es reproducible e idempotente
 import { describe, expect, it } from 'vitest';
 import { seedB2 } from '../../../prisma/seed-b2';
-import { prisma } from '../../lib/prisma';
+import { sinAlcance } from '../../lib/contextoIglesia';
+import { iglesiaDePrueba, prisma } from '../../test/bd';
 import { crearUsuario } from '../../test/helpers';
+
+/** Las semillas corren sin alcance por iglesia (como en prisma/seed.ts), en la iglesia de pruebas. */
+async function sembrar() {
+  const iglesiaId = await iglesiaDePrueba();
+  return sinAlcance('seed', () => seedB2(iglesiaId));
+}
 
 describe('seed de miembros y ministerios (B2-12)', () => {
   it('crea 60 miembros (10 % inactivos), 6 ministerios, vínculos y coordinadores', async () => {
     await crearUsuario('COORDINADOR', { email: 'coordinador@iglesia.local' });
-    const { miembroIds } = await seedB2();
+    const { miembroIds } = await sembrar();
 
     expect(miembroIds).toHaveLength(60);
     expect(await prisma.miembro.count({ where: { activo: false } })).toBe(6);
@@ -19,11 +26,11 @@ describe('seed de miembros y ministerios (B2-12)', () => {
   });
 
   it('volver a correrlo no duplica y genera los mismos datos', async () => {
-    const primera = await seedB2();
+    const primera = await sembrar();
     const antes = await prisma.miembro.findMany({ orderBy: { id: 'asc' } });
     const vinculos = await prisma.miembroMinisterio.count();
 
-    const segunda = await seedB2();
+    const segunda = await sembrar();
     expect(segunda.miembroIds).toEqual(primera.miembroIds);
     expect(await prisma.miembroMinisterio.count()).toBe(vinculos);
     const despues = await prisma.miembro.findMany({ orderBy: { id: 'asc' } });

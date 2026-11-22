@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { enIglesiaDePrueba, iglesiaDePrueba, prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 import * as miembrosService from './miembros.service';
 
 let app: ReturnType<typeof crearApp>;
@@ -23,11 +23,12 @@ const api = () => ({
 
 const ID_INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 
-function crearMiembro(
+async function crearMiembro(
   datos: Partial<{ nombre: string; apellidos: string; activo: boolean; fechaIngreso: string }> = {},
 ) {
   return prisma.miembro.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       nombre: datos.nombre ?? 'Ana',
       apellidos: datos.apellidos ?? 'Pérez Canul',
       fechaIngreso: new Date(`${datos.fechaIngreso ?? '2025-01-15'}T00:00:00.000Z`),
@@ -36,8 +37,8 @@ function crearMiembro(
   });
 }
 
-function crearMinisterio(nombre: string) {
-  return prisma.ministerio.create({ data: { nombre } });
+async function crearMinisterio(nombre: string) {
+  return prisma.ministerio.create({ data: { iglesiaId: await iglesiaDePrueba(), nombre } });
 }
 
 describe('POST /miembros (B2-01)', () => {
@@ -220,9 +221,10 @@ describe('GET /miembros/:id y PATCH /miembros/:id (B2-04)', () => {
 describe('resumen de asistencia en GET /miembros/:id (B2-04)', () => {
   async function miembroConAsistencia() {
     const miembro = await crearMiembro();
-    const evento = (titulo: string) =>
+    const evento = async (titulo: string) =>
       prisma.evento.create({
         data: {
+          iglesiaId: await iglesiaDePrueba(),
           titulo,
           tipo: 'RELIGIOSO',
           categoria: 'CULTO',
@@ -380,47 +382,81 @@ describe('PATCH /miembros/:id/estado (B2-05)', () => {
 });
 
 describe('funciones para otros módulos (B2-06)', () => {
-  it('contarActivos, obtenerActivos y existeActivo', async () => {
-    const activo = await crearMiembro({ nombre: 'Ana' });
-    const inactivo = await crearMiembro({ nombre: 'Beto', activo: false });
-    const damas = await crearMinisterio('Damas');
-    await prisma.miembroMinisterio.create({
-      data: { miembroId: activo.id, ministerioId: damas.id },
-    });
+  it('contarActivos, obtenerActivos y existeActivo', () =>
+    enIglesiaDePrueba(async () => {
+      const activo = await crearMiembro({ nombre: 'Ana' });
+      const inactivo = await crearMiembro({ nombre: 'Beto', activo: false });
+      const damas = await crearMinisterio('Damas');
+      await prisma.miembroMinisterio.create({
+        data: { miembroId: activo.id, ministerioId: damas.id },
+      });
 
-    expect(await miembrosService.contarActivos()).toBe(1);
-    expect(await miembrosService.obtenerActivos({ ministerioId: damas.id })).toEqual([
-      { id: activo.id, nombre: 'Ana', apellidos: 'Pérez Canul' },
-    ]);
-    expect(await miembrosService.obtenerActivos({ ids: [inactivo.id] })).toEqual([]);
-    expect(await miembrosService.existeActivo(activo.id)).toBe(true);
-    expect(await miembrosService.existeActivo(inactivo.id)).toBe(false);
-    expect(await miembrosService.existeActivo(ID_INEXISTENTE)).toBe(false);
+      expect(await miembrosService.contarActivos()).toBe(1);
+      expect(await miembrosService.obtenerActivos({ ministerioId: damas.id })).toEqual([
+        { id: activo.id, nombre: 'Ana', apellidos: 'Pérez Canul' },
+      ]);
+      expect(await miembrosService.obtenerActivos({ ids: [inactivo.id] })).toEqual([]);
+      expect(await miembrosService.existeActivo(activo.id)).toBe(true);
+      expect(await miembrosService.existeActivo(inactivo.id)).toBe(false);
+      expect(await miembrosService.existeActivo(ID_INEXISTENTE)).toBe(false);
+    }));
+
+  it('altasPorMes incluye meses sin altas', () =>
+    enIglesiaDePrueba(async () => {
+      await crearMiembro({ fechaIngreso: '2026-01-05' });
+      await crearMiembro({ fechaIngreso: '2026-01-20' });
+      await crearMiembro({ fechaIngreso: '2026-03-31' });
+      await crearMiembro({ fechaIngreso: '2026-04-01' });
+      expect(await miembrosService.altasPorMes('2026-01-01', '2026-03-31')).toEqual([
+        { mes: '2026-01', total: 2 },
+        { mes: '2026-02', total: 0 },
+        { mes: '2026-03', total: 1 },
+      ]);
+    }));
+
+  it('listadoParaReporte filtra por estado y trae ministerios', () =>
+    enIglesiaDePrueba(async () => {
+      const ana = await crearMiembro({ nombre: 'Ana' });
+      await crearMiembro({ nombre: 'Beto', activo: false });
+      const ensenanza = await crearMinisterio('Enseñanza');
+      await prisma.miembroMinisterio.create({
+        data: { miembroId: ana.id, ministerioId: ensenanza.id },
+      });
+
+      const activos = await miembrosService.listadoParaReporte();
+      expect(activos).toHaveLength(1);
+      expect(activos[0]).toMatchObject({ nombre: 'Ana', ministerios: ['Enseñanza'] });
+      expect(await miembrosService.listadoParaReporte({ estado: 'todos' })).toHaveLength(2);
+    }));
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('el listado y la búsqueda solo traen miembros de la iglesia del usuario', async () => {
+    const otra = await deOtraIglesia();
+    await crearMiembro();
+    const res = await api().get('/miembros?estado=todos');
+    expect(res.body.data.map((m: { id: string }) => m.id)).not.toContain(otra.miembro.id);
+    expect((await api().get('/miembros?q=ajeno')).body.meta.total).toBe(0);
   });
 
-  it('altasPorMes incluye meses sin altas', async () => {
-    await crearMiembro({ fechaIngreso: '2026-01-05' });
-    await crearMiembro({ fechaIngreso: '2026-01-20' });
-    await crearMiembro({ fechaIngreso: '2026-03-31' });
-    await crearMiembro({ fechaIngreso: '2026-04-01' });
-    expect(await miembrosService.altasPorMes('2026-01-01', '2026-03-31')).toEqual([
-      { mes: '2026-01', total: 2 },
-      { mes: '2026-02', total: 0 },
-      { mes: '2026-03', total: 1 },
-    ]);
+  it('el miembro de otra iglesia no existe para este usuario (404 al leer y al editar)', async () => {
+    const otra = await deOtraIglesia();
+    expect((await api().get(`/miembros/${otra.miembro.id}`)).status).toBe(404);
+    expect((await api().patch(`/miembros/${otra.miembro.id}`, { notas: 'x' })).status).toBe(404);
+    const intacto = await prisma.miembro.findUniqueOrThrow({ where: { id: otra.miembro.id } });
+    expect(intacto.notas).toBeNull();
   });
 
-  it('listadoParaReporte filtra por estado y trae ministerios', async () => {
-    const ana = await crearMiembro({ nombre: 'Ana' });
-    await crearMiembro({ nombre: 'Beto', activo: false });
-    const ensenanza = await crearMinisterio('Enseñanza');
-    await prisma.miembroMinisterio.create({
-      data: { miembroId: ana.id, ministerioId: ensenanza.id },
+  it('el miembro creado queda en la iglesia del usuario, aunque el body mande otra', async () => {
+    const otra = await deOtraIglesia();
+    const res = await api().post('/miembros', {
+      nombre: 'Nuevo',
+      apellidos: 'Pérez',
+      fechaIngreso: '2025-01-01',
+      iglesiaId: otra.iglesiaId,
     });
-
-    const activos = await miembrosService.listadoParaReporte();
-    expect(activos).toHaveLength(1);
-    expect(activos[0]).toMatchObject({ nombre: 'Ana', ministerios: ['Enseñanza'] });
-    expect(await miembrosService.listadoParaReporte({ estado: 'todos' })).toHaveLength(2);
+    // .strict() rechaza el campo desconocido; nunca se acepta una iglesiaId del cliente
+    expect(res.status).toBe(400);
+    expect(await prisma.miembro.count({ where: { iglesiaId: otra.iglesiaId } })).toBe(1);
   });
 });
