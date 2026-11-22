@@ -539,3 +539,56 @@ describe('GET /public/iglesias?estado= (E2-07)', () => {
     expect((await publica('estado=99')).status).toBe(404);
   });
 });
+
+describe('nombre único por municipio (A2-E2-06, decisión de Oscar)', () => {
+  const san = (municipio: string, estado = '21') => ({
+    nombre: 'Parroquia de San Miguel',
+    tipo: 'PARROQUIA',
+    estado,
+    municipio,
+  });
+
+  it('el mismo nombre se acepta en municipios distintos', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    const { auth } = await loginComo('COORDINACION');
+    expect((await api(auth).post('/iglesias', san('21114'))).status).toBe(201);
+    expect((await api(auth).post('/iglesias', san('21019'))).status).toBe(201);
+  });
+
+  it('en el mismo municipio es 409, sin distinguir mayúsculas, y señala el campo', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    const { auth } = await loginComo('COORDINACION');
+    await api(auth).post('/iglesias', san('21114'));
+    const res = await api(auth).post('/iglesias', {
+      ...san('21114'),
+      nombre: 'PARROQUIA DE SAN MIGUEL',
+    });
+    expect(res.status).toBe(409);
+    expect(res.body.error.details).toEqual([expect.objectContaining({ campo: 'nombre' })]);
+  });
+
+  it('mudar una iglesia a un municipio donde ya hay otra con su nombre es 409', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    const { auth } = await loginComo('COORDINACION');
+    await api(auth).post('/iglesias', san('21114'));
+    const otra = await api(auth).post('/iglesias', san('21019'));
+    const res = await enviar('patch', `/iglesias/${otra.body.data.id}`, auth, {
+      municipio: '21114',
+    });
+    expect(res.status).toBe(409);
+  });
+
+  it('la BD rechaza el repetido en el mismo municipio aunque se salte la API', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    const datos = {
+      nombre: 'Templo del Carmen',
+      tipo: 'TEMPLO' as const,
+      estadoClave: '21',
+      municipioClave: '21114',
+    };
+    await prisma.iglesia.create({ data: datos });
+    await expect(
+      prisma.iglesia.create({ data: { ...datos, nombre: 'templo del carmen' } }),
+    ).rejects.toThrow(/iglesias_nombre_por_municipio|Unique constraint/);
+  });
+});
