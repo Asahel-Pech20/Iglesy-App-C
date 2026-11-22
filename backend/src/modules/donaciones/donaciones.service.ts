@@ -9,7 +9,8 @@
 import { Prisma } from '../../generated/prisma/client';
 import { AppError } from '../../lib/appError';
 import { crearMeta, ordenar, paginar } from '../../lib/paginacion';
-import { prisma } from '../../lib/prisma';
+import { iglesiaDelContexto } from '../../lib/contextoIglesia';
+import { consultarDeIglesia, exigirMismaIglesia, prisma } from '../../lib/prisma';
 import { periodosEntre } from '../asistencia/asistencia.service';
 import type { Solicitante } from '../eventos/eventos.service';
 import { aFechaApi, aFechaBd, existeActivo, hoyIglesia } from '../miembros/miembros.service';
@@ -80,6 +81,8 @@ async function verificarFechaNoFutura(fecha: string | undefined) {
 
 /** El donante debe existir y estar activo → si no, 422. */
 async function verificarDonante(miembroId: string | null | undefined) {
+  // E1-06: donante de otra iglesia → 422 (con el filtro parecería no existir)
+  await exigirMismaIglesia('miembro', [miembroId], 'miembroId');
   if (miembroId && !(await existeActivo(miembroId))) {
     throw AppError.reglaNegocio('El donante no existe o está inactivo.');
   }
@@ -106,6 +109,7 @@ export async function crear(datos: CrearDonacion, solicitante: Solicitante) {
       // Sin donante ⇒ anónima (specs.md §6)
       anonima: miembroId === null,
       registradoPorId: solicitante.id,
+      iglesiaId: iglesiaDelContexto('Donacion'),
     },
     select: SELECT_DONACION,
   });
@@ -274,11 +278,14 @@ function expresionGrupo(agrupar: Agrupacion) {
  */
 export async function resumenEntre(desde: string, hasta: string, agrupar: Agrupacion) {
   const grupo = expresionGrupo(agrupar);
-  const filas = await prisma.$queryRaw<{ clave: string; total: string; cantidad: bigint }[]>`
-    SELECT ${grupo} AS clave, SUM(monto)::text AS total, COUNT(*) AS cantidad
-    FROM donaciones
-    WHERE NOT anulada AND fecha >= ${desde}::date AND fecha <= ${hasta}::date
-    GROUP BY 1`;
+  const filas = await consultarDeIglesia<{ clave: string; total: string; cantidad: bigint }[]>(
+    (iglesiaId) => Prisma.sql`
+      SELECT ${grupo} AS clave, SUM(monto)::text AS total, COUNT(*) AS cantidad
+      FROM donaciones
+      WHERE "iglesiaId" = ${iglesiaId}
+        AND NOT anulada AND fecha >= ${desde}::date AND fecha <= ${hasta}::date
+      GROUP BY 1`,
+  );
   const porClave = new Map(filas.map((f) => [f.clave, f]));
   const grupos = clavesDe(agrupar, desde, hasta).map((clave) => {
     const f = porClave.get(clave);
