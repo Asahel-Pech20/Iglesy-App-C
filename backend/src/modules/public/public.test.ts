@@ -14,8 +14,10 @@ const enDias = (dias: number) => new Date(Date.now() + dias * DIA);
 
 async function prepararDatos() {
   const autor = await crearUsuario('SECRETARIO', { nombre: 'Secretaria Privada' });
-  await prisma.configuracionIglesia.create({
-    data: { id: 1, nombre: 'Iglesia Central', telefono: '9991234567', ciudad: 'Mérida' },
+  // E1-06b: los datos de la cartelera son los de la iglesia (antes, la configuración única)
+  await prisma.iglesia.update({
+    where: { id: await iglesiaDePrueba() },
+    data: { nombre: 'Iglesia Central', telefono: '9991234567' },
   });
   await prisma.horarioReunion.createMany({
     data: [
@@ -194,5 +196,55 @@ describe('cartelera e iglesia inicial (E1-06, hasta E1-06b)', () => {
     const res = await request(app).get('/api/v1/public/cartelera');
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ horarios: [], anuncios: [], eventosProximos: [] });
+  });
+});
+
+describe('cartelera de cada iglesia (E1-06b)', () => {
+  async function iglesiaConAnuncio(nombre: string, titulo: string) {
+    const otra = await deOtraIglesia();
+    await prisma.iglesia.update({ where: { id: otra.iglesiaId }, data: { nombre } });
+    await prisma.anuncio.create({
+      data: {
+        titulo,
+        contenido: 'x',
+        fechaPublicacion: enDias(-1),
+        autorId: otra.coordinador.id,
+        iglesiaId: otra.iglesiaId,
+      },
+    });
+    return otra.iglesiaId;
+  }
+  const cartelera = (iglesiaId: string) =>
+    request(app).get(`/api/v1/public/iglesias/${iglesiaId}/cartelera`);
+
+  it('muestra los datos y anuncios de ESA iglesia (y la cache no los mezcla)', async () => {
+    const b = await iglesiaConAnuncio('Parroquia B', 'Aviso B');
+    const c = await iglesiaConAnuncio('Parroquia C', 'Aviso C');
+    for (const [id, nombre, aviso] of [
+      [b, 'Parroquia B', 'Aviso B'],
+      [c, 'Parroquia C', 'Aviso C'],
+    ] as const) {
+      const res = await cartelera(id);
+      expect(res.status).toBe(200);
+      expect(res.body.data.iglesia.nombre).toBe(nombre);
+      expect(res.body.data.anuncios.map((a: { titulo: string }) => a.titulo)).toEqual([aviso]);
+    }
+  });
+
+  it('id no válido → 400; inexistente → 404; cerrada → 404', async () => {
+    expect((await cartelera('no-es-uuid')).status).toBe(400);
+    expect((await cartelera('00000000-0000-4000-8000-000000000000')).status).toBe(404);
+    const b = await iglesiaConAnuncio('Cerrada', 'x');
+    await prisma.iglesia.update({ where: { id: b }, data: { activa: false } });
+    expect((await cartelera(b)).status).toBe(404);
+  });
+
+  it('/public/cartelera es el alias de la iglesia inicial', async () => {
+    const inicial = await iglesiaDePrueba();
+    await prisma.iglesia.update({ where: { id: inicial }, data: { nombre: 'La inicial' } });
+    await iglesiaConAnuncio('Otra', 'Aviso de otra');
+    const alias = await request(app).get('/api/v1/public/cartelera');
+    expect(alias.body.data.iglesia.nombre).toBe('La inicial');
+    expect(alias.body.data).toEqual((await cartelera(inicial)).body.data);
   });
 });
