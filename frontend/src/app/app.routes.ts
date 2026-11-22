@@ -51,6 +51,20 @@ function publica(
 export const routes: Routes = [
   // F3-13: cartelera pública, sin sesión ni layout administrativo
   { path: 'cartelera', component: CarteleraPage, title: 'Cartelera' },
+  // E4-19: espacios (criptas, nichos, columbarios y osarios) sin cuenta, con folio y clave.
+  // «seguimiento» va antes de «:iglesiaId» para que no se tome como el id de una iglesia.
+  {
+    path: 'espacios/seguimiento',
+    loadComponent: () =>
+      import('./features/espacios/seguimiento-espacio.page').then((m) => m.SeguimientoEspacioPage),
+    title: 'Seguimiento de solicitud',
+  },
+  {
+    path: 'espacios/:iglesiaId',
+    loadComponent: () =>
+      import('./features/espacios/solicitar-espacio.page').then((m) => m.SolicitarEspacioPage),
+    title: 'Solicitar un espacio',
+  },
   publica('login', LoginPage, 'Iniciar sesión', true),
   publica('recuperar', RecuperarPage, 'Recuperar contraseña'),
   publica('restablecer', RestablecerPage, 'Nueva contraseña'),
@@ -170,6 +184,14 @@ export const routes: Routes = [
         component: IglesiasPage,
         data: { permiso: 'iglesias:leer' },
         title: 'Iglesias',
+      },
+      // Ecclesia: solicitudes de espacio y su cotización (solo personal de iglesia)
+      {
+        path: 'espacios',
+        loadComponent: () =>
+          import('./features/espacios/espacios.page').then((m) => m.EspaciosPage),
+        data: { permiso: 'espacios:leer' },
+        title: 'Espacios',
       },
       // Ecclesia: diezmo de las misas (solo personal de iglesia)
       {

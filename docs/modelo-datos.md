@@ -98,6 +98,35 @@ erDiagram
     uuid hechaPorId FK
     datetime hechaEn
   }
+  Iglesia ||--o{ TipoEspacio : "ofrece"
+  Iglesia ||--o{ SolicitudEspacio : "recibe"
+  TipoEspacio ||--o{ SolicitudEspacio : "se pide"
+  SolicitudEspacio ||--o{ Cotizacion : "se cotiza"
+  TipoEspacio {
+    uuid id PK
+    uuid iglesiaId FK
+    enum clase
+    bool activo
+    bool disponible
+  }
+  SolicitudEspacio {
+    uuid id PK
+    string folio UK
+    string claveHash
+    uuid iglesiaId FK
+    uuid tipoEspacioId FK
+    enum estado
+    int intentosFallidos
+    datetime bloqueadoHasta
+  }
+  Cotizacion {
+    uuid id PK
+    uuid solicitudId FK
+    decimal monto
+    datetime emitidaEn
+    datetime venceEn
+    enum respuesta
+  }
 ```
 
 ## Diagrama: gestión interna heredada de AppIglesia (implementado)
@@ -147,6 +176,14 @@ erDiagram
 | `Diezmo` | Oscar | **Una** captura por misa (`misaId` único); monto `Decimal(12,2)` no negativo; misma iglesia que su misa | RF-60–63, RN-40–42 |
 | `DiezmoCorreccion` | Oscar | Historial de **solo inserción**: monto anterior, nuevo, quién y cuándo | RN-43, RNF-12 |
 
+### Criptas y otros espacios
+
+| Entidad | Dueño | Puntos clave | Requerimientos |
+|---|---|---|---|
+| `TipoEspacio` | Oscar | Lo que una iglesia ofrece: cripta, nicho, columbario u osario (`clase`), único por iglesia y clase; `activo` (no se borra, se desactiva) y `disponible` (hay lugar). **Sin precio** | RF-70, RF-71, RN-47, RN-48 |
+| `SolicitudEspacio` | Oscar | Hecha sin cuenta: `folio` legible único (`ESP-2026-000123`), clave guardada solo como hash SHA-256, contacto privado de la iglesia, `estado` del diagrama de la §7, contador de intentos fallidos y bloqueo temporal | RF-72–74, RN-49, RN-53 |
+| `Cotizacion` | Oscar | `monto` `Decimal(12,2)` mayor que 0, condiciones, `emitidaEn` y `venceEn` (15 días); varias por solicitud, con **a lo sumo una sin respuesta** (`respuesta`: aceptada, rechazada o vencida) | RF-77–79, RN-50, RN-51 |
+
 ## Reglas de integridad en la BD
 
 | Regla | Tipo | Tabla | Qué impide | Migración |
@@ -159,6 +196,13 @@ erDiagram
 | `diezmos_misaId_key` | Único | `diezmos` | Dos capturas de la misma misa | `ecclesia_misas_y_diezmo` |
 | `diezmo_correcciones_inmutable` | Disparador | `diezmo_correcciones` | Editar o borrar el historial | `ecclesia_misas_y_diezmo` |
 | `diezmos_iglesia_de_la_misa` | Disparador | `diezmos` | Un diezmo en otra iglesia que su misa | `ecclesia_misas_y_diezmo` |
+| `cotizaciones_monto_positivo` | `CHECK` | `cotizaciones` | Cotizaciones de monto cero o negativo | `e4_07_espacios` |
+| `cotizaciones_vence_despues_de_emitirse` | `CHECK` | `cotizaciones` | Un vencimiento anterior a la emisión | `e4_07_espacios` |
+| `cotizaciones_una_vigente_por_solicitud` | Único parcial | `cotizaciones` | Dos cotizaciones sin respuesta en la misma solicitud (si P-26 permite volver a cotizar, se cierra la anterior) | `e4_07_espacios` |
+| `solicitudes_espacio_intentos_no_negativos` | `CHECK` | `solicitudes_espacio` | Un contador de intentos negativo | `e4_07_espacios` |
+| `solicitudes_espacio_iglesia_del_tipo` | Disparador | `solicitudes_espacio` | Una solicitud en otra iglesia que el tipo de espacio que pide | `e4_07_espacios` |
+| `tipos_espacio_iglesiaId_clase_key` | Único | `tipos_espacio` | Repetir una clase de espacio en la misma iglesia | `e4_07_espacios` |
+| `solicitudes_espacio_folio_seq` | Secuencia | — | Folios repetidos (consecutivo nacional, P-25) | `e4_07_espacios` |
 | `estados_clave_valida` | `CHECK` | `estados` | Claves que no son de 2 dígitos | `e2_05_06_catalogos_e_iglesias` |
 | `municipios_clave_valida` | `CHECK` | `municipios` | Claves que no son de 5 dígitos o que no empiezan con la clave de su estado | `e2_05_06_catalogos_e_iglesias` |
 | `localidades_clave_valida` | `CHECK` | `localidades` | Claves que no son de 9 dígitos o que no empiezan con la clave de su municipio | `e2_05_06_catalogos_e_iglesias` |
@@ -176,7 +220,6 @@ Además, en la API: una iglesia cerrada solo acepta lecturas (`alcanceIglesia`, 
 | `patrimonio` | `CriteriosIndice` | Nataly | Versionado: cada cambio crea una versión con `vigenteDesde`; rangos, multiplicadores y distinciones en JSON validado con Zod. **El índice no se guarda**: se calcula al consultar (ADR-0005) | `plan-nataly.md`, RNF-13 |
 | `servicios` | `Servicio`, `Platica` y sus horarios | Genaro | Costo (gratuito, donativo o monto `Decimal(12,2)`), requisitos, duración, cita; sesiones, cupo, lugar y quién imparte | `specs.md` §12.4 · campos por definir en el plan de Genaro |
 | `misas` | `PadreIglesia`, `HorarioMisa`; ampliar `Padre` y `MisaCelebrada` | Genaro | Tipo e idioma; un padre sin choques de horario; hora por defecto; sustitución con quién ofició, quién cambió y por qué (RNF-12) | `specs.md` §12.4 · por definir |
-| `espacios` | `TipoEspacio`, `SolicitudEspacio`, `Cotizacion` | Oscar | Folio legible (`CR-2026-000123`) y clave aleatoria de 32 bytes guardada con hash; datos de contacto privados; vigencia de 15 días; estados del diagrama de la §7 de `requerimientos.md` | `docs/ecclesia/api-diezmo-espacios.md`, reglas puras en `modules/espacios/dominio/` |
 
 ## Pendiente de integración (E1-06)
 
