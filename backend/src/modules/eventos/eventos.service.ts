@@ -9,7 +9,8 @@ import { type Permiso, type RolUsuario, tienePermiso } from '../../config/permis
 import { Prisma } from '../../generated/prisma/client';
 import { AppError, type DetalleError } from '../../lib/appError';
 import { crearMeta, ordenar, paginar } from '../../lib/paginacion';
-import { prisma } from '../../lib/prisma';
+import { iglesiaDelContexto } from '../../lib/contextoIglesia';
+import { consultarDeIglesia, exigirMismaIglesia, prisma } from '../../lib/prisma';
 import { esCoordinadorDe } from '../../middlewares/auth';
 import { condicionSinAcentos } from '../miembros/miembros.service';
 import { esFechaSola, finDiaEnZona, inicioDiaEnZona, zonaIglesia } from './eventos.fechas';
@@ -86,6 +87,8 @@ export async function verificarGestionaEvento(
 /** El ministerio debe existir y estar activo → si no, 422. */
 async function verificarMinisterio(ministerioId: string | null | undefined) {
   if (!ministerioId) return;
+  // E1-06: el ministerio debe ser de la misma iglesia que el evento → 422
+  await exigirMismaIglesia('ministerio', [ministerioId], 'ministerioId');
   const ministerio = await prisma.ministerio.findUnique({
     where: { id: ministerioId },
     select: { activo: true },
@@ -161,7 +164,10 @@ async function aInstantes(desde?: string, hasta?: string) {
 async function idsPorTitulo(q: string) {
   const condicion = condicionSinAcentos(Prisma.sql`titulo`, q);
   if (!condicion) return [];
-  const filas = await prisma.$queryRaw<{ id: string }[]>`SELECT id FROM eventos WHERE ${condicion}`;
+  const filas = await consultarDeIglesia<{ id: string }[]>(
+    (iglesiaId) => Prisma.sql`
+      SELECT id FROM eventos WHERE "iglesiaId" = ${iglesiaId} AND ${condicion}`,
+  );
   return filas.map((f) => f.id);
 }
 
@@ -281,7 +287,7 @@ export async function crear(datos: CrearEvento, solicitante: Solicitante) {
   );
   await verificarMinisterio(datos.ministerioId);
   const evento = await prisma.evento.create({
-    data: { ...datos, creadoPorId: solicitante.id },
+    data: { ...datos, creadoPorId: solicitante.id, iglesiaId: iglesiaDelContexto('Evento') },
     select: { id: true },
   });
   return obtener(evento.id);
@@ -354,6 +360,8 @@ export async function asignarResponsables(
     'eventos:editar-propio',
   );
   noCancelado(actual.estado);
+  // E1-06: responsable de otra iglesia → 422 (con el filtro parecería no existir)
+  await exigirMismaIglesia('miembro', miembroIds, 'miembroIds');
   const miembros = await prisma.miembro.findMany({
     where: { id: { in: miembroIds } },
     select: { id: true, nombre: true, apellidos: true, activo: true },

@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { enIglesiaDePrueba, iglesiaDePrueba, prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 import * as eventosService from './eventos.service';
 
 let app: ReturnType<typeof crearApp>;
@@ -36,18 +36,24 @@ const datosEvento = (extra: object = {}) => ({
   ...extra,
 });
 
-function crearMinisterio(nombre = 'Jóvenes', activo = true) {
-  return prisma.ministerio.create({ data: { nombre, activo } });
+async function crearMinisterio(nombre = 'Jóvenes', activo = true) {
+  return prisma.ministerio.create({ data: { iglesiaId: await iglesiaDePrueba(), nombre, activo } });
 }
 
-function crearMiembro(nombre = 'Ana', activo = true) {
+async function crearMiembro(nombre = 'Ana', activo = true) {
   return prisma.miembro.create({
-    data: { nombre, apellidos: 'Pérez', fechaIngreso: new Date('2025-01-01'), activo },
+    data: {
+      iglesiaId: await iglesiaDePrueba(),
+      nombre,
+      apellidos: 'Pérez',
+      fechaIngreso: new Date('2025-01-01'),
+      activo,
+    },
   });
 }
 
 /** Evento directo en BD (para preparar escenarios). */
-function crearEventoBd(
+async function crearEventoBd(
   datos: Partial<{
     titulo: string;
     fechaInicio: Date;
@@ -58,6 +64,7 @@ function crearEventoBd(
 ) {
   return prisma.evento.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: datos.titulo ?? 'Evento',
       tipo: 'RELIGIOSO',
       categoria: 'CULTO',
@@ -404,28 +411,55 @@ describe('próximos eventos y estado REALIZADO (B3-06)', () => {
     expect((await api().get('/eventos/proximos?limit=50')).status).toBe(400);
   });
 
-  it('marca REALIZADO los programados cuya fecha ya pasó (y no toca cancelados ni futuros)', async () => {
-    const pasado = await crearEventoBd({ fechaInicio: enDias(-3) });
-    const conFin = await crearEventoBd({ fechaInicio: enDias(-3), fechaFin: enDias(1) });
-    const cancelado = await crearEventoBd({ fechaInicio: enDias(-3), estado: 'CANCELADO' });
-    const futuro = await crearEventoBd({ fechaInicio: enDias(2) });
-    expect(await eventosService.marcarRealizados()).toBe(1);
-    const estados = await prisma.evento.findMany({ select: { id: true, estado: true } });
-    const estadoDe = (id: string) => estados.find((e) => e.id === id)?.estado;
-    expect(estadoDe(pasado.id)).toBe('REALIZADO');
-    expect(estadoDe(conFin.id)).toBe('PROGRAMADO');
-    expect(estadoDe(cancelado.id)).toBe('CANCELADO');
-    expect(estadoDe(futuro.id)).toBe('PROGRAMADO');
-  });
+  it('marca REALIZADO los programados cuya fecha ya pasó (y no toca cancelados ni futuros)', () =>
+    enIglesiaDePrueba(async () => {
+      const pasado = await crearEventoBd({ fechaInicio: enDias(-3) });
+      const conFin = await crearEventoBd({ fechaInicio: enDias(-3), fechaFin: enDias(1) });
+      const cancelado = await crearEventoBd({ fechaInicio: enDias(-3), estado: 'CANCELADO' });
+      const futuro = await crearEventoBd({ fechaInicio: enDias(2) });
+      expect(await eventosService.marcarRealizados()).toBe(1);
+      const estados = await prisma.evento.findMany({ select: { id: true, estado: true } });
+      const estadoDe = (id: string) => estados.find((e) => e.id === id)?.estado;
+      expect(estadoDe(pasado.id)).toBe('REALIZADO');
+      expect(estadoDe(conFin.id)).toBe('PROGRAMADO');
+      expect(estadoDe(cancelado.id)).toBe('CANCELADO');
+      expect(estadoDe(futuro.id)).toBe('PROGRAMADO');
+    }));
 
   it('al consultar el detalle de un evento pasado ya aparece REALIZADO', async () => {
     const evento = await crearEventoBd({ fechaInicio: enDias(-1) });
     expect((await api().get(`/eventos/${evento.id}`)).body.data.estado).toBe('REALIZADO');
   });
 
-  it('contarPorRango excluye cancelados', async () => {
-    await crearEventoBd({ fechaInicio: enDias(1) });
-    await crearEventoBd({ fechaInicio: enDias(2), estado: 'CANCELADO' });
-    expect(await eventosService.contarPorRango(enDias(0), enDias(7))).toBe(1);
+  it('contarPorRango excluye cancelados', () =>
+    enIglesiaDePrueba(async () => {
+      await crearEventoBd({ fechaInicio: enDias(1) });
+      await crearEventoBd({ fechaInicio: enDias(2), estado: 'CANCELADO' });
+      expect(await eventosService.contarPorRango(enDias(0), enDias(7))).toBe(1);
+    }));
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('crear un evento con un ministerio de otra iglesia → 422', async () => {
+    const otra = await deOtraIglesia();
+    const res = await api().post('/eventos', datosEvento({ ministerioId: otra.ministerio.id }));
+    expect(res.status).toBe(422);
+  });
+
+  it('responsables: asignar un miembro de otra iglesia → 422', async () => {
+    const otra = await deOtraIglesia();
+    const evento = await crearEventoBd();
+    const res = await api().put(`/eventos/${evento.id}/responsables`, {
+      miembroIds: [otra.miembro.id],
+    });
+    expect(res.status).toBe(422);
+    expect(await prisma.eventoResponsable.count()).toBe(0);
+  });
+
+  it('el evento de otra iglesia no existe para este usuario y no sale en el listado', async () => {
+    const otra = await deOtraIglesia();
+    expect((await api().get(`/eventos/${otra.evento.id}`)).status).toBe(404);
+    const lista = await api().get('/eventos');
+    expect(lista.body.data.map((e: { id: string }) => e.id)).not.toContain(otra.evento.id);
   });
 });
