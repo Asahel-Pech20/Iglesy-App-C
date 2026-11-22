@@ -9,7 +9,7 @@ let app: ReturnType<typeof crearApp>;
 let admin: Awaited<ReturnType<typeof loginComo>>;
 beforeEach(async () => {
   app = crearApp();
-  admin = await loginComo('ADMIN');
+  admin = await loginComo('ADMIN_IGLESIA');
 });
 
 const api = () => ({
@@ -104,7 +104,7 @@ describe('CRUD /ministerios (B2-07)', () => {
     expect((await api().get(`/ministerios/${ID_INEXISTENTE}`)).status).toBe(404);
   });
 
-  it('solo ADMIN y PASTOR crean/editan/desactivan; todos leen; sin sesión → 401', async () => {
+  it('solo ADMIN_IGLESIA y PASTOR crean/editan/desactivan; todos leen; sin sesión → 401', async () => {
     const ministerio = await crearMinisterio();
     const pastor = await loginComo('PASTOR');
     expect((await api().post('/ministerios', { nombre: 'Servicio' }, pastor.auth)).status).toBe(
@@ -159,6 +159,18 @@ describe('PUT /ministerios/:id/coordinadores (B2-08)', () => {
     expect(res.body.error.message).toContain('Jorge Canul');
     expect(res.body.error.message).toContain('Luis Baja');
     expect(await prisma.ministerioCoordinador.count()).toBe(0);
+  });
+
+  it('usuario inexistente → 422 indicando cuál; no cambia la lista', async () => {
+    const ministerio = await crearMinisterio();
+    const coord = await crearUsuario('COORDINADOR');
+    await api().put(`/ministerios/${ministerio.id}/coordinadores`, { usuarioIds: [coord.id] });
+    const res = await api().put(`/ministerios/${ministerio.id}/coordinadores`, {
+      usuarioIds: [ID_INEXISTENTE],
+    });
+    expect(res.status).toBe(422);
+    expect(res.body.error.message).toContain(ID_INEXISTENTE);
+    expect(await prisma.ministerioCoordinador.count()).toBe(1);
   });
 
   it('validación → 400; COORDINADOR → 403', async () => {

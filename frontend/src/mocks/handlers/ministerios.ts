@@ -31,7 +31,7 @@ function nombreOcupado(nombre: string, exceptoId?: string) {
 const errorNombre = () =>
   errorApi(409, 'CONFLICT', NOMBRE_DUPLICADO, [{ campo: 'nombre', mensaje: NOMBRE_DUPLICADO }]);
 
-/** ADMIN/PASTOR, o COORDINADOR de ese ministerio; si no, 403 */
+/** ADMIN_IGLESIA/PASTOR, o COORDINADOR de ese ministerio; si no, 403 */
 function puedeGestionar(usuario: Usuario, ministerioId: string) {
   if (tienePermiso(usuario.rol, 'ministerios:editar')) return true;
   return (

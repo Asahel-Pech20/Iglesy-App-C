@@ -13,7 +13,7 @@
 
 Verificado: 82 pruebas de frontend (`ng test`), lint, typecheck, formato y `ng build` en verde; pantallas revisadas en el navegador con mocks.
 
-¿Por qué Angular 21 y no 22? Angular 22 pide Node ≥ 24.15 y el equipo usa Node 22/24.12. Angular 21 funciona con ambos.
+¿Por qué Angular 21 y no 22? Angular 22 pide Node ≥ 24.15 y el equipo usa Node 22/24.12. Angular 21 funciona con ambos, siempre que Node 22 sea **22.12 o posterior** (`node scripts/verificar-equipo.mjs` lo revisa).
 
 ## Cómo correrlo
 

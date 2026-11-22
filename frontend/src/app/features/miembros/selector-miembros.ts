@@ -77,6 +77,7 @@ const nombreCompleto = (m: Pick<MiembroOpcion, 'nombre' | 'apellidos'>) =>
       <mat-autocomplete
         #auto="matAutocomplete"
         (optionSelected)="elegir($event); entrada.value = ''"
+        (opened)="abierto.set(true)"
         (closed)="abierto.set(false)"
       >
         @if (consulta.isLoading()) {
@@ -157,6 +158,7 @@ export class SelectorMiembros {
   private readonly busqueda = signal('');
   // Nombres de los miembros vistos, para mostrar los seleccionados sin otra petición
   private readonly conocidos = signal(new Map<string, MiembroOpcion>());
+  private readonly pidiendo = new Set<string>();
   private temporizador: ReturnType<typeof setTimeout> | undefined;
 
   protected readonly consulta = rxResource({
@@ -189,7 +191,10 @@ export class SelectorMiembros {
   protected nombreDe(id: string) {
     const conocido = this.conocidos().get(id);
     if (conocido) return nombreCompleto(conocido);
-    this.servicio.obtener(id).subscribe((m) => this.recordar(m));
+    if (!this.pidiendo.has(id)) {
+      this.pidiendo.add(id);
+      this.servicio.obtener(id).subscribe((m) => this.recordar(m));
+    }
     return 'Cargando…';
   }
 

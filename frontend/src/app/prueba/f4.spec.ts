@@ -282,7 +282,7 @@ describe('centro de reportes (F4-09)', () => {
       a.getAttribute('href'),
     );
 
-  it('ADMIN ve los cuatro reportes', async () => {
+  it('ADMIN_IGLESIA ve los cuatro reportes', async () => {
     await abrirApp('/reportes', { como: 'admin@iglesia.local' });
     await esperarA(() => tarjetas().length > 0);
     expect(tarjetas()).toEqual([

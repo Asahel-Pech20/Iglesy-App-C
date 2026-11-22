@@ -2,7 +2,9 @@ import {
   Banknote,
   CalendarDays,
   ClipboardCheck,
+  Church,
   FileBarChart,
+  HandCoins,
   Home,
   type LucideIconData,
   Megaphone,
@@ -54,6 +56,13 @@ export const MENU: EntradaMenu[] = [
     ruta: '/donaciones',
     icono: Banknote,
     permiso: 'donaciones:leer',
+  },
+  { etiqueta: 'Iglesias', ruta: '/iglesias', icono: Church, permiso: 'iglesias:leer' },
+  {
+    etiqueta: 'Diezmo',
+    ruta: '/diezmo',
+    icono: HandCoins,
+    permiso: 'diezmo:leer',
   },
   {
     etiqueta: 'Reportes',

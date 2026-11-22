@@ -12,7 +12,7 @@ let app: ReturnType<typeof crearApp>;
 let admin: string;
 beforeEach(async () => {
   app = crearApp();
-  admin = (await loginComo('ADMIN')).auth;
+  admin = (await loginComo('ADMIN_IGLESIA')).auth;
 });
 afterAll(() => rm(path.resolve(env.UPLOAD_DIR), { recursive: true, force: true }));
 
@@ -37,7 +37,7 @@ describe('configuración (B1-15)', () => {
     expect(res.body.data).not.toHaveProperty('id');
   });
 
-  it('PUT (ADMIN) guarda y normaliza', async () => {
+  it('PUT (ADMIN_IGLESIA) guarda y normaliza', async () => {
     const res = await request(app)
       .put('/api/v1/configuracion')
       .set('Authorization', admin)
@@ -61,7 +61,7 @@ describe('configuración (B1-15)', () => {
     }
   });
 
-  it('rol distinto de ADMIN → 403 en PUT', async () => {
+  it('rol distinto de ADMIN_IGLESIA → 403 en PUT', async () => {
     const { auth } = await loginComo('PASTOR');
     expect(
       (await request(app).put('/api/v1/configuracion').set('Authorization', auth).send(CONFIG))

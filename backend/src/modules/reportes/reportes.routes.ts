@@ -9,7 +9,7 @@ import {
   esquemaReporteMinisterios,
 } from './reportes.schemas';
 
-// Miembros / asistencia / ministerios: ADMIN, PASTOR, SECRETARIO; COORDINADOR solo sus ministerios
+// Miembros / asistencia / ministerios: ADMIN_IGLESIA, PASTOR, SECRETARIO; COORDINADOR solo sus ministerios
 const generales = autorizarAlguno('reportes:generales', 'reportes:generales-propio');
 
 export const reportesRouter = Router();
@@ -35,7 +35,7 @@ reportesRouter.get(
   validar({ query: esquemaReporteMinisterios }),
   c.ministerios,
 );
-// Información financiera: ADMIN, PASTOR y TESORERO (RF-06.5)
+// Información financiera: ADMIN_IGLESIA, PASTOR y TESORERO (RF-06.5)
 reportesRouter.get(
   '/ingresos',
   autenticar,

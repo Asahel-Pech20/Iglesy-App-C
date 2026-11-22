@@ -70,7 +70,11 @@
   background: var(--superficie);
   padding: 0 16px;
 }
+.barra app-marca-iglesia {
+  flex: 1 1 auto;
+}
 .derecha {
+  flex-shrink: 0;
   margin-left: auto;
   display: flex;
   align-items: center;
@@ -88,8 +92,12 @@
   line-height: 1.2;
 }
 @media (min-width: 640px) {
+  /* inline: ícono, nombre y flecha en una sola fila dentro del botón */
   .datos-cuenta {
-    display: flex;
+    display: inline-flex;
+    margin: 0 8px;
+    text-align: left;
+    vertical-align: middle;
   }
 }
 .nombre {
@@ -102,6 +110,14 @@
   font-size: 12px;
   font-weight: 400;
   color: var(--texto-suave);
+  /* El nombre de la iglesia puede ser largo: se recorta en vez de empujar los botones */
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cerrada {
+  color: var(--alerta);
 }
 .cabecera-menu {
   display: flex;

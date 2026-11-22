@@ -38,6 +38,15 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   {
+    // Arnés de IA de Ecclesia: scripts de Node (hooks, configuración)
+    files: ['arnes-ia/**/*.{js,mjs,cjs,ts}'],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['arnes-ia/**/hooks/*.mjs'],
+    rules: { 'no-console': 'off' },
+  },
+  {
     files: ['frontend/**/*.ts'],
     languageOptions: { globals: globals.browser },
   },

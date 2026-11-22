@@ -26,7 +26,11 @@ export const appConfig: ApplicationConfig = {
     // En desarrollo los handlers de MSW responden el contrato de specs.md §7 sin backend
     provideHttpClient(withInterceptors([interceptorApi, ...INTERCEPTORES_MOCKS])),
     { provide: LOCALE_ID, useValue: 'es-MX' },
-    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
+    // subscriptSizing dynamic: una ayuda o un error de dos líneas no se encima en el campo de abajo
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline', subscriptSizing: 'dynamic' },
+    },
     // Restaura la sesión con la cookie de refresh antes de resolver la primera ruta
     provideAppInitializer(() => inject(SesionService).restaurar()),
   ],

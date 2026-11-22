@@ -4,34 +4,88 @@ import { PERMISOS, PERMISOS_POR_ROL, ROLES, type RolUsuario, tienePermiso } from
 // Transcripción literal de la tabla de specs.md §3.
 // Leyenda: C crear · L leer · E editar · D eliminar · minúscula = solo "propio" · — sin acceso.
 const MATRIZ: Record<string, Record<RolUsuario, string>> = {
-  usuarios: { ADMIN: 'CLED', PASTOR: '—', SECRETARIO: '—', TESORERO: '—', COORDINADOR: '—' },
-  configuracion: { ADMIN: 'LE', PASTOR: 'L', SECRETARIO: 'L', TESORERO: 'L', COORDINADOR: 'L' },
-  miembros: { ADMIN: 'CLED', PASTOR: 'CLED', SECRETARIO: 'CLED', TESORERO: 'L', COORDINADOR: 'L' },
-  ministerios: { ADMIN: 'CLED', PASTOR: 'CLED', SECRETARIO: 'L', TESORERO: 'L', COORDINADOR: 'Le' },
+  usuarios: {
+    COORDINACION: 'CLED',
+    ADMIN_IGLESIA: 'CLED',
+    PASTOR: '—',
+    SECRETARIO: '—',
+    TESORERO: '—',
+    COORDINADOR: '—',
+  },
+  configuracion: {
+    // S-04 retirado: la Coordinación edita iglesias (iglesias:editar), no la configuración
+    COORDINACION: 'L',
+    ADMIN_IGLESIA: 'LE',
+    PASTOR: 'L',
+    SECRETARIO: 'L',
+    TESORERO: 'L',
+    COORDINADOR: 'L',
+  },
+  miembros: {
+    COORDINACION: '—',
+    ADMIN_IGLESIA: 'CLED',
+    PASTOR: 'CLED',
+    SECRETARIO: 'CLED',
+    TESORERO: 'L',
+    COORDINADOR: 'L',
+  },
+  ministerios: {
+    COORDINACION: '—',
+    ADMIN_IGLESIA: 'CLED',
+    PASTOR: 'CLED',
+    SECRETARIO: 'L',
+    TESORERO: 'L',
+    COORDINADOR: 'Le',
+  },
   eventos: {
-    ADMIN: 'CLED',
+    COORDINACION: '—',
+    ADMIN_IGLESIA: 'CLED',
     PASTOR: 'CLED',
     SECRETARIO: 'CLED',
     TESORERO: 'L',
     COORDINADOR: 'Lced',
   },
-  asistencia: { ADMIN: 'CLE', PASTOR: 'CLE', SECRETARIO: 'CLE', TESORERO: '—', COORDINADOR: 'cle' },
-  anuncios: { ADMIN: 'CLED', PASTOR: 'CLED', SECRETARIO: 'CLED', TESORERO: 'L', COORDINADOR: 'L' },
-  donaciones: { ADMIN: 'CLED', PASTOR: 'L', SECRETARIO: '—', TESORERO: 'CLED', COORDINADOR: '—' },
+  asistencia: {
+    COORDINACION: '—',
+    ADMIN_IGLESIA: 'CLE',
+    PASTOR: 'CLE',
+    SECRETARIO: 'CLE',
+    TESORERO: '—',
+    COORDINADOR: 'cle',
+  },
+  anuncios: {
+    COORDINACION: '—',
+    ADMIN_IGLESIA: 'CLED',
+    PASTOR: 'CLED',
+    SECRETARIO: 'CLED',
+    TESORERO: 'L',
+    COORDINADOR: 'L',
+  },
+  donaciones: {
+    COORDINACION: '—',
+    ADMIN_IGLESIA: 'CLED',
+    PASTOR: 'L',
+    SECRETARIO: '—',
+    TESORERO: 'CLED',
+    COORDINADOR: '—',
+  },
 };
 
 const ACCIONES: Record<string, string> = { C: 'crear', L: 'leer', E: 'editar', D: 'eliminar' };
 
 // Fila "Reportes" y "Dashboard" de la tabla
 const REPORTES_GENERALES: Record<RolUsuario, 'si' | 'propio' | 'no'> = {
-  ADMIN: 'si',
+  COORDINACION: 'no',
+  ADMIN_IGLESIA: 'si',
   PASTOR: 'si',
   SECRETARIO: 'si',
   TESORERO: 'no',
   COORDINADOR: 'propio',
 };
-const REPORTES_INGRESOS: RolUsuario[] = ['ADMIN', 'PASTOR', 'TESORERO'];
-const DASHBOARD_CON_INGRESOS: RolUsuario[] = ['ADMIN', 'PASTOR', 'TESORERO'];
+const REPORTES_INGRESOS: RolUsuario[] = ['ADMIN_IGLESIA', 'PASTOR', 'TESORERO'];
+const DASHBOARD_CON_INGRESOS: RolUsuario[] = ['ADMIN_IGLESIA', 'PASTOR', 'TESORERO'];
+// El dashboard es de una iglesia: la Coordinación nacional no lo tiene
+const CON_DASHBOARD: readonly RolUsuario[] = ROLES.filter((rol) => rol !== 'COORDINACION');
 
 describe('matriz de permisos (specs.md §3)', () => {
   for (const [modulo, fila] of Object.entries(MATRIZ)) {
@@ -68,16 +122,17 @@ describe('matriz de permisos (specs.md §3)', () => {
     }
   });
 
-  it('dashboard: todos lo ven; ingresos solo con donaciones:leer', () => {
+  it('dashboard: lo ve el personal de iglesia; ingresos solo con donaciones:leer', () => {
     for (const rol of ROLES) {
-      expect(tienePermiso(rol, 'dashboard:leer')).toBe(true);
+      expect(tienePermiso(rol, 'dashboard:leer')).toBe(CON_DASHBOARD.includes(rol));
       expect(tienePermiso(rol, 'donaciones:leer')).toBe(DASHBOARD_CON_INGRESOS.includes(rol));
     }
   });
 
-  it('usuarios:opciones solo para ADMIN y PASTOR (specs.md §7.2)', () => {
+  it('usuarios:opciones solo para COORDINACION, ADMIN_IGLESIA y PASTOR (specs.md §7.2, §12.3)', () => {
     expect(ROLES.filter((rol) => tienePermiso(rol, 'usuarios:opciones'))).toEqual([
-      'ADMIN',
+      'COORDINACION',
+      'ADMIN_IGLESIA',
       'PASTOR',
     ]);
   });
@@ -94,5 +149,32 @@ describe('matriz de permisos (specs.md §3)', () => {
     for (const permiso of PERMISOS) {
       expect(ROLES.some((rol) => tienePermiso(rol, permiso))).toBe(true);
     }
+  });
+
+  it('Ecclesia: el diezmo y los espacios son solo del personal de la iglesia, nunca de la Coordinación', () => {
+    const quien = (permiso: (typeof PERMISOS)[number]) =>
+      ROLES.filter((rol) => tienePermiso(rol, permiso));
+    expect(quien('diezmo:capturar')).toEqual(['TESORERO']);
+    expect(quien('diezmo:leer')).toEqual(['ADMIN_IGLESIA', 'TESORERO']);
+    expect(quien('espacios:leer')).toEqual(['ADMIN_IGLESIA']);
+    expect(quien('espacios:gestionar')).toEqual(['ADMIN_IGLESIA']);
+    expect(quien('misas:leer')).toEqual(['ADMIN_IGLESIA', 'TESORERO']);
+    expect(quien('misas:registrar')).toEqual(['ADMIN_IGLESIA']);
+  });
+
+  it('E2-05 y E2-06: la Coordinación carga el catálogo y cierra iglesias; el administrador edita la suya', () => {
+    const quien = (permiso: (typeof PERMISOS)[number]) =>
+      ROLES.filter((rol) => tienePermiso(rol, permiso));
+    expect(quien('catalogos:gestionar')).toEqual(['COORDINACION']);
+    expect(quien('iglesias:cerrar')).toEqual(['COORDINACION']);
+    expect(quien('iglesias:editar')).toEqual(['COORDINACION', 'ADMIN_IGLESIA']);
+  });
+
+  it('S-04 retirado: la Coordinación ya no edita la configuración; edita iglesias (E2-06)', () => {
+    const quien = (permiso: (typeof PERMISOS)[number]) =>
+      ROLES.filter((rol) => tienePermiso(rol, permiso));
+    expect(quien('configuracion:editar')).toEqual(['ADMIN_IGLESIA']);
+    expect(tienePermiso('COORDINACION', 'configuracion:leer')).toBe(true);
+    expect(tienePermiso('COORDINACION', 'iglesias:editar')).toBe(true);
   });
 });

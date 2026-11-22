@@ -178,7 +178,9 @@ export class MinisteriosDelMiembro {
   protected readonly opciones = computed(() =>
     (valorDe(this.catalogo)?.data ?? []).filter(
       (m) =>
-        this.servicio.puedeGestionarIntegrantes(m) && !this.actuales().some((a) => a.id === m.id),
+        m.activo &&
+        this.servicio.puedeGestionarIntegrantes(m) &&
+        !this.actuales().some((a) => a.id === m.id),
     ),
   );
   protected readonly fecha = formatearFecha;

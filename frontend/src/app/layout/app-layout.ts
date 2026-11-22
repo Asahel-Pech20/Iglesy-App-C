@@ -55,6 +55,7 @@ export class AppLayout {
   private readonly temaService = inject(TemaService);
 
   protected readonly usuario = this.sesion.usuario;
+  protected readonly iglesia = this.sesion.iglesia;
   protected readonly etiquetasRol = ETIQUETAS_ROL;
   protected readonly movil = toSignal(
     inject(BreakpointObserver)

@@ -8,7 +8,12 @@ import { createServer } from 'node:net';
 import os from 'node:os';
 
 const GB = 1024 ** 3;
-const NODE_MINIMO = 22;
+// Angular 21 pide Node ^22.12 o >=24 (la 23 no la soporta); el backend, 22 o superior
+const NODE_REQUERIDO = '22.12 o superior (o 24 o superior)';
+function nodeCompatible(version) {
+  const [mayor, menor] = version.split('.').map(Number);
+  return (mayor === 22 && menor >= 12) || mayor >= 24;
+}
 const PNPM_ESPERADO = '12.16.1';
 const PUERTOS = {
   5432: 'PostgreSQL',
@@ -64,11 +69,10 @@ if (discoLibre !== null) console.log(`  Disco libre: ${discoLibre.toFixed(1)} GB
 const problemas = [];
 
 titulo('🧰 Herramientas');
-const versionNode = Number(process.versions.node.split('.')[0]);
-if (versionNode >= NODE_MINIMO) ok(`Node ${process.versions.node}`);
+if (nodeCompatible(process.versions.node)) ok(`Node ${process.versions.node}`);
 else {
   falla(
-    `Node ${process.versions.node}: se necesita ${NODE_MINIMO} o superior (https://nodejs.org, versión LTS)`,
+    `Node ${process.versions.node}: se necesita Node ${NODE_REQUERIDO}. Instala la versión LTS de https://nodejs.org`,
   );
   problemas.push('node');
 }

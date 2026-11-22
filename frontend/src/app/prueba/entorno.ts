@@ -24,7 +24,10 @@ export async function abrirApp(url: string, opciones: { como?: string } = {}) {
       provideZonelessChangeDetection(),
       provideRouter(routes, withComponentInputBinding()),
       provideHttpClient(withInterceptors([interceptorApi, interceptorMocks])),
-      { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
+      {
+        provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+        useValue: { appearance: 'outline', subscriptSizing: 'dynamic' },
+      },
     ],
   });
   const sesion = TestBed.inject(SesionService);

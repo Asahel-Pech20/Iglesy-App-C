@@ -35,6 +35,23 @@ function appDePrueba() {
       meta: { target: ['email'] },
     });
   });
+  // Forma real de Prisma 7 + adaptador pg ante un CHECK (A2-E1-02)
+  app.get('/check', () => {
+    throw Object.assign(new Error('prisma'), {
+      name: 'PrismaClientKnownRequestError',
+      code: 'P2039',
+      meta: {
+        modelName: 'Usuario',
+        driverAdapterError: {
+          cause: {
+            originalCode: '23514',
+            originalMessage: 'new row for relation "usuarios" violates check constraint "regla_x"',
+            detail: 'Failing row contains (dato-personal@correo.local)',
+          },
+        },
+      },
+    });
+  });
   app.get('/inesperado', () => {
     throw new Error('fallo interno con datos sensibles');
   });
@@ -85,6 +102,14 @@ describe('manejarErrores', () => {
     const noExiste = await request(appDePrueba()).get('/prisma/P2025');
     expect(noExiste.status).toBe(404);
     expect(noExiste.body.error.code).toBe('NOT_FOUND');
+  });
+
+  it('traduce una violación de CHECK de la BD a 422 sin exponer la fila (A2-E1-02)', async () => {
+    const res = await request(appDePrueba()).get('/check');
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe('BUSINESS_RULE');
+    expect(JSON.stringify(res.body)).not.toContain('dato-personal');
+    expect(JSON.stringify(res.body)).not.toContain('regla_x');
   });
 
   it('responde 404 en rutas inexistentes', async () => {

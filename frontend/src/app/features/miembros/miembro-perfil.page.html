@@ -75,11 +75,37 @@
       </div>
     </mat-tab>
 
-    <mat-tab label="Asistencia">
-      <section class="tarjeta pestana">
-        <app-asistencia-del-miembro [miembroId]="miembro.id" />
-      </section>
-    </mat-tab>
+    <!-- Solo con permiso de asistencia: el TESORERO no la ve (specs.md §3) -->
+    @if (verAsistencia()) {
+      <mat-tab label="Asistencia">
+        <div class="columna pestana">
+          <!-- El resumen abarca todos los eventos: solo llega con asistencia:leer -->
+          @if (miembro.resumenAsistencia; as resumen) {
+            <div class="rejilla-2">
+              <app-stat-card
+                [titulo]="'Asistencia de los últimos ' + resumen.meses + ' meses'"
+                [valor]="resumen.porcentaje === null ? 'Sin registros' : resumen.porcentaje + ' %'"
+                [icono]="iconos.Percent"
+              >
+                {{ resumen.presentes }} de {{ resumen.total }} eventos
+              </app-stat-card>
+              <app-stat-card
+                titulo="Último evento asistido"
+                [valor]="resumen.ultimaAsistencia?.titulo ?? 'Ninguno'"
+                [icono]="iconos.CalendarCheck"
+              >
+                @if (resumen.ultimaAsistencia; as ultima) {
+                  {{ fechaHora(ultima.fechaInicio) }}
+                }
+              </app-stat-card>
+            </div>
+          }
+          <section class="tarjeta">
+            <app-asistencia-del-miembro [miembroId]="miembro.id" />
+          </section>
+        </div>
+      </mat-tab>
+    }
 
     <!-- Solo con donaciones:leer: sin el permiso no se pide ningún dato financiero -->
     @if (verAportaciones()) {

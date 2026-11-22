@@ -21,6 +21,10 @@ tags:
   - name: Donaciones
   - name: Dashboard
   - name: Reportes
+  - name: Iglesias
+  - name: Catálogos
+  - name: Misas
+  - name: Diezmo
 
 components:
   securitySchemes:
@@ -38,6 +42,27 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    IglesiaId:
+      name: iglesiaId
+      in: path
+      required: true
+      description: Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia).
+      schema: { type: string, format: uuid }
+    MisaId:
+      name: misaId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    DesdeDia:
+      name: desde
+      in: query
+      description: aaaa-mm-dd, hora local de la iglesia
+      schema: { type: string, format: date }
+    HastaDia:
+      name: hasta
+      in: query
+      description: aaaa-mm-dd, incluye el día completo
+      schema: { type: string, format: date }
     Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
     Limit:
       { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
@@ -51,7 +76,7 @@ components:
   schemas:
     Rol:
       type: string
-      enum: [ADMIN, PASTOR, SECRETARIO, TESORERO, COORDINADOR]
+      enum: [COORDINACION, ADMIN_IGLESIA, PASTOR, SECRETARIO, TESORERO, COORDINADOR]
     Error:
       type: object
       properties:
@@ -81,6 +106,63 @@ components:
                 properties:
                   campo: { type: string }
                   mensaje: { type: string }
+    IglesiaDatos:
+      description: Datos de la ficha (E2-06). Opcionales; vacío o null borra el dato.
+      type: object
+      properties:
+        direccion: { type: string, maxLength: 250, nullable: true }
+        estado:
+          { type: string, pattern: '^\d{2}$', nullable: true, description: Clave INEGI del estado }
+        municipio:
+          {
+            type: string,
+            pattern: '^\d{5}$',
+            nullable: true,
+            description: Clave INEGI de 5 dígitos; debe ser del estado (RN-09),
+          }
+        localidad:
+          {
+            type: string,
+            pattern: '^\d{9}$',
+            nullable: true,
+            description: Clave INEGI de 9 dígitos; debe ser del municipio (RN-09),
+          }
+        capacidad: { type: integer, minimum: 1, maximum: 100000, nullable: true }
+        anioConstruccion: { type: integer, minimum: 1500, maximum: 2100, nullable: true }
+        telefono: { type: string, nullable: true, description: 7 a 15 dígitos }
+        correo: { type: string, format: email, nullable: true }
+        latitud:
+          { type: number, minimum: -90, maximum: 90, nullable: true, description: Va con longitud }
+        longitud:
+          { type: number, minimum: -180, maximum: 180, nullable: true, description: Va con latitud }
+    LugarInegi:
+      type: object
+      nullable: true
+      properties:
+        clave: { type: string }
+        nombre: { type: string }
+    Iglesia:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nombre: { type: string }
+        tipo: { type: string, enum: [CATEDRAL, BASILICA, PARROQUIA, TEMPLO, CAPILLA, SANTUARIO] }
+        zonaHoraria: { type: string }
+        activa: { type: boolean }
+        direccion: { type: string, nullable: true }
+        estado: { $ref: '#/components/schemas/LugarInegi' }
+        municipio: { $ref: '#/components/schemas/LugarInegi' }
+        localidad: { $ref: '#/components/schemas/LugarInegi' }
+        capacidad: { type: integer, nullable: true }
+        anioConstruccion: { type: integer, nullable: true }
+        telefono: { type: string, nullable: true }
+        correo: { type: string, nullable: true }
+        latitud: { type: string, nullable: true, example: '19.043100' }
+        longitud: { type: string, nullable: true, example: '-98.198200' }
+        fechaCierre: { type: string, format: date, nullable: true }
+        motivoCierre: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     Meta:
       type: object
       properties:
@@ -96,6 +178,13 @@ components:
         email: { type: string, format: email }
         rol: { $ref: '#/components/schemas/Rol' }
         activo: { type: boolean }
+        iglesiaId:
+          {
+            type: string,
+            format: uuid,
+            nullable: true,
+            description: Null solo para la Coordinación,
+          }
         ultimoAcceso: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
@@ -106,6 +195,14 @@ components:
         permisos:
           type: array
           items: { type: string, example: 'miembros:leer' }
+        iglesia:
+          type: object
+          nullable: true
+          description: Iglesia del personal (E1-02); null solo en la Coordinación
+          properties:
+            id: { type: string, format: uuid }
+            nombre: { type: string }
+            activa: { type: boolean }
     Configuracion:
       type: object
       properties:
@@ -597,10 +694,224 @@ paths:
         '204': { $ref: '#/components/responses/SinContenido' }
         '400': { $ref: '#/components/responses/Validacion' }
 
+  /iglesias:
+    get:
+      tags: [Iglesias]
+      summary: Listar las iglesias del sistema (iglesias:leer, solo la Coordinación)
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - { name: q, in: query, schema: { type: string }, description: Busca por nombre }
+        - { name: estado, in: query, schema: { type: string, pattern: '^\d{2}$' } }
+        - { name: municipio, in: query, schema: { type: string, pattern: '^\d{5}$' } }
+        - {
+            name: tipo,
+            in: query,
+            schema:
+              { type: string, enum: [CATEDRAL, BASILICA, PARROQUIA, TEMPLO, CAPILLA, SANTUARIO] },
+          }
+        - name: situacion
+          in: query
+          description: Incluir cerradas (RF-12)
+          schema: { type: string, enum: [activas, cerradas, todas], default: todas }
+      responses:
+        '200': { description: Lista paginada de iglesias }
+        '403': { $ref: '#/components/responses/Prohibido' }
+    post:
+      tags: [Iglesias]
+      summary: Crear una iglesia (iglesias:crear, solo la Coordinación; RF-07, RN-09)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/IglesiaDatos'
+                - type: object
+                  required: [nombre, tipo]
+                  properties:
+                    nombre: { type: string, maxLength: 150 }
+                    tipo:
+                      {
+                        type: string,
+                        enum: [CATEDRAL, BASILICA, PARROQUIA, TEMPLO, CAPILLA, SANTUARIO],
+                      }
+                    zonaHoraria: { type: string, default: America/Mexico_City }
+      responses:
+        '201':
+          description: Creada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { data: { $ref: '#/components/schemas/Iglesia' } }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+
+  /iglesias/{iglesiaId}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+    get:
+      tags: [Iglesias]
+      summary: Detalle de una iglesia (Coordinación, o el administrador de esa iglesia)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { data: { $ref: '#/components/schemas/Iglesia' } }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    patch:
+      tags: [Iglesias]
+      summary: Editar los datos (iglesias:editar; el administrador solo la suya, RF-08)
+      description: Cambiar el estado sin enviar municipio deja la iglesia sin municipio ni localidad.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/IglesiaDatos'
+                - type: object
+                  properties:
+                    nombre: { type: string, maxLength: 150 }
+                    tipo:
+                      {
+                        type: string,
+                        enum: [CATEDRAL, BASILICA, PARROQUIA, TEMPLO, CAPILLA, SANTUARIO],
+                      }
+                    zonaHoraria: { type: string }
+      responses:
+        '200': { description: Editada }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/cierre:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+    post:
+      tags: [Iglesias]
+      summary: Cerrar una iglesia sin borrar su historia (iglesias:cerrar, solo la Coordinación; RF-11, RN-07)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fecha, motivo]
+              properties:
+                fecha: { type: string, format: date, description: No futura }
+                motivo: { type: string, minLength: 3, maxLength: 500 }
+      responses:
+        '200': { description: Cerrada }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /public/estados:
+    get:
+      tags: [Catálogos]
+      security: []
+      summary: Los estados del catálogo del INEGI (sin sesión, paginado)
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string, maxLength: 100 },
+            description: Busca por nombre,
+          }
+      responses:
+        '200': { description: 'Lista paginada de { clave, nombre }, ordenados por clave' }
+        '400': { $ref: '#/components/responses/Validacion' }
+
+  /public/estados/{clave}/municipios:
+    get:
+      tags: [Catálogos]
+      security: []
+      summary: Municipios de un estado (sin sesión, paginado)
+      parameters:
+        - { name: clave, in: path, required: true, schema: { type: string, pattern: '^\d{2}$' } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string, maxLength: 100 },
+            description: Busca por nombre,
+          }
+      responses:
+        '200': { description: 'Lista paginada de { clave, nombre }, ordenados por nombre' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /public/municipios/{clave}/localidades:
+    get:
+      tags: [Catálogos]
+      security: []
+      summary: Localidades de un municipio (sin sesión, paginado)
+      parameters:
+        - { name: clave, in: path, required: true, schema: { type: string, pattern: '^\d{5}$' } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string, maxLength: 100 },
+            description: Busca por nombre,
+          }
+      responses:
+        '200': { description: 'Lista paginada de { clave, nombre }, ordenadas por nombre' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /catalogos/importacion:
+    post:
+      tags: [Catálogos]
+      summary: Cargar o actualizar el catálogo del INEGI (catalogos:gestionar, solo la Coordinación; RF-10)
+      description: >
+        Inserta lo nuevo y actualiza nombres; nunca borra. Todo o nada. Para el archivo completo usa
+        el script `pnpm --filter backend db:catalogos <archivo.csv>`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filas]
+              properties:
+                filas:
+                  type: array
+                  minItems: 1
+                  maxItems: 5000
+                  items:
+                    type: object
+                    required: [cveEnt, nomEnt]
+                    properties:
+                      cveEnt: { type: string, pattern: '^\d{2}$' }
+                      nomEnt: { type: string }
+                      cveMun: { type: string, pattern: '^\d{3}$' }
+                      nomMun: { type: string }
+                      cveLoc: { type: string, pattern: '^\d{4}$' }
+                      nomLoc: { type: string }
+      responses:
+        '200': { description: '{ leidas, cambiadas } por nivel' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+
   /usuarios:
     get:
       tags: [Usuarios]
-      summary: Listar usuarios (ADMIN)
+      summary: Listar usuarios (ADMIN_IGLESIA)
       parameters:
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/Limit' }
@@ -626,7 +937,7 @@ paths:
         '403': { $ref: '#/components/responses/Prohibido' }
     post:
       tags: [Usuarios]
-      summary: Crear usuario (ADMIN). Sin password se envía invitación por correo (48 h).
+      summary: Crear usuario (ADMIN_IGLESIA). Sin password se envía invitación por correo (48 h).
       requestBody:
         required: true
         content:
@@ -640,6 +951,12 @@ paths:
                   email: { type: string },
                   rol: { $ref: '#/components/schemas/Rol' },
                   password: { type: string },
+                  iglesiaId:
+                    {
+                      type: string,
+                      format: uuid,
+                      description: Solo la Coordinación la indica (el administrador crea en su iglesia; los usuarios de la Coordinación no tienen),
+                    },
                 }
       responses:
         '201':
@@ -663,7 +980,7 @@ paths:
   /usuarios/opciones:
     get:
       tags: [Usuarios]
-      summary: Usuarios activos para selectores (ADMIN, PASTOR)
+      summary: Usuarios activos para selectores (ADMIN_IGLESIA, PASTOR)
       parameters:
         - { name: rol, in: query, schema: { $ref: '#/components/schemas/Rol' } }
       responses:
@@ -697,7 +1014,7 @@ paths:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     get:
       tags: [Usuarios]
-      summary: Detalle de usuario (ADMIN)
+      summary: Detalle de usuario (ADMIN_IGLESIA)
       responses:
         '200':
           {
@@ -717,7 +1034,7 @@ paths:
         '404': { $ref: '#/components/responses/NoEncontrado' }
     patch:
       tags: [Usuarios]
-      summary: Editar nombre, correo o rol (ADMIN)
+      summary: Editar nombre, correo o rol (ADMIN_IGLESIA)
       requestBody:
         required: true
         content:
@@ -758,7 +1075,7 @@ paths:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     patch:
       tags: [Usuarios]
-      summary: Activar o desactivar (ADMIN). Desactivar revoca sus sesiones.
+      summary: Activar o desactivar (ADMIN_IGLESIA). Desactivar revoca sus sesiones.
       requestBody:
         required: true
         content:
@@ -790,7 +1107,7 @@ paths:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     post:
       tags: [Usuarios]
-      summary: Reenvía el correo para configurar contraseña (ADMIN)
+      summary: Reenvía el correo para configurar contraseña (ADMIN_IGLESIA)
       responses:
         '204': { $ref: '#/components/responses/SinContenido' }
         '422': { $ref: '#/components/responses/ReglaNegocio' }
@@ -818,7 +1135,7 @@ paths:
           }
     put:
       tags: [Configuración]
-      summary: Actualizar datos de la iglesia (ADMIN)
+      summary: Actualizar datos de la iglesia (ADMIN_IGLESIA)
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/Configuracion' } } }
@@ -843,7 +1160,7 @@ paths:
   /configuracion/logo:
     post:
       tags: [Configuración]
-      summary: Subir logotipo (ADMIN). PNG, JPG, WEBP o SVG ≤ 2 MB.
+      summary: Subir logotipo (ADMIN_IGLESIA). PNG, JPG, WEBP o SVG ≤ 2 MB.
       requestBody:
         required: true
         content:
@@ -897,7 +1214,7 @@ paths:
           }
     post:
       tags: [Configuración]
-      summary: Agregar horario (ADMIN)
+      summary: Agregar horario (ADMIN_IGLESIA)
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/Horario' } } }
@@ -908,7 +1225,7 @@ paths:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     patch:
       tags: [Configuración]
-      summary: Editar horario (ADMIN)
+      summary: Editar horario (ADMIN_IGLESIA)
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/Horario' } } }
@@ -918,7 +1235,7 @@ paths:
         '404': { $ref: '#/components/responses/NoEncontrado' }
     delete:
       tags: [Configuración]
-      summary: Eliminar horario (ADMIN)
+      summary: Eliminar horario (ADMIN_IGLESIA)
       responses:
         '204': { $ref: '#/components/responses/SinContenido' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
@@ -991,6 +1308,7 @@ paths:
     get:
       tags: [Miembros]
       summary: Detalle con ministerios (actuales e históricos)
+      description: Con `asistencia:leer` incluye `resumenAsistencia { meses, presentes, total, porcentaje, ultimaAsistencia }` de los últimos 3 meses; sin ese permiso el campo se omite.
       responses:
         '200': { description: OK }
         '404': { $ref: '#/components/responses/NoEncontrado' }
@@ -1045,7 +1363,7 @@ paths:
                   meta: { $ref: '#/components/schemas/Meta' }
     post:
       tags: [Ministerios]
-      summary: Crear (ADMIN, PASTOR); nombre único sin distinguir mayúsculas
+      summary: Crear (ADMIN_IGLESIA, PASTOR); nombre único sin distinguir mayúsculas
       requestBody:
         required: true
         content:
@@ -1068,7 +1386,7 @@ paths:
         '404': { $ref: '#/components/responses/NoEncontrado' }
     patch:
       tags: [Ministerios]
-      summary: Editar nombre / descripción (ADMIN, PASTOR)
+      summary: Editar nombre / descripción (ADMIN_IGLESIA, PASTOR)
       responses:
         '200': { description: OK }
         '409': { $ref: '#/components/responses/Conflicto' }
@@ -1076,7 +1394,7 @@ paths:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     patch:
       tags: [Ministerios]
-      summary: Desactivar / reactivar (ADMIN, PASTOR)
+      summary: Desactivar / reactivar (ADMIN_IGLESIA, PASTOR)
       requestBody:
         required: true
         content:
@@ -1088,7 +1406,7 @@ paths:
     parameters: [{ $ref: '#/components/parameters/Id' }]
     put:
       tags: [Ministerios]
-      summary: Reemplazar coordinadores (ADMIN, PASTOR)
+      summary: Reemplazar coordinadores (ADMIN_IGLESIA, PASTOR)
       description: Solo usuarios activos con rol COORDINADOR o PASTOR. Lista vacía permitida.
       requestBody:
         required: true
@@ -1123,7 +1441,7 @@ paths:
                   meta: { $ref: '#/components/schemas/Meta' }
     post:
       tags: [Ministerios]
-      summary: Vincular miembros (ADMIN, PASTOR o COORDINADOR del ministerio)
+      summary: Vincular miembros (ADMIN_IGLESIA, PASTOR o COORDINADOR del ministerio)
       description: Reactiva vínculos previos; ids repetidos se ignoran; todo o nada.
       requestBody:
         required: true
@@ -1143,7 +1461,7 @@ paths:
       - { name: miembroId, in: path, required: true, schema: { type: string, format: uuid } }
     delete:
       tags: [Ministerios]
-      summary: Desvincular (soft, guarda fechaSalida); ADMIN, PASTOR o COORDINADOR del ministerio
+      summary: Desvincular (soft, guarda fechaSalida); ADMIN_IGLESIA, PASTOR o COORDINADOR del ministerio
       responses:
         '204': { $ref: '#/components/responses/SinContenido' }
         '403': { $ref: '#/components/responses/Prohibido' }
@@ -1492,7 +1810,7 @@ paths:
   /donaciones:
     get:
       tags: [Donaciones]
-      summary: Aportaciones paginadas por fecha desc (donaciones:leer — ADMIN, PASTOR, TESORERO)
+      summary: Aportaciones paginadas por fecha desc (donaciones:leer — ADMIN_IGLESIA, PASTOR, TESORERO)
       description: Excluye anuladas salvo incluirAnuladas=true. meta.totalMonto suma el filtro completo sin anuladas.
       parameters:
         - { $ref: '#/components/parameters/Page' }
@@ -1521,7 +1839,7 @@ paths:
         '403': { $ref: '#/components/responses/Prohibido' }
     post:
       tags: [Donaciones]
-      summary: Registrar aportación (donaciones:crear — ADMIN, TESORERO)
+      summary: Registrar aportación (donaciones:crear — ADMIN_IGLESIA, TESORERO)
       requestBody:
         required: true
         content:
@@ -1710,7 +2028,7 @@ paths:
   /reportes/ingresos:
     get:
       tags: [Reportes]
-      summary: Ingresos por periodo (reportes:ingresos — ADMIN, PASTOR, TESORERO)
+      summary: Ingresos por periodo (reportes:ingresos — ADMIN_IGLESIA, PASTOR, TESORERO)
       parameters:
         - { name: desde, in: query, schema: { type: string, format: date } }
         - { name: hasta, in: query, schema: { type: string, format: date } }
@@ -1723,3 +2041,162 @@ paths:
         '400': { $ref: '#/components/responses/Validacion' }
         '403': { $ref: '#/components/responses/Prohibido' }
         '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  # ───────────── Ecclesia · Misas (versión mínima) y diezmo ─────────────
+  /iglesias/{iglesiaId}/padres:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Misas]
+      summary: Padres registrados (misas:leer)
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    post:
+      tags: [Misas]
+      summary: Registrar un padre (misas:registrar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties: { nombre: { type: string, maxLength: 120 } }
+      responses:
+        '201': { description: Creado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+
+  /iglesias/{iglesiaId}/misas-celebradas:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Misas]
+      summary: Misas celebradas del periodo con su diezmo (misas:leer); por omisión, el mes en curso
+      parameters:
+        - { $ref: '#/components/parameters/DesdeDia' }
+        - { $ref: '#/components/parameters/HastaDia' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+    post:
+      tags: [Misas]
+      summary: Registrar una misa ya celebrada (misas:registrar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inicio, padreId]
+              properties:
+                inicio:
+                  { type: string, format: date-time, description: Instante de inicio (ISO 8601) }
+                padreId: { type: string, format: uuid }
+      responses:
+        '201': { description: Creado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/misas-celebradas/{misaId}/diezmo:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { $ref: '#/components/parameters/MisaId' }
+    post:
+      tags: [Diezmo]
+      summary: Capturar el diezmo de una misa celebrada, una sola vez (diezmo:capturar, TESORERO)
+      description: >
+        El monto viaja como texto con hasta 2 decimales. 409 si la misa ya tiene captura (se corrige con PATCH);
+        422 si la misa todavía no se celebra.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monto]
+              properties: { monto: { type: string, example: '1250.50' } }
+      responses:
+        '201': { description: Creado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+    get:
+      tags: [Diezmo]
+      summary: Captura vigente con su historial de correcciones (diezmo:leer, ADMIN_IGLESIA y TESORERO)
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    patch:
+      tags: [Diezmo]
+      summary: Corregir el monto; guarda quién, cuándo y la cantidad anterior (diezmo:capturar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monto]
+              properties: { monto: { type: string, example: '1520.50' } }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/diezmos:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Diezmo]
+      summary: Capturas del periodo, la más reciente primero (diezmo:leer)
+      parameters:
+        - { $ref: '#/components/parameters/DesdeDia' }
+        - { $ref: '#/components/parameters/HastaDia' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+
+  /iglesias/{iglesiaId}/diezmo/resumen:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Diezmo]
+      summary: Total, promedio por misa y misas con más y con menos diezmo (diezmo:leer)
+      description: Sumas en SQL sobre Decimal(12,2). Reporte solo para el personal de esa iglesia.
+      parameters:
+        - { $ref: '#/components/parameters/DesdeDia' }
+        - { $ref: '#/components/parameters/HastaDia' }
+      responses:
+        '200': { description: 'OK: desde, hasta, misas, total, promedio, conMas y conMenos' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+
+  /iglesias/{iglesiaId}/diezmo/agrupado:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Diezmo]
+      summary: Diezmo por día, semana, mes, horario de misa o padre, en la hora local de la iglesia (diezmo:leer)
+      parameters:
+        - { $ref: '#/components/parameters/DesdeDia' }
+        - { $ref: '#/components/parameters/HastaDia' }
+        - name: por
+          in: query
+          required: true
+          schema: { type: string, enum: [dia, semana, mes, horario, padre] }
+      responses:
+        '200': { description: 'OK: desde, hasta, por y grupos con clave, etiqueta, misas y total' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }

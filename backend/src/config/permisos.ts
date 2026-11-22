@@ -2,7 +2,15 @@
 // frontend/src/lib/permisos.ts es una copia exacta de PERMISOS y PERMISOS_POR_ROL (F1).
 // Sufijo "-propio": solo sobre ministerios donde el usuario es coordinador (ver esCoordinadorDe).
 
-export const ROLES = ['ADMIN', 'PASTOR', 'SECRETARIO', 'TESORERO', 'COORDINADOR'] as const;
+// COORDINACION es nacional (sin iglesia); los demás roles pertenecen a una iglesia (Usuario.iglesiaId).
+export const ROLES = [
+  'COORDINACION',
+  'ADMIN_IGLESIA',
+  'PASTOR',
+  'SECRETARIO',
+  'TESORERO',
+  'COORDINADOR',
+] as const;
 export type RolUsuario = (typeof ROLES)[number];
 
 export const PERMISOS = [
@@ -47,6 +55,21 @@ export const PERMISOS = [
   'reportes:generales',
   'reportes:generales-propio',
   'reportes:ingresos',
+  // Ecclesia: diezmo de las misas y solicitudes de espacio (criptas, nichos, columbarios, osarios)
+  'diezmo:capturar',
+  'diezmo:leer',
+  'espacios:leer',
+  'espacios:gestionar',
+  // Misas celebradas y padres (versión mínima que necesita el diezmo)
+  'misas:leer',
+  'misas:registrar',
+  // Iglesias del sistema nacional (solo la Coordinación)
+  'iglesias:leer',
+  'iglesias:crear',
+  // E2-05 y E2-06 (Nataly): catálogo del INEGI, edición y cierre de iglesias
+  'iglesias:editar',
+  'iglesias:cerrar',
+  'catalogos:gestionar',
 ] as const;
 
 export type Permiso = (typeof PERMISOS)[number];
@@ -55,11 +78,25 @@ const CLED = (modulo: string) =>
   ['crear', 'leer', 'editar', 'eliminar'].map((accion) => `${modulo}:${accion}`) as Permiso[];
 
 export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
-  ADMIN: [
+  // Personal de la Coordinación Nacional: usuarios y configuración. No ve el diezmo ni los datos de
+  // los solicitantes de espacio, que son solo del personal de cada iglesia (RNF-08, RNF-09).
+  COORDINACION: [
+    ...CLED('usuarios'),
+    'usuarios:opciones',
+    'configuracion:leer',
+    'iglesias:leer',
+    'iglesias:crear',
+    'iglesias:editar',
+    'iglesias:cerrar',
+    'catalogos:gestionar',
+  ],
+  ADMIN_IGLESIA: [
     ...CLED('usuarios'),
     'usuarios:opciones',
     'configuracion:leer',
     'configuracion:editar',
+    // Datos de SU iglesia (RF-08); alcanceIglesia impide tocar otra
+    'iglesias:editar',
     ...CLED('miembros'),
     ...CLED('ministerios'),
     ...CLED('eventos'),
@@ -71,6 +108,11 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'dashboard:leer',
     'reportes:generales',
     'reportes:ingresos',
+    'diezmo:leer',
+    'espacios:leer',
+    'espacios:gestionar',
+    'misas:leer',
+    'misas:registrar',
   ],
   PASTOR: [
     'usuarios:opciones',
@@ -108,6 +150,9 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     ...CLED('donaciones'),
     'dashboard:leer',
     'reportes:ingresos',
+    'diezmo:capturar',
+    'diezmo:leer',
+    'misas:leer',
   ],
   COORDINADOR: [
     'configuracion:leer',

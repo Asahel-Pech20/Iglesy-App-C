@@ -26,7 +26,7 @@ describe('plantilla de módulo', () => {
   });
 
   it('validación: query inválida → 400', async () => {
-    const { auth } = await loginComo('ADMIN');
+    const { auth } = await loginComo('ADMIN_IGLESIA');
     const res = await request(app).get('/ejemplo?limit=500').set('Authorization', auth);
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
@@ -38,7 +38,7 @@ describe('plantilla de módulo', () => {
   });
 
   it('no encontrado → 404', async () => {
-    const { auth } = await loginComo('ADMIN');
+    const { auth } = await loginComo('ADMIN_IGLESIA');
     const res = await request(app)
       .get('/ejemplo/00000000-0000-4000-8000-000000000000')
       .set('Authorization', auth);

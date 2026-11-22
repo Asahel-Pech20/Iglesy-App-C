@@ -9,7 +9,11 @@ declare global {
         nombre: string;
         email: string;
         rol: RolUsuario;
+        /** Iglesia del personal; null solo para la Coordinación (alcance nacional). */
+        iglesiaId: string | null;
       };
+      /** Iglesia del recurso, ya verificada por `alcanceIglesia` (ver `iglesiaAlcanceDe`). */
+      iglesiaAlcance?: string;
     }
   }
 }

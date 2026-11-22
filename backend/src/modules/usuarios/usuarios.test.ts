@@ -9,7 +9,10 @@ let app: ReturnType<typeof crearApp>;
 let admin: Awaited<ReturnType<typeof loginComo>>;
 beforeEach(async () => {
   app = crearApp();
-  admin = await loginComo('ADMIN', { nombre: 'Admin Principal', email: 'admin@prueba.local' });
+  admin = await loginComo('ADMIN_IGLESIA', {
+    nombre: 'Admin Principal',
+    email: 'admin@prueba.local',
+  });
 });
 
 const api = () => ({
@@ -109,7 +112,7 @@ describe('POST /usuarios (B1-13, B1-14)', () => {
     const res = await api().post('/usuarios', {
       nombre: 'X',
       email: 'x@prueba.local',
-      rol: 'ADMIN',
+      rol: 'ADMIN_IGLESIA',
       esJefe: true,
     });
     expect(res.status).toBe(400);
@@ -121,7 +124,7 @@ describe('POST /usuarios (B1-13, B1-14)', () => {
       (
         await api().post(
           '/usuarios',
-          { nombre: 'X', email: 'x@p.local', rol: 'ADMIN' },
+          { nombre: 'X', email: 'x@p.local', rol: 'ADMIN_IGLESIA' },
           secretario.auth,
         )
       ).status,
@@ -145,31 +148,22 @@ describe('PATCH /usuarios/:id y /estado (B1-13)', () => {
     expect((await api().get('/usuarios/abc')).status).toBe(400);
   });
 
-  it('no se puede quitar el rol ADMIN al último administrador activo → 422', async () => {
+  it('no se puede quitar el rol ADMIN_IGLESIA al último administrador activo → 422', async () => {
     const res = await api().patch(`/usuarios/${admin.usuario.id}`, { rol: 'PASTOR' });
     expect(res.status).toBe(422);
-    expect(res.body.error.message).toBe('Debe existir al menos un administrador activo.');
+    expect(res.body.error.message).toBe(
+      'Debe existir al menos un administrador activo en la iglesia.',
+    );
   });
 
-  it('no se puede desactivar al último administrador activo → 422', async () => {
-    const segundo = await loginComo('ADMIN');
-    // Con dos admins activos, uno puede desactivar al otro
-    expect(
-      (await api().patch(`/usuarios/${admin.usuario.id}/estado`, { activo: false }, segundo.auth))
-        .status,
-    ).toBe(200);
-    // Un admin inactivo no cuenta: `segundo` es ahora el último
-    const res = await api().patch(
-      `/usuarios/${segundo.usuario.id}`,
-      { rol: 'PASTOR' },
-      segundo.auth,
-    );
+  it('el único encargado no puede quitarse el rol: la iglesia quedaría sin encargado → 422', async () => {
+    // E1-09: cada iglesia tiene un solo encargado activo; lo reemplaza la Coordinación
+    const res = await api().patch(`/usuarios/${admin.usuario.id}`, { rol: 'PASTOR' });
     expect(res.status).toBe(422);
     expect(res.body.error.code).toBe('BUSINESS_RULE');
   });
 
-  it('un ADMIN no puede desactivarse a sí mismo → 422', async () => {
-    await crearUsuario('ADMIN');
+  it('un ADMIN_IGLESIA no puede desactivarse a sí mismo → 422', async () => {
     const res = await api().patch(`/usuarios/${admin.usuario.id}/estado`, { activo: false });
     expect(res.status).toBe(422);
     expect(res.body.error.message).toBe('No puedes desactivar tu propia cuenta.');
@@ -193,7 +187,7 @@ describe('PATCH /usuarios/:id y /estado (B1-13)', () => {
 });
 
 describe('GET /usuarios/opciones', () => {
-  it('ADMIN y PASTOR obtienen solo activos con { id, nombre, rol }', async () => {
+  it('ADMIN_IGLESIA y PASTOR obtienen solo activos con { id, nombre, rol }', async () => {
     await crearUsuario('COORDINADOR', { nombre: 'Coordinadora Activa' });
     await crearUsuario('COORDINADOR', { nombre: 'Coordinador Inactivo', activo: false });
     const pastor = await loginComo('PASTOR');

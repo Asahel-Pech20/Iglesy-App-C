@@ -13,7 +13,7 @@ import {
 } from './donaciones.schemas';
 
 const porId = validar({ params: esquemaIdDonacion });
-// Información financiera: solo ADMIN, TESORERO y PASTOR (lectura) — specs.md §3, RF-06.5
+// Información financiera: solo ADMIN_IGLESIA, TESORERO y PASTOR (lectura) — specs.md §3, RF-06.5
 const leer = autorizar('donaciones:leer');
 
 export const donacionesRouter = Router();

@@ -14,11 +14,23 @@ datasource db {
 // ───────────── Enums ─────────────
 
 enum Rol {
-  ADMIN
+  // Nacional (Ecclesia): sin iglesia asignada
+  COORDINACION
+  // Antes ADMIN; administrador de una iglesia
+  ADMIN_IGLESIA
   PASTOR
   SECRETARIO
   TESORERO
   COORDINADOR
+}
+
+enum TipoIglesia {
+  CATEDRAL
+  BASILICA
+  PARROQUIA
+  TEMPLO
+  CAPILLA
+  SANTUARIO
 }
 
 enum TipoEvento {
@@ -63,16 +75,22 @@ enum PrioridadAnuncio {
 // ───────────── B1 · Usuarios y autenticación ─────────────
 
 model Usuario {
-  id           String    @id @default(uuid())
-  nombre       String
-  email        String    @unique
+  id                 String             @id @default(uuid())
+  nombre             String
+  email              String             @unique
   // Nulo mientras el usuario no configura su contraseña desde la invitación (B1-14)
-  passwordHash String?
-  rol          Rol
-  activo       Boolean   @default(true)
-  ultimoAcceso DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  passwordHash       String?
+  rol                Rol
+  // Iglesia a la que pertenece el personal. Nulo solo para la Coordinación (alcance nacional).
+  iglesiaId          String?
+  // Restrict: una iglesia con personal no se borra (se cierra con `activa = false`)
+  iglesia            Iglesia?           @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+  diezmosCapturados  Diezmo[]           @relation("DiezmoCapturador")
+  correccionesDiezmo DiezmoCorreccion[] @relation("DiezmoCorrector")
+  activo             Boolean            @default(true)
+  ultimoAcceso       DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   refreshTokens          RefreshToken[]
   resetTokens            PasswordResetToken[]
@@ -83,6 +101,7 @@ model Usuario {
   donacionesActualizadas Donacion[]              @relation("DonacionActualizador")
   anuncios               Anuncio[]
 
+  @@index([iglesiaId])
   @@map("usuarios")
 }
 
@@ -294,6 +313,155 @@ model Donacion {
   @@index([fecha])
   @@index([miembroId])
   @@map("donaciones")
+}
+
+// ───────────── Ecclesia · Iglesias ─────────────
+
+// Una fila por iglesia. Reemplaza a la fila única de ConfiguracionIglesia; la ficha completa
+// (dirección, INEGI, contacto, patrimonio) la amplía el módulo de iglesias.
+model Iglesia {
+  id          String      @id @default(uuid())
+  nombre      String
+  tipo        TipoIglesia
+  zonaHoraria String      @default("America/Mexico_City")
+  // Una iglesia cerrada conserva su historia pero no aparece en consultas públicas
+  activa      Boolean     @default(true)
+
+  // E2-06 (Nataly): ubicación del catálogo del INEGI (RN-09 se valida en iglesias.service) y datos
+  // de la ficha (RF-07). Opcionales mientras no se carguen el catálogo y los seeds (E2-05, E2-09).
+  direccion        String?
+  estadoClave      String?   @db.Char(2)
+  municipioClave   String?   @db.Char(5)
+  localidadClave   String?   @db.Char(9)
+  capacidad        Int?
+  anioConstruccion Int?
+  telefono         String?
+  correo           String?
+  latitud          Decimal?  @db.Decimal(9, 6)
+  longitud         Decimal?  @db.Decimal(9, 6)
+  // Cierre sin borrar la historia (RF-11, RN-07)
+  fechaCierre      DateTime? @db.Date
+  motivoCierre     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  estado    Estado?    @relation(fields: [estadoClave], references: [clave], onDelete: Restrict)
+  municipio Municipio? @relation(fields: [municipioClave], references: [clave], onDelete: Restrict)
+  localidad Localidad? @relation(fields: [localidadClave], references: [clave], onDelete: Restrict)
+
+  usuarios Usuario[]
+  misas    MisaCelebrada[]
+  diezmos  Diezmo[]
+
+  @@index([estadoClave, activa])
+  @@index([municipioClave])
+  @@map("iglesias")
+}
+
+// ───────────── Ecclesia · Catálogo del INEGI (E2-05, Nataly) ─────────────
+// Claves oficiales: estado (2 dígitos), estado + municipio (5) y estado + municipio + localidad (9).
+
+model Estado {
+  clave  String @id @db.Char(2)
+  nombre String
+
+  municipios Municipio[]
+  iglesias   Iglesia[]
+
+  @@map("estados")
+}
+
+model Municipio {
+  clave       String @id @db.Char(5)
+  estadoClave String @db.Char(2)
+  nombre      String
+
+  estado      Estado      @relation(fields: [estadoClave], references: [clave], onDelete: Restrict)
+  localidades Localidad[]
+  iglesias    Iglesia[]
+
+  @@index([estadoClave])
+  @@map("municipios")
+}
+
+model Localidad {
+  clave          String @id @db.Char(9)
+  municipioClave String @db.Char(5)
+  nombre         String
+
+  municipio Municipio @relation(fields: [municipioClave], references: [clave], onDelete: Restrict)
+  iglesias  Iglesia[]
+
+  @@index([municipioClave])
+  @@map("localidades")
+}
+
+// ───────────── Ecclesia · Misas y diezmo ─────────────
+
+// Padre que oficia misas. Versión mínima que necesita el diezmo; el módulo de misas la amplía
+// (asociación a varias iglesias, agenda, horario semanal).
+model Padre {
+  id        String   @id @default(uuid())
+  nombre    String
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  misas MisaCelebrada[]
+
+  @@map("padres")
+}
+
+// Hecho: un día, una hora y el padre que realmente ofició la misa (RN-29). Versión mínima.
+model MisaCelebrada {
+  id        String   @id @default(uuid())
+  iglesiaId String
+  iglesia   Iglesia  @relation(fields: [iglesiaId], references: [id])
+  // Instante de inicio (UTC); la hora local es la de la zona horaria de la iglesia
+  inicio    DateTime
+  padreId   String
+  padre     Padre    @relation(fields: [padreId], references: [id])
+  createdAt DateTime @default(now())
+
+  diezmo Diezmo?
+
+  @@index([iglesiaId, inicio])
+  @@map("misas_celebradas")
+}
+
+// Diezmo recogido en una misa. Una sola captura por misa (RN-41); se corrige, no se borra.
+model Diezmo {
+  id             String             @id @default(uuid())
+  misaId         String             @unique
+  misa           MisaCelebrada      @relation(fields: [misaId], references: [id])
+  // Se repite aquí para el alcance por iglesia y los reportes (siempre es la de la misa)
+  iglesiaId      String
+  iglesia        Iglesia            @relation(fields: [iglesiaId], references: [id])
+  monto          Decimal            @db.Decimal(12, 2)
+  capturadoPorId String
+  capturadoPor   Usuario            @relation("DiezmoCapturador", fields: [capturadoPorId], references: [id])
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  correcciones   DiezmoCorreccion[]
+
+  @@index([iglesiaId])
+  @@map("diezmos")
+}
+
+// Historial de correcciones: solo se inserta (un disparador de la BD impide editar o borrar). RN-43.
+model DiezmoCorreccion {
+  id            String   @id @default(uuid())
+  diezmoId      String
+  diezmo        Diezmo   @relation(fields: [diezmoId], references: [id])
+  montoAnterior Decimal  @db.Decimal(12, 2)
+  montoNuevo    Decimal  @db.Decimal(12, 2)
+  hechaPorId    String
+  hechaPor      Usuario  @relation("DiezmoCorrector", fields: [hechaPorId], references: [id])
+  hechaEn       DateTime @default(now())
+
+  @@index([diezmoId])
+  @@map("diezmo_correcciones")
 }
 
 // ───────────── B1 · Configuración de la iglesia ─────────────

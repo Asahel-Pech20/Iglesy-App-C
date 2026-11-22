@@ -20,6 +20,11 @@ import { ConfiguracionService } from '@/app/features/configuracion/configuracion
     </div>
   `,
   styles: `
+    /* En la barra móvil el nombre se recorta con «…» en vez de empujar los botones fuera */
+    :host {
+      display: block;
+      min-width: 0;
+    }
     .marca {
       display: flex;
       min-width: 0;

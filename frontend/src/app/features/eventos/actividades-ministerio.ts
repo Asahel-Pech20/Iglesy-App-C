@@ -4,9 +4,10 @@ import { MatButton } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule, Plus } from 'lucide-angular';
 import { valorDe } from '@/app/core/recurso';
-import { SesionService } from '@/app/core/sesion.service';
+import type { Evento } from '@/app/tipos/eventos';
 import { ListaEventos } from './componentes';
 import { EventosService } from './eventos.service';
+import { PermisosMinisterioService } from './permisos-ministerio.service';
 
 /**
  * Pestaña "Actividades" del ministerio (F2-11): próximos eventos y los pasados.
@@ -34,6 +35,7 @@ import { EventosService } from './eventos.service';
         [eventos]="proximas()"
         [cargando]="consulta.isLoading() && !consulta.hasValue()"
         [error]="consulta.error()"
+        [conEstado]="true"
         vacio="No hay actividades programadas."
         etiqueta="Actividades próximas"
         (reintentar)="consulta.reload()"
@@ -67,11 +69,15 @@ import { EventosService } from './eventos.service';
 })
 export class ActividadesMinisterio {
   readonly ministerioId = input.required<string>();
+  /** Un ministerio inactivo no admite eventos nuevos (el backend respondería 422) */
+  readonly activo = input(true);
   private readonly servicio = inject(EventosService);
-  private readonly sesion = inject(SesionService);
+  private readonly permisos = inject(PermisosMinisterioService);
 
-  protected readonly puedeCrear = computed(() =>
-    this.sesion.puede('eventos:crear', 'eventos:crear-propio'),
+  protected readonly puedeCrear = computed(
+    () =>
+      this.activo() &&
+      this.permisos.puede('eventos:crear', 'eventos:crear-propio', this.ministerioId()),
   );
   protected readonly consulta = rxResource({
     params: () => ({
@@ -81,14 +87,17 @@ export class ActividadesMinisterio {
     }),
     stream: ({ params }) => this.servicio.listar(params),
   });
+  private readonly ahora = new Date().toISOString();
   private readonly todas = computed(() => valorDe(this.consulta)?.data ?? []);
+  /** Programados y cancelados que aún no ocurren (el badge indica el estado) */
+  private esProxima(e: Evento) {
+    return e.estado === 'PROGRAMADO' || (e.estado === 'CANCELADO' && e.fechaInicio >= this.ahora);
+  }
   protected readonly proximas = computed(() =>
     this.todas()
-      .filter((e) => e.estado === 'PROGRAMADO')
+      .filter((e) => this.esProxima(e))
       .sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio)),
   );
-  protected readonly pasadas = computed(() =>
-    this.todas().filter((e) => e.estado !== 'PROGRAMADO'),
-  );
+  protected readonly pasadas = computed(() => this.todas().filter((e) => !this.esProxima(e)));
   protected readonly iconoMas = Plus;
 }

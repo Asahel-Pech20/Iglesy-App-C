@@ -4,7 +4,7 @@
 
 ## Paso 1 — Revisa tu computadora (1 minuto)
 
-Instala solo **Node.js 22 o superior** (<https://nodejs.org>, versión LTS) y **Git** (<https://git-scm.com>), clona el repo y ejecuta en la carpeta del proyecto:
+Instala solo **Node.js 22.12 o superior, o 24 o superior** (<https://nodejs.org>, versión LTS; Angular 21 no funciona con Node 23 ni con un Node 22 anterior al 22.12) y **Git** (<https://git-scm.com>), clona el repo y ejecuta en la carpeta del proyecto:
 
 ```bash
 node scripts/verificar-equipo.mjs
@@ -16,7 +16,7 @@ El script revisa sistema operativo, RAM, disco, Node, pnpm, Git, Docker y los pu
 
 | Tu trabajo | Necesitas | ¿Docker? |
 |---|---|---|
-| **Frontend** (F2, F3, F4) | Node 22+, pnpm, Git, un editor o IDE con IA | **No.** El frontend funciona con datos simulados (MSW) sin backend ni base de datos |
+| **Frontend** (F2, F3, F4) | Node 22.12+ o 24+, pnpm, Git, un editor o IDE con IA | **No.** El frontend funciona con datos simulados (MSW) sin backend ni base de datos |
 | **Backend** (B2, B3, B4) | Lo anterior + **PostgreSQL 16** (opción A, B o C) | Opcional: hay alternativas |
 | **Probar todo junto / demo** | Todo lo anterior corriendo a la vez | Recomendado (opción A) |
 

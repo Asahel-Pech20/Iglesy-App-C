@@ -318,3 +318,9 @@ a .lucide {
 .tabla-simple tfoot td {
   font-weight: 600;
 }
+
+/* Campos de formulario: espacio mínimo bajo cada campo; crece si hay ayuda o error de varias líneas */
+form .mat-mdc-form-field-subscript-wrapper,
+.mat-mdc-dialog-content .mat-mdc-form-field-subscript-wrapper {
+  min-height: 16px;
+}

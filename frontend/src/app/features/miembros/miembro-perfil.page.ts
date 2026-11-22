@@ -3,13 +3,22 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { RouterLink } from '@angular/router';
-import { ArrowLeft, LucideAngularModule, Pencil, UserCheck, UserX } from 'lucide-angular';
-import { formatearFecha } from '@/app/core/formato';
+import {
+  ArrowLeft,
+  CalendarCheck,
+  LucideAngularModule,
+  Pencil,
+  Percent,
+  UserCheck,
+  UserX,
+} from 'lucide-angular';
+import { formatearFecha, formatearFechaHora } from '@/app/core/formato';
 import { valorDe } from '@/app/core/recurso';
 import { PuedeDirective } from '@/app/core/puede.directive';
 import { SesionService } from '@/app/core/sesion.service';
 import { BadgeEstado } from '@/app/compartido/badge-estado';
 import { EstadoError, Esqueleto } from '@/app/compartido/estados';
+import { StatCard } from '@/app/compartido/stat-card';
 import { AsistenciaDelMiembro } from '@/app/features/asistencia/asistencia-del-miembro';
 import { AportacionesDelMiembro } from '@/app/features/donaciones/aportaciones-del-miembro';
 import { EstadoMiembroService } from './estado-miembro';
@@ -30,6 +39,7 @@ import { MinisteriosDelMiembro } from './ministerios-del-miembro';
     BadgeEstado,
     EstadoError,
     Esqueleto,
+    StatCard,
     MinisteriosDelMiembro,
     AsistenciaDelMiembro,
     AportacionesDelMiembro,
@@ -80,9 +90,13 @@ export class MiembroPerfilPage {
     params: () => this.id(),
     stream: ({ params }) => this.servicio.obtener(params),
   });
+  protected readonly verAsistencia = computed(() =>
+    this.sesion.puede('asistencia:leer', 'asistencia:leer-propio'),
+  );
   protected readonly verAportaciones = computed(() => this.sesion.puede('donaciones:leer'));
   protected readonly fecha = formatearFecha;
-  protected readonly iconos = { ArrowLeft, Pencil, UserX, UserCheck };
+  protected readonly fechaHora = formatearFechaHora;
+  protected readonly iconos = { ArrowLeft, Pencil, UserX, UserCheck, Percent, CalendarCheck };
 
   protected async cambiarEstado() {
     const m = valorDe(this.consulta);
