@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { enIglesiaDePrueba, iglesiaDePrueba, prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 import * as asistenciaService from './asistencia.service';
 
 let app: ReturnType<typeof crearApp>;
@@ -23,17 +23,23 @@ const ID_INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 const DIA = 86_400_000;
 const enDias = (dias: number) => new Date(Date.now() + dias * DIA);
 
-function crearMinisterio(nombre = 'Jóvenes') {
-  return prisma.ministerio.create({ data: { nombre } });
+async function crearMinisterio(nombre = 'Jóvenes') {
+  return prisma.ministerio.create({ data: { iglesiaId: await iglesiaDePrueba(), nombre } });
 }
 
-function crearMiembro(nombre: string, apellidos = 'Pérez', activo = true) {
+async function crearMiembro(nombre: string, apellidos = 'Pérez', activo = true) {
   return prisma.miembro.create({
-    data: { nombre, apellidos, fechaIngreso: new Date('2025-01-01'), activo },
+    data: {
+      iglesiaId: await iglesiaDePrueba(),
+      nombre,
+      apellidos,
+      fechaIngreso: new Date('2025-01-01'),
+      activo,
+    },
   });
 }
 
-function crearEvento(
+async function crearEvento(
   datos: Partial<{
     titulo: string;
     fechaInicio: Date;
@@ -43,6 +49,7 @@ function crearEvento(
 ) {
   return prisma.evento.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: datos.titulo ?? 'Culto',
       tipo: 'RELIGIOSO',
       categoria: 'CULTO',
@@ -282,8 +289,10 @@ describe('PUT /eventos/:id/asistencia (B3-08)', () => {
   });
 
   it('300 registros en menos de 1 s', async () => {
+    const iglesiaId = await iglesiaDePrueba();
     await prisma.miembro.createMany({
       data: Array.from({ length: 300 }, (_, i) => ({
+        iglesiaId,
         nombre: `Miembro${i}`,
         apellidos: 'Prueba',
         fechaIngreso: new Date('2025-01-01'),
@@ -364,34 +373,36 @@ describe('GET /asistencias (B3-09)', () => {
     expect((await request(app).get('/api/v1/asistencias')).status).toBe(401);
   });
 
-  it('porcentajeMiembro calcula el % de los últimos meses y la última asistencia', async () => {
-    const ana = await crearMiembro('Ana');
-    const e1 = await crearEvento({ titulo: 'Uno', fechaInicio: enDias(-30) });
-    const e2 = await crearEvento({ titulo: 'Dos', fechaInicio: enDias(-10) });
-    const e3 = await crearEvento({ titulo: 'Tres', fechaInicio: enDias(-5) });
-    const viejo = await crearEvento({ fechaInicio: enDias(-200) });
-    await registrar(e1.id, ana.id, true);
-    await registrar(e2.id, ana.id, true);
-    await registrar(e3.id, ana.id, false);
-    await registrar(viejo.id, ana.id, false);
-    const resultado = await asistenciaService.porcentajeMiembro(ana.id, 3);
-    expect(resultado).toMatchObject({ presentes: 2, total: 3, porcentaje: 66.7 });
-    expect(resultado.ultimaAsistencia?.titulo).toBe('Dos');
-  });
+  it('porcentajeMiembro calcula el % de los últimos meses y la última asistencia', () =>
+    enIglesiaDePrueba(async () => {
+      const ana = await crearMiembro('Ana');
+      const e1 = await crearEvento({ titulo: 'Uno', fechaInicio: enDias(-30) });
+      const e2 = await crearEvento({ titulo: 'Dos', fechaInicio: enDias(-10) });
+      const e3 = await crearEvento({ titulo: 'Tres', fechaInicio: enDias(-5) });
+      const viejo = await crearEvento({ fechaInicio: enDias(-200) });
+      await registrar(e1.id, ana.id, true);
+      await registrar(e2.id, ana.id, true);
+      await registrar(e3.id, ana.id, false);
+      await registrar(viejo.id, ana.id, false);
+      const resultado = await asistenciaService.porcentajeMiembro(ana.id, 3);
+      expect(resultado).toMatchObject({ presentes: 2, total: 3, porcentaje: 66.7 });
+      expect(resultado.ultimaAsistencia?.titulo).toBe('Dos');
+    }));
 
-  it('la última asistencia ignora eventos cancelados', async () => {
-    const ana = await crearMiembro('Ana');
-    const valido = await crearEvento({ titulo: 'Válido', fechaInicio: enDias(-20) });
-    const cancelado = await crearEvento({
-      titulo: 'Cancelado',
-      fechaInicio: enDias(-2),
-      estado: 'CANCELADO',
-    });
-    await registrar(valido.id, ana.id, true);
-    await registrar(cancelado.id, ana.id, true);
-    const resultado = await asistenciaService.porcentajeMiembro(ana.id, 3);
-    expect(resultado.ultimaAsistencia?.titulo).toBe('Válido');
-  });
+  it('la última asistencia ignora eventos cancelados', () =>
+    enIglesiaDePrueba(async () => {
+      const ana = await crearMiembro('Ana');
+      const valido = await crearEvento({ titulo: 'Válido', fechaInicio: enDias(-20) });
+      const cancelado = await crearEvento({
+        titulo: 'Cancelado',
+        fechaInicio: enDias(-2),
+        estado: 'CANCELADO',
+      });
+      await registrar(valido.id, ana.id, true);
+      await registrar(cancelado.id, ana.id, true);
+      const resultado = await asistenciaService.porcentajeMiembro(ana.id, 3);
+      expect(resultado.ultimaAsistencia?.titulo).toBe('Válido');
+    }));
 });
 
 describe('GET /asistencias/resumen (B3-10)', () => {
@@ -518,40 +529,75 @@ describe('GET /asistencias/resumen (B3-10)', () => {
 });
 
 describe('funciones para reportes y dashboard (B3-11)', () => {
-  it('porEvento, contarRegistradas y participacionPorMinisterio', async () => {
-    const jovenes = await crearMinisterio();
-    const ana = await crearMiembro('Ana');
-    const luis = await crearMiembro('Luis');
-    await prisma.miembroMinisterio.createMany({
-      data: [
-        { miembroId: ana.id, ministerioId: jovenes.id },
-        { miembroId: luis.id, ministerioId: jovenes.id },
-      ],
+  it('porEvento, contarRegistradas y participacionPorMinisterio', () =>
+    enIglesiaDePrueba(async () => {
+      const jovenes = await crearMinisterio();
+      const ana = await crearMiembro('Ana');
+      const luis = await crearMiembro('Luis');
+      await prisma.miembroMinisterio.createMany({
+        data: [
+          { miembroId: ana.id, ministerioId: jovenes.id },
+          { miembroId: luis.id, ministerioId: jovenes.id },
+        ],
+      });
+      const evento = await crearEvento({ fechaInicio: enDias(-2), ministerioId: jovenes.id });
+      await registrar(evento.id, ana.id, true);
+      await registrar(evento.id, luis.id, false);
+
+      const detalle = await asistenciaService.porEvento(evento.id);
+      expect(detalle).toMatchObject({ presentes: 1, ausentes: 1, porcentaje: 50 });
+      expect(detalle.registros).toHaveLength(2);
+
+      expect(await asistenciaService.contarRegistradas(enDias(-7), enDias(1))).toBe(1);
+
+      const participacion = await asistenciaService.participacionPorMinisterio(
+        enDias(-30),
+        enDias(1),
+      );
+      expect(participacion).toEqual([
+        {
+          ministerioId: jovenes.id,
+          ministerio: 'Jóvenes',
+          integrantes: 2,
+          eventos: 1,
+          presentes: 1,
+          ausentes: 1,
+          porcentaje: 50,
+        },
+      ]);
+    }));
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('pasar lista a un miembro de otra iglesia → 422 y no se registra nada', async () => {
+    const otra = await deOtraIglesia();
+    const evento = await crearEvento();
+    const res = await api().put(`/eventos/${evento.id}/asistencia`, {
+      registros: [{ miembroId: otra.miembro.id, presente: true }],
     });
-    const evento = await crearEvento({ fechaInicio: enDias(-2), ministerioId: jovenes.id });
-    await registrar(evento.id, ana.id, true);
-    await registrar(evento.id, luis.id, false);
+    expect(res.status).toBe(422);
+    expect(await prisma.asistencia.count()).toBe(0);
+  });
 
-    const detalle = await asistenciaService.porEvento(evento.id);
-    expect(detalle).toMatchObject({ presentes: 1, ausentes: 1, porcentaje: 50 });
-    expect(detalle.registros).toHaveLength(2);
+  it('pasar lista en el evento de otra iglesia → 404', async () => {
+    const otra = await deOtraIglesia();
+    const propio = await crearMiembro('Ana');
+    const res = await api().put(`/eventos/${otra.evento.id}/asistencia`, {
+      registros: [{ miembroId: propio.id, presente: true }],
+    });
+    expect(res.status).toBe(404);
+  });
 
-    expect(await asistenciaService.contarRegistradas(enDias(-7), enDias(1))).toBe(1);
-
-    const participacion = await asistenciaService.participacionPorMinisterio(
-      enDias(-30),
-      enDias(1),
-    );
-    expect(participacion).toEqual([
-      {
-        ministerioId: jovenes.id,
-        ministerio: 'Jóvenes',
-        integrantes: 2,
-        eventos: 1,
-        presentes: 1,
-        ausentes: 1,
-        porcentaje: 50,
+  it('el historial no trae asistencias de otra iglesia', async () => {
+    const otra = await deOtraIglesia();
+    await prisma.asistencia.create({
+      data: {
+        eventoId: otra.evento.id,
+        miembroId: otra.miembro.id,
+        presente: true,
+        registradoPorId: otra.coordinador.id,
       },
-    ]);
+    });
+    expect((await api().get('/asistencias')).body.meta.total).toBe(0);
   });
 });
