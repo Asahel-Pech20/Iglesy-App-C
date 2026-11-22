@@ -1,6 +1,7 @@
 // Seed mínimo (B1-04): configuración de la iglesia y un usuario por rol. Idempotente (upsert).
 // B2 extiende este archivo con datos de dominio (B2-12).
 import { ROLES } from '../src/config/permisos';
+import { sinAlcance } from '../src/lib/contextoIglesia';
 import { prisma } from '../src/lib/prisma';
 import { hashPassword } from '../src/lib/seguridad';
 import { seedB2 } from './seed-b2';
@@ -51,9 +52,9 @@ async function main() {
   }
 
   // B2-12: miembros, ministerios, vínculos y coordinadores
-  const { miembroIds, ministerios } = await seedB2();
+  const { miembroIds, ministerios } = await seedB2(iglesia.id);
   // B4: aportaciones de los últimos 12 meses
-  const donaciones = await seedDonaciones(miembroIds);
+  const donaciones = await seedDonaciones(miembroIds, iglesia.id);
 
   // Ecclesia: 4 semanas de misas y diezmos en 6 iglesias (datos ficticios)
   const diezmo = await seedDiezmo(iglesia.id, passwordHash);
@@ -62,14 +63,15 @@ async function main() {
   const espacios = await seedEspacios();
 
   // B3: eventos (con asistencia), anuncios y un evento cancelado para la demo
-  const b3 = await seedB3({ ministerios });
+  const b3 = await seedB3({ ministerios, iglesiaId: iglesia.id });
 
   console.warn(
     `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias y ${espacios.solicitudes} solicitudes de espacio.`,
   );
 }
 
-main()
+// E1-06: la semilla carga datos de varias iglesias; el alcance por iglesia se omite a propósito
+sinAlcance('seed', main)
   .catch((err) => {
     console.error(err);
     process.exitCode = 1;

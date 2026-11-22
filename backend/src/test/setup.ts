@@ -1,6 +1,7 @@
 import { afterAll, beforeEach, expect } from 'vitest';
 import { correosEnviados } from '../lib/mailer';
-import { prisma } from '../lib/prisma';
+import { prisma as prismaApp } from '../lib/prisma';
+import { prisma } from './bd';
 
 let tablas: string | null = null;
 
@@ -37,5 +38,5 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
-  await prisma.$disconnect();
+  await Promise.all([prisma.$disconnect(), prismaApp.$disconnect()]);
 });

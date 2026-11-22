@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { RolUsuario } from '../config/permisos';
 import type { TipoIglesia } from '../generated/prisma/client';
-import { prisma } from '../lib/prisma';
+import { iglesiaDePrueba, prisma } from './bd';
 import { firmarAccessToken, hashPassword } from '../lib/seguridad';
 
 export const PASSWORD_PRUEBA = 'Prueba123';
@@ -64,4 +64,36 @@ export async function loginComo(rol: RolUsuario, datos?: Parameters<typeof crear
   const usuario = await crearUsuario(rol, datos);
   const token = firmarAccessToken({ sub: usuario.id, rol: usuario.rol });
   return { usuario, token, auth: `Bearer ${token}` };
+}
+
+/**
+ * E1-06: otra iglesia con un miembro, un ministerio, un coordinador y un evento, para probar que la
+ * gestión interna no se mezcla entre iglesias. La iglesia de pruebas sigue siendo la primera, así
+ * que `loginComo` (personal) cae en ella y no en esta.
+ */
+export async function deOtraIglesia() {
+  await iglesiaDePrueba();
+  const { id: iglesiaId } = await crearIglesia({ nombre: `Otra ${randomUUID().slice(0, 8)}` });
+  const coordinador = await crearUsuario('COORDINADOR', { iglesiaId });
+  const miembro = await prisma.miembro.create({
+    data: {
+      nombre: 'Ajeno',
+      apellidos: 'De Otra',
+      fechaIngreso: new Date('2025-01-01'),
+      iglesiaId,
+    },
+  });
+  const ministerio = await prisma.ministerio.create({ data: { nombre: 'Jóvenes', iglesiaId } });
+  const evento = await prisma.evento.create({
+    data: {
+      titulo: 'Evento ajeno',
+      tipo: 'RELIGIOSO',
+      categoria: 'CULTO',
+      lugar: 'Otro templo',
+      fechaInicio: new Date(Date.now() - 3_600_000),
+      creadoPorId: coordinador.id,
+      iglesiaId,
+    },
+  });
+  return { iglesiaId, coordinador, miembro, ministerio, evento };
 }

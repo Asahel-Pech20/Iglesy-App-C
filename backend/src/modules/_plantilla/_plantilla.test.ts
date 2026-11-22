@@ -3,7 +3,7 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { prisma } from '../../lib/prisma';
+import { iglesiaDePrueba, prisma } from '../../test/bd';
 import { manejarErrores } from '../../middlewares/errores';
 import { loginComo } from '../../test/helpers';
 import { plantillaRouter } from './_plantilla.routes';
@@ -14,7 +14,12 @@ const app = express().use(express.json()).use('/ejemplo', plantillaRouter).use(m
 describe('plantilla de módulo', () => {
   it('caso feliz: lista paginada', async () => {
     await prisma.horarioReunion.create({
-      data: { nombre: 'Culto', diaSemana: 0, horaInicio: '10:00' },
+      data: {
+        iglesiaId: await iglesiaDePrueba(),
+        nombre: 'Culto',
+        diaSemana: 0,
+        horaInicio: '10:00',
+      },
     });
     const { auth } = await loginComo('SECRETARIO');
     const res = await request(app).get('/ejemplo?q=cul').set('Authorization', auth);

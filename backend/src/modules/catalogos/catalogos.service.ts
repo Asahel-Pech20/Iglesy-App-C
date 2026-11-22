@@ -124,6 +124,7 @@ export async function importar(filas: FilaCatalogo[]) {
   }
 
   const [e, m, l] = await prisma.$transaction(async (tx) => {
+    // sql-sin-iglesia: catálogo nacional del INEGI, no es de una iglesia
     const totalEstados = await tx.$executeRaw`
       INSERT INTO "estados" ("clave", "nombre")
       SELECT * FROM unnest(${[...estados.keys()]}::text[], ${[...estados.values()]}::text[])
@@ -131,7 +132,8 @@ export async function importar(filas: FilaCatalogo[]) {
       WHERE "estados"."nombre" IS DISTINCT FROM EXCLUDED."nombre"`;
     const listaMun = [...municipios.entries()];
     const totalMunicipios = listaMun.length
-      ? await tx.$executeRaw`
+      ? // sql-sin-iglesia: catálogo nacional del INEGI, no es de una iglesia
+        await tx.$executeRaw`
       INSERT INTO "municipios" ("clave", "estadoClave", "nombre")
       SELECT * FROM unnest(${listaMun.map(([c]) => c)}::text[],
                            ${listaMun.map(([, v]) => v.estado)}::text[],
@@ -141,7 +143,8 @@ export async function importar(filas: FilaCatalogo[]) {
       : 0;
     const listaLoc = [...localidades.entries()];
     const totalLocalidades = listaLoc.length
-      ? await tx.$executeRaw`
+      ? // sql-sin-iglesia: catálogo nacional del INEGI, no es de una iglesia
+        await tx.$executeRaw`
       INSERT INTO "localidades" ("clave", "municipioClave", "nombre")
       SELECT * FROM unnest(${listaLoc.map(([c]) => c)}::text[],
                            ${listaLoc.map(([, v]) => v.municipio)}::text[],

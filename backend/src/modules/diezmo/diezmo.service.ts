@@ -247,6 +247,7 @@ export async function resumen(iglesiaId: string, query: QueryPeriodo) {
   const { zona, periodo } = await periodoDe(iglesiaId, query);
   const rango = Prisma.sql`m."inicio" >= ${periodo.inicio} AND m."inicio" < ${periodo.finExcluido}`;
 
+  // sql-sin-iglesia: no es gestión interna; filtra por la iglesia de la ruta (alcanceIglesia) en el WHERE
   const [fila] = await prisma.$queryRaw<
     { misas: number; total: string; promedio: string | null }[]
   >(
@@ -309,6 +310,7 @@ export async function agrupado(iglesiaId: string, query: QueryAgrupado) {
     padre: Prisma.sql`m."padreId"`,
   }[query.por];
 
+  // sql-sin-iglesia: no es gestión interna; filtra por la iglesia de la ruta (alcanceIglesia) en el WHERE
   const filas = await prisma.$queryRaw<
     { clave: string; etiqueta: string | null; misas: number; total: string }[]
   >(

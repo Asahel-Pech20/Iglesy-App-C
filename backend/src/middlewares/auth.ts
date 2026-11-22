@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from 'express';
 import { type Permiso, type RolUsuario, tienePermiso } from '../config/permisos';
 import { AppError } from '../lib/appError';
+import { continuarConIglesiaDe } from '../lib/contextoIglesia';
 import { prisma } from '../lib/prisma';
 import { verificarAccessToken } from '../lib/seguridad';
 
@@ -24,7 +25,21 @@ export const autenticar: RequestHandler = async function autenticar(req, _res, n
     rol: usuario.rol,
     iglesiaId: usuario.iglesiaId,
   };
-  next();
+  // E1-06 (ADR-0007): el resto de la petición corre con la iglesia del usuario, leída de la BD.
+  // La gestión interna se filtra con ella; la Coordinación no tiene (sus consultas lanzan).
+  continuarConIglesiaDe(usuario.iglesiaId, () => next());
+};
+
+/**
+ * Para rutas públicas que cambian con la sesión (E1-06): sin cabecera Authorization sigue como
+ * visitante; con ella, se comporta igual que `autenticar` (un token inválido sigue siendo 401).
+ */
+export const autenticarOpcional: RequestHandler = function autenticarOpcional(req, res, next) {
+  if (!req.headers.authorization) {
+    next();
+    return;
+  }
+  return autenticar(req, res, next);
 };
 
 /** Usuario autenticado de la petición (para controllers detrás de `autenticar`). */

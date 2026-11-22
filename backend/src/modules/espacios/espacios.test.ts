@@ -6,7 +6,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
 import type { Prisma } from '../../generated/prisma/client';
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../../test/bd';
 import { hashToken } from '../../lib/seguridad';
 import { crearIglesia, loginComo } from '../../test/helpers';
 import { fechaVencimiento } from './dominio/vigencia-cotizacion';
