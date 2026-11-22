@@ -216,6 +216,17 @@ components:
         sitioWeb: { type: string, nullable: true }
         moneda: { type: string, example: MXN }
         zonaHoraria: { type: string, example: America/Mexico_City }
+    ConfiguracionEditar:
+      type: object
+      description: >-
+        E1-06b. Solo lo institucional de la iglesia del usuario. Es estricto: nombre, direccion,
+        ciudad, telefono o email responden 400 (se editan en la ficha, PATCH /iglesias/{iglesiaId}).
+      required: [moneda, zonaHoraria]
+      additionalProperties: false
+      properties:
+        sitioWeb: { type: string, nullable: true, format: uri }
+        moneda: { type: string, example: MXN }
+        zonaHoraria: { type: string, example: America/Mexico_City }
     Horario:
       type: object
       properties:
@@ -1116,9 +1127,18 @@ paths:
   /configuracion:
     get:
       tags: [Configuración]
-      summary: Datos de la iglesia (público)
-      security: []
+      summary: Datos de una iglesia (sesión opcional)
+      description: >-
+        E1-06b. Con sesión de personal, los de SU iglesia (iglesiaId se ignora). La Coordinación
+        debe indicar iglesiaId (sin él, 400; nunca recibe la iglesia inicial en silencio). Sin
+        sesión, la iglesia de iglesiaId o, si no viene, la iglesia inicial. ciudad es el nombre del
+        municipio del catálogo del INEGI.
+      security: [{}, { bearer: [] }]
+      parameters:
+        - { name: iglesiaId, in: query, required: false, schema: { type: string, format: uuid } }
       responses:
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { description: La iglesia no existe }
         '200':
           {
             description: OK,
@@ -1136,10 +1156,11 @@ paths:
           }
     put:
       tags: [Configuración]
-      summary: Actualizar datos de la iglesia (ADMIN_IGLESIA)
+      summary: Actualizar moneda, zona horaria y sitio web de la iglesia del usuario (ADMIN_IGLESIA)
       requestBody:
         required: true
-        content: { application/json: { schema: { $ref: '#/components/schemas/Configuracion' } } }
+        content:
+          { application/json: { schema: { $ref: '#/components/schemas/ConfiguracionEditar' } } }
       responses:
         '200':
           {
@@ -1192,8 +1213,11 @@ paths:
   /configuracion/horarios:
     get:
       tags: [Configuración]
-      summary: Horarios de reuniones, ordenados por día y hora (público)
-      security: []
+      summary: Horarios de reuniones, ordenados por día y hora (sesión opcional)
+      description: Misma regla de iglesia que GET /configuracion (E1-06b).
+      security: [{}, { bearer: [] }]
+      parameters:
+        - { name: iglesiaId, in: query, required: false, schema: { type: string, format: uuid } }
       responses:
         '200':
           {
@@ -1776,10 +1800,24 @@ paths:
         '403': { $ref: '#/components/responses/Prohibido' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
 
+  /public/iglesias/{iglesiaId}/cartelera:
+    get:
+      tags: [Público]
+      summary: Cartelera de una iglesia (E1-06b; sin sesión; cache 60 s por iglesia)
+      description: >-
+        Mismo contenido que /public/cartelera, de la iglesia indicada. 400 si el id no es válido;
+        404 si no existe o está cerrada.
+      security: []
+      parameters:
+        - { name: iglesiaId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: 'OK (mismo formato que /public/cartelera)' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { description: La iglesia no existe o está cerrada }
   /public/cartelera:
     get:
       tags: [Público]
-      summary: Cartelera pública (sin sesión; cache 60 s; 60 solicitudes/min por IP)
+      summary: Cartelera de la iglesia inicial (alias heredado; sin sesión; cache 60 s; 60 solicitudes/min por IP)
       description: Solo datos públicos; no incluye miembros, usuarios ni responsables.
       security: []
       responses:

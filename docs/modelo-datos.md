@@ -153,7 +153,7 @@ erDiagram
   Usuario ||--o{ Donacion : "registra"
 ```
 
-`ConfiguracionIglesia` (fila única, `id = 1`) sigue como en AppIglesia hasta E1-06b. El nombre de un ministerio es único dentro de su iglesia (`ministerios_iglesiaId_nombre_key`).
+`ConfiguracionIglesia` (fila única, `id = 1`) ya no se usa desde E1-06b: sus datos pasaron a `Iglesia`. El nombre de un ministerio es único dentro de su iglesia (`ministerios_iglesiaId_nombre_key`).
 
 ## Entidades implementadas
 
@@ -221,8 +221,8 @@ Además, en la API: una iglesia cerrada solo acepta lecturas (`alcanceIglesia`, 
 | `servicios` | `Servicio`, `Platica` y sus horarios | Genaro | Costo (gratuito, donativo o monto `Decimal(12,2)`), requisitos, duración, cita; sesiones, cupo, lugar y quién imparte | `specs.md` §12.4 · campos por definir en el plan de Genaro |
 | `misas` | `PadreIglesia`, `HorarioMisa`; ampliar `Padre` y `MisaCelebrada` | Genaro | Tipo e idioma; un padre sin choques de horario; hora por defecto; sustitución con quién ofició, quién cambió y por qué (RNF-12) | `specs.md` §12.4 · por definir |
 
-## Pendiente de integración (E1-06b)
+## Integración con AppIglesia (E1-06 y E1-06b, hechas)
 
-- `Iglesia` reemplaza a `ConfiguracionIglesia`: hoy la marca lateral del frontend todavía muestra el nombre de la configuración, no el de la iglesia del usuario.
-- Hecho en E1-06: `iglesiaId` en la gestión interna, con el alcance de ADR-0007.
+- E1-06: `iglesiaId` en la gestión interna, con el alcance de ADR-0007.
+- E1-06b: `Iglesia` reemplaza a `ConfiguracionIglesia`: `moneda`, `zonaHoraria`, `logoUrl` y `sitioWeb` son de cada iglesia. La tabla `configuracion_iglesia` queda **sin uso**; borrarla requiere confirmación del equipo.
 - Índice único del nombre de iglesia según la regla que se decida (A2-E4-05, A2-E2-06).

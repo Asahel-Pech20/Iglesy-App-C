@@ -40,7 +40,7 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 | E1-04 | Hora local de cada iglesia para guardar y mostrar (la usa Genaro en misas): `instanteLocal` y `esZonaValida` en `lib/dominio/zona.ts`, pruebas y guía en `backend/README.md` | RNF-07 | E1-01 | Hecho (rama `feat/E1-04-zona-horaria`) |
 | E1-05 | Renombrar `ADMIN` → `ADMIN_IGLESIA` (migración, pruebas, seed, frontend, mocks) | §12.3 | E1-03 | Hecho en la base de Oscar |
 | E1-06 | `iglesiaId` en la gestión interna (miembros, ministerios, eventos, asistencia, anuncios, donaciones, horarios, dashboard y reportes) con alcance en el cliente de Prisma, SQL crudo con la iglesia, vínculos entre iglesias → 422 y cartelera en la iglesia inicial. Revisan Nataly (B2), Genaro (B3) y Oscar (B4, donaciones, dashboard y reportes) | §12.2, RNF-10, ADR-0006, ADR-0007 | E1-05, S-05 | Hecho (rama `feat/E1-06-alcance-gestion-interna`); en revisión |
-| E1-06b | `Iglesia` reemplaza a `ConfiguracionIglesia` (moneda, zona horaria y logo por iglesia; la barra lateral muestra la iglesia del usuario) y una cartelera por iglesia en su ficha pública | §12.2, ADR-0006 | E1-06 | Pendiente |
+| E1-06b | `Iglesia` reemplaza a `ConfiguracionIglesia` (moneda, zona horaria, logo y sitio web por iglesia; la barra lateral muestra la iglesia del usuario y «Coordinación Nacional» en la Coordinación) y una cartelera por iglesia (`/public/iglesias/:iglesiaId/cartelera`) | §12.2, ADR-0006, ADR-0007 | E1-06 | Hecho (rama `feat/E1-06b-iglesia-reemplaza-configuracion`, PR encima del de E1-06); en revisión. La ficha pública de Nataly (PR #20) debe enlazar la cartelera; Genaro revisa `public` |
 
 ### Fase 0 · Diseño (Entrega 1)
 
