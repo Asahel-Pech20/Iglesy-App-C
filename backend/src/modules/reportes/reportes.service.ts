@@ -10,7 +10,7 @@ import { tienePermiso } from '../../config/permisos';
 import { Prisma } from '../../generated/prisma/client';
 import { AppError } from '../../lib/appError';
 import type { Celda, ContextoReporte, Dato, Reporte } from '../../lib/exportadores/reporte';
-import { prisma } from '../../lib/prisma';
+import { consultarDeIglesia } from '../../lib/prisma';
 import * as asistenciaService from '../asistencia/asistencia.service';
 import * as configuracionService from '../configuracion/configuracion.service';
 import * as donacionesService from '../donaciones/donaciones.service';
@@ -240,7 +240,7 @@ async function eventosConAsistencia(desde: Date, hasta: Date, ministerios: strin
   const filtro = ministerios
     ? Prisma.sql`AND e."ministerioId" = ANY(${ministerios}::text[])`
     : Prisma.empty;
-  const filas = await prisma.$queryRaw<
+  const filas = await consultarDeIglesia<
     {
       titulo: string;
       fechaInicio: Date;
@@ -248,17 +248,20 @@ async function eventosConAsistencia(desde: Date, hasta: Date, ministerios: strin
       presentes: bigint;
       ausentes: bigint;
     }[]
-  >`
+  >(
+    (iglesiaId) => Prisma.sql`
     SELECT e.titulo, e."fechaInicio", m.nombre AS ministerio,
            COUNT(a.id) FILTER (WHERE a.presente) AS presentes,
            COUNT(a.id) FILTER (WHERE NOT a.presente) AS ausentes
     FROM eventos e
     LEFT JOIN ministerios m ON m.id = e."ministerioId"
     LEFT JOIN asistencias a ON a."eventoId" = e.id
-    WHERE e.estado <> 'CANCELADO' AND e."fechaInicio" >= ${desde} AND e."fechaInicio" < ${hasta}
+    WHERE e."iglesiaId" = ${iglesiaId}
+      AND e.estado <> 'CANCELADO' AND e."fechaInicio" >= ${desde} AND e."fechaInicio" < ${hasta}
       ${filtro}
     GROUP BY e.id, m.nombre
-    ORDER BY e."fechaInicio"`;
+    ORDER BY e."fechaInicio"`,
+  );
   return filas.map((f) => {
     const presentes = Number(f.presentes);
     const ausentes = Number(f.ausentes);
@@ -350,17 +353,20 @@ export async function asistencia(
 
 /** Presentes / ausentes de cada miembro en los eventos de un ministerio (solo lectura). */
 async function asistenciaPorIntegrante(ministerioId: string, desde: Date, hasta: Date) {
-  const filas = await prisma.$queryRaw<
+  const filas = await consultarDeIglesia<
     { miembroId: string; presentes: bigint; ausentes: bigint }[]
-  >`
+  >(
+    (iglesiaId) => Prisma.sql`
     SELECT a."miembroId" AS "miembroId",
            COUNT(*) FILTER (WHERE a.presente) AS presentes,
            COUNT(*) FILTER (WHERE NOT a.presente) AS ausentes
     FROM asistencias a
     JOIN eventos e ON e.id = a."eventoId"
-    WHERE e."ministerioId" = ${ministerioId} AND e.estado <> 'CANCELADO'
+    WHERE e."iglesiaId" = ${iglesiaId}
+      AND e."ministerioId" = ${ministerioId} AND e.estado <> 'CANCELADO'
       AND e."fechaInicio" >= ${desde} AND e."fechaInicio" < ${hasta}
-    GROUP BY a."miembroId"`;
+    GROUP BY a."miembroId"`,
+  );
   return new Map(
     filas.map((f) => [
       f.miembroId,
