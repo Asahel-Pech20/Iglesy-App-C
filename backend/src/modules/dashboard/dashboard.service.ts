@@ -4,7 +4,9 @@
  * `ingresos` se OMITE (no es null) si el rol no tiene `donaciones:leer` (AGENTS.md §1, regla 4).
  */
 import { type RolUsuario, tienePermiso } from '../../config/permisos';
-import { prisma } from '../../lib/prisma';
+import { Prisma } from '../../generated/prisma/client';
+import { iglesiaDelContexto } from '../../lib/contextoIglesia';
+import { consultarDeIglesia } from '../../lib/prisma';
 import * as anunciosService from '../anuncios/anuncios.service';
 import * as asistenciaService from '../asistencia/asistencia.service';
 import * as configuracionService from '../configuracion/configuracion.service';
@@ -112,38 +114,50 @@ export type Dashboard = Awaited<ReturnType<typeof dashboard>>;
  * aportación, editar miembros, ministerios, eventos o anuncios. Una sola consulta barata.
  */
 export async function huellaDatos() {
-  const [fila] = await prisma.$queryRaw<{ huella: string }[]>`
+  // E1-06: la huella es de la iglesia del contexto (cada subconsulta filtra por ella)
+  const [fila] = await consultarDeIglesia<{ huella: string }[]>(
+    (iglesiaId) => Prisma.sql`
     SELECT concat_ws('|',
-      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '') FROM miembros),
-      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '') FROM ministerios),
-      (SELECT count(*) FILTER (WHERE activo) || ':' ||
-              coalesce(max(greatest("fechaUnion", coalesce("fechaSalida", "fechaUnion")))::text, '')
-         FROM miembro_ministerios),
-      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '') FROM eventos),
-      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '') FROM asistencias),
-      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '') FROM anuncios),
-      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '') FROM donaciones)
-    ) AS huella`;
+      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '')
+         FROM miembros WHERE "iglesiaId" = ${iglesiaId}),
+      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '')
+         FROM ministerios WHERE "iglesiaId" = ${iglesiaId}),
+      (SELECT count(*) FILTER (WHERE mm.activo) || ':' ||
+              coalesce(max(greatest(mm."fechaUnion", coalesce(mm."fechaSalida", mm."fechaUnion")))::text, '')
+         FROM miembro_ministerios mm JOIN ministerios m ON m.id = mm."ministerioId"
+         WHERE m."iglesiaId" = ${iglesiaId}),
+      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '')
+         FROM eventos WHERE "iglesiaId" = ${iglesiaId}),
+      (SELECT count(*) || ':' || coalesce(max(a."updatedAt")::text, '')
+         FROM asistencias a JOIN eventos e ON e.id = a."eventoId" WHERE e."iglesiaId" = ${iglesiaId}),
+      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '')
+         FROM anuncios WHERE "iglesiaId" = ${iglesiaId}),
+      (SELECT count(*) || ':' || coalesce(max("updatedAt")::text, '')
+         FROM donaciones WHERE "iglesiaId" = ${iglesiaId})
+    ) AS huella`,
+  );
   return fila?.huella ?? '';
 }
 
 /**
- * Cache en memoria por vista (con / sin ingresos), una por instancia de la app. Una entrada vale
+ * Cache en memoria por iglesia y vista (con / sin ingresos), una por instancia de la app.
+ * E1-06: la clave lleva la iglesia; sin ella, una iglesia recibiría el panel de otra. Una entrada vale
  * 60 s y solo mientras la huella de los datos no cambie: registrar asistencia o crear/anular una
  * aportación la invalida al instante sin tocar los módulos de B2/B3.
  */
 export function crearCacheDashboard(duracionMs = CACHE_MS) {
   const guardadas = new Map<
-    'con-ingresos' | 'sin-ingresos',
+    `${string}:${'con-ingresos' | 'sin-ingresos'}`,
     { datos: Dashboard; huella: string; expira: number }
   >();
   return async function obtenerDashboard(rol: RolUsuario) {
     const vista = tienePermiso(rol, 'donaciones:leer') ? 'con-ingresos' : 'sin-ingresos';
+    const clave = `${iglesiaDelContexto('dashboard')}:${vista}` as const;
     const [huella, ahora] = [await huellaDatos(), Date.now()];
-    const guardada = guardadas.get(vista);
+    const guardada = guardadas.get(clave);
     if (guardada && guardada.expira > ahora && guardada.huella === huella) return guardada.datos;
     const datos = await dashboard(rol);
-    guardadas.set(vista, { datos, huella, expira: ahora + duracionMs });
+    guardadas.set(clave, { datos, huella, expira: ahora + duracionMs });
     return datos;
   };
 }
