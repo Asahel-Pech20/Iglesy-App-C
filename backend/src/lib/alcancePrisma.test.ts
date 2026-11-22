@@ -85,7 +85,20 @@ describe('limitarAIglesia (E1-06)', () => {
   it('solo la gestión interna tiene alcance (usuarios, iglesias, diezmo… no)', () => {
     for (const modelo of MODELOS_CON_IGLESIA) expect(tieneAlcance(modelo)).toBe(true);
     expect(tieneAlcance('Asistencia')).toBe(true);
-    for (const modelo of ['Usuario', 'Iglesia', 'Diezmo', 'SolicitudEspacio', undefined]) {
+    // Ecclesia (misas, diezmo, espacios) se limita con alcanceIglesia en la ruta y tiene rutas
+    // públicas sin sesión: la extensión no debe tocarlos (ajuste del orquestador a E1-06)
+    for (const modelo of [
+      'Usuario',
+      'Iglesia',
+      'Padre',
+      'MisaCelebrada',
+      'Diezmo',
+      'DiezmoCorreccion',
+      'TipoEspacio',
+      'SolicitudEspacio',
+      'Cotizacion',
+      undefined,
+    ]) {
       expect(tieneAlcance(modelo)).toBe(false);
     }
   });

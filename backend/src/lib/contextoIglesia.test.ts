@@ -1,7 +1,9 @@
 // E1-06 (ADR-0007): el cliente de Prisma con alcance por iglesia, contra la BD de pruebas
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+import { crearApp } from '../app';
 import { prisma as bd } from '../test/bd';
 import { crearIglesia } from '../test/helpers';
 import { conIglesia, SinContextoDeIglesia, sinAlcance } from './contextoIglesia';
@@ -104,5 +106,15 @@ describe('quién usa sinAlcance (E1-06, ADR-0007)', () => {
           : 'coordinacion';
       expect(motivo, archivo).toBe(esperado);
     }
+  });
+});
+
+describe('rutas públicas de Ecclesia sin sesión (E1-06)', () => {
+  it('los tipos de espacio públicos de una iglesia responden sin sesión ni contexto', async () => {
+    const iglesia = await crearIglesia();
+    await bd.tipoEspacio.create({ data: { iglesiaId: iglesia.id, clase: 'CRIPTA' } });
+    const res = await request(crearApp()).get(`/api/v1/public/iglesias/${iglesia.id}/espacios`);
+    expect(res.status).toBe(200);
+    expect(JSON.stringify(res.body)).toContain('CRIPTA');
   });
 });
