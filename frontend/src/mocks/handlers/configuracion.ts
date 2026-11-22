@@ -7,6 +7,8 @@ import type {
 import { db } from '../db';
 import { autenticar, errorApi, ruta } from '../utils';
 
+const CAMPOS_EDITABLES: readonly string[] = ['sitioWeb', 'moneda', 'zonaHoraria'];
+
 const ordenarHorarios = (lista: HorarioReunion[]) =>
   [...lista].sort((a, b) => a.diaSemana - b.diaSemana || a.horaInicio.localeCompare(b.horaInicio));
 
@@ -33,6 +35,16 @@ export const configuracionHandlers = [
     const usuario = autenticar(request, 'configuracion:editar');
     if (usuario instanceof Response) return usuario;
     const cuerpo = (await request.json()) as EditarConfiguracion;
+    // E1-06b: igual que el backend, solo lo institucional; nombre y contacto van en la ficha
+    const ajenos = Object.keys(cuerpo).filter((c) => !CAMPOS_EDITABLES.includes(c));
+    if (ajenos.length > 0) {
+      return errorApi(
+        400,
+        'VALIDATION_ERROR',
+        'Los datos enviados no son válidos.',
+        ajenos.map((campo) => ({ campo, mensaje: 'Se edita en la ficha de la iglesia.' })),
+      );
+    }
     db.configuracion = { ...db.configuracion, ...cuerpo };
     return HttpResponse.json({ data: db.configuracion });
   }),

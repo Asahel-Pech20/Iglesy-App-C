@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Church, LucideAngularModule } from 'lucide-angular';
 import { ConfiguracionService } from '@/app/features/configuracion/configuracion.service';
+import { SesionService } from '@/app/core/sesion.service';
 
 /** Logo + nombre de la iglesia (de la configuración). */
 @Component({
@@ -69,7 +70,14 @@ export class MarcaIglesia {
   readonly grande = input(false);
   private readonly configuracion = inject(ConfiguracionService);
   protected readonly config = this.configuracion.actual;
-  protected readonly nombre = computed(() => this.config()?.nombre ?? 'AppIglesia');
+  private readonly sesion = inject(SesionService);
+  /** E1-06b: la Coordinación no tiene iglesia propia, así que su marca es la nacional */
+  protected readonly nombre = computed(() => {
+    const config = this.config();
+    if (config) return config.nombre;
+    const esNacional = this.sesion.estado() === 'autenticado' && !this.sesion.iglesia();
+    return esNacional ? 'Coordinación Nacional' : 'AppIglesia';
+  });
   protected readonly iglesia = Church;
 
   constructor() {

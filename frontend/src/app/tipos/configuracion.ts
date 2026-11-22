@@ -12,7 +12,11 @@ export interface ConfiguracionIglesia {
   zonaHoraria: string;
 }
 
-export type EditarConfiguracion = Omit<ConfiguracionIglesia, 'logoUrl'>;
+/**
+ * PUT /configuracion (E1-06b): solo lo institucional. Nombre, dirección, ciudad, teléfono y correo
+ * se editan en la ficha de la iglesia (PATCH /iglesias/:id) y el backend los rechaza aquí (400).
+ */
+export type EditarConfiguracion = Pick<ConfiguracionIglesia, 'sitioWeb' | 'moneda' | 'zonaHoraria'>;
 
 export interface HorarioReunion {
   id: string;
