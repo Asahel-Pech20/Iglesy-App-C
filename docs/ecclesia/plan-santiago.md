@@ -26,6 +26,7 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 | S-02: la Coordinación entra a los datos de cualquier iglesia (RF-07, RF-08); en datos privados (diezmo, solicitudes) se le **deniega**, que es lo que hace `alcanceIglesia` por omisión. | P-21, P-28 | `middlewares/alcanceIglesia.ts` (`SUPUESTOS_ALCANCE`) |
 | S-03: los usuarios existentes de AppIglesia pasan a la iglesia inicial (la más antigua); el administrador crea personal en su iglesia y la Coordinación indica la iglesia. | P-20, P-28 | migraciones `ecclesia_iglesias_y_roles` y `e1_01_usuario_iglesia_segun_rol`, `usuarios.service.ts` |
 | ~~S-04~~ **Retirado (2026-11-20):** la edición de iglesias de Nataly (`iglesias:editar`, PR #6) ya está en `main`. Era: `configuracion:editar` de la Coordinación es un **marcador**: se conserva hasta que exista la edición de iglesias (Nataly) y entonces se quita y se adapta. Acordado con Oscar. | Módulo de iglesias | `config/permisos.ts` (back y front) |
+| S-05 (2026-11-22, decisión de Oscar): **se conserva la gestión interna** heredada de AppIglesia, ahora por iglesia. Los datos que ya existen pasan a la iglesia inicial (S-03). | P-20 | migración `e1_06_iglesia_en_gestion_interna`, `lib/prisma.ts`, [ADR-0007](adr/0007-alcance-de-la-gestion-interna.md) |
 
 ## Tareas
 
@@ -38,7 +39,8 @@ Mientras el cliente no responda, se trabaja con estos supuestos. **No son reglas
 | E1-03 | Usuarios por iglesia: la Coordinación crea usuarios y les asigna iglesia y rol; revisar la regla del último administrador | RF-81, RF-82 | E1-01, P-28 | Hecho en la base de Oscar (último administrador por iglesia); falta revisarlo |
 | E1-04 | Hora local de cada iglesia para guardar y mostrar (la usa Genaro en misas): `instanteLocal` y `esZonaValida` en `lib/dominio/zona.ts`, pruebas y guía en `backend/README.md` | RNF-07 | E1-01 | Hecho (rama `feat/E1-04-zona-horaria`) |
 | E1-05 | Renombrar `ADMIN` → `ADMIN_IGLESIA` (migración, pruebas, seed, frontend, mocks) | §12.3 | E1-03 | Hecho en la base de Oscar |
-| E1-06 | `Iglesia` reemplaza a `ConfiguracionIglesia`; `iglesiaId` en la gestión interna, con revisión de cada dueño | §12.2, ADR-0006 | E1-05, P-20, catálogo de Nataly | Pendiente |
+| E1-06 | `iglesiaId` en la gestión interna (miembros, ministerios, eventos, asistencia, anuncios, donaciones, horarios, dashboard y reportes) con alcance en el cliente de Prisma, SQL crudo con la iglesia, vínculos entre iglesias → 422 y cartelera en la iglesia inicial. Revisan Nataly (B2), Genaro (B3) y Oscar (B4, donaciones, dashboard y reportes) | §12.2, RNF-10, ADR-0006, ADR-0007 | E1-05, S-05 | Hecho (rama `feat/E1-06-alcance-gestion-interna`); en revisión |
+| E1-06b | `Iglesia` reemplaza a `ConfiguracionIglesia` (moneda, zona horaria y logo por iglesia; la barra lateral muestra la iglesia del usuario) y una cartelera por iglesia en su ficha pública | §12.2, ADR-0006 | E1-06 | Pendiente |
 
 ### Fase 0 · Diseño (Entrega 1)
 
