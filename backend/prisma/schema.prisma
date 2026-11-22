@@ -153,6 +153,10 @@ model Miembro {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  // E1-06: iglesia dueña (alcance por iglesia, ADR-0007). RESTRICT: una iglesia con historia no se borra.
+  iglesiaId String
+  iglesia   Iglesia @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+
   ministerios   MiembroMinisterio[]
   responsableDe EventoResponsable[]
   asistencias   Asistencia[]
@@ -160,21 +164,28 @@ model Miembro {
 
   @@index([apellidos, nombre])
   @@index([activo])
+  @@index([iglesiaId, activo])
   @@map("miembros")
 }
 
 model Ministerio {
   id          String   @id @default(uuid())
-  nombre      String   @unique
+  nombre      String
   descripcion String?
   activo      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // E1-06: iglesia dueña (alcance por iglesia, ADR-0007). RESTRICT: una iglesia con historia no se borra.
+  iglesiaId String
+  iglesia   Iglesia @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+
   coordinadores MinisterioCoordinador[]
   miembros      MiembroMinisterio[]
   eventos       Evento[]
 
+  // E1-06: el nombre es único dentro de cada iglesia (antes, en todo el sistema)
+  @@unique([iglesiaId, nombre])
   @@map("ministerios")
 }
 
@@ -223,6 +234,10 @@ model Evento {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
+  // E1-06: iglesia dueña (alcance por iglesia, ADR-0007). RESTRICT: una iglesia con historia no se borra.
+  iglesiaId String
+  iglesia   Iglesia @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+
   ministerio   Ministerio?         @relation(fields: [ministerioId], references: [id])
   creadoPor    Usuario             @relation("EventoCreador", fields: [creadoPorId], references: [id])
   responsables EventoResponsable[]
@@ -231,6 +246,7 @@ model Evento {
 
   @@index([fechaInicio])
   @@index([ministerioId])
+  @@index([iglesiaId, fechaInicio])
   @@map("eventos")
 }
 
@@ -277,10 +293,15 @@ model Anuncio {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  // E1-06: iglesia dueña (alcance por iglesia, ADR-0007). RESTRICT: una iglesia con historia no se borra.
+  iglesiaId String
+  iglesia   Iglesia @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+
   evento Evento? @relation(fields: [eventoId], references: [id], onDelete: SetNull)
   autor  Usuario @relation(fields: [autorId], references: [id])
 
   @@index([fechaPublicacion])
+  @@index([iglesiaId, fechaPublicacion])
   @@map("anuncios")
 }
 
@@ -306,12 +327,17 @@ model Donacion {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  // E1-06: iglesia dueña (alcance por iglesia, ADR-0007). RESTRICT: una iglesia con historia no se borra.
+  iglesiaId String
+  iglesia   Iglesia @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+
   miembro        Miembro? @relation(fields: [miembroId], references: [id])
   registradoPor  Usuario  @relation("DonacionRegistrador", fields: [registradoPorId], references: [id])
   actualizadoPor Usuario? @relation("DonacionActualizador", fields: [actualizadoPorId], references: [id])
 
   @@index([fecha])
   @@index([miembroId])
+  @@index([iglesiaId, fecha])
   @@map("donaciones")
 }
 
@@ -355,6 +381,13 @@ model Iglesia {
   diezmos            Diezmo[]
   tiposEspacio       TipoEspacio[]
   solicitudesEspacio SolicitudEspacio[]
+  // E1-06: gestión interna de cada iglesia
+  miembros           Miembro[]
+  ministerios        Ministerio[]
+  eventos            Evento[]
+  anuncios           Anuncio[]
+  donaciones         Donacion[]
+  horariosReunion    HorarioReunion[]
 
   @@index([estadoClave, activa])
   @@index([municipioClave])
@@ -499,7 +532,12 @@ model HorarioReunion {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // E1-06: iglesia dueña (alcance por iglesia, ADR-0007). RESTRICT: una iglesia con historia no se borra.
+  iglesiaId String
+  iglesia   Iglesia @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+
   @@index([diaSemana, horaInicio])
+  @@index([iglesiaId, diaSemana])
   @@map("horarios_reunion")
 }
 
