@@ -42,7 +42,7 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
 | E2-10 | Llevar `indice-patrimonial.ts` del módulo de referencia a `modules/iglesias/dominio/`, con los tipos de RN-16 y los criterios leídos de la BD; rutas para consultarlos y cambiarlos | RF-18, RF-22, RN-01–RN-06, RN-14, RN-15, CA-01, CA-05, CA-07 | E2-08, P-01 | Hecha en la PR #20 (en revisión); el dominio quedó en `modules/patrimonio/dominio/` (el módulo dueño de los objetos); P-01 como supuesto |
-| E2-11 | Ficha pública: datos, objetos vigentes, índice y distinción, más servicios, pláticas, misas con su padre y tipos de espacio de los otros módulos | RF-06, RF-16, RF-18, CA-04 | E2-10, services de Genaro y Oscar, P-05 | Hecha en la PR #20 (en revisión); servicios, pláticas, misas y espacios van vacíos hasta que Genaro y Oscar publiquen sus funciones |
+| E2-11 | Ficha pública: datos, objetos vigentes, índice y distinción, más servicios, pláticas, misas con su padre y tipos de espacio de los otros módulos | RF-06, RF-16, RF-18, CA-04 | E2-10, services de Genaro y Oscar, P-05 | Hecha en el PR #20 (en revisión): con los tipos de espacio de Oscar; servicios, pláticas y misas van vacíos hasta que Genaro publique sus funciones |
 | E2-12 | Ranking del país, estado, municipio o ciudad | RF-19–RF-21, RN-12, RN-13, CA-06 | E2-10, P-07 | Hecha en la PR #20 (en revisión); P-07 como supuesto |
 | E2-13 | Búsqueda del investigador por tipo de objeto y antigüedad en un lugar | RF-23, CA-08 | E2-10, P-09 | Hecha en la PR #20 (en revisión); P-09 como supuesto |
 | E2-14 | Pantallas públicas en Angular, a 360 px: lista por estado, ficha, reconocidas y búsqueda | RF-01–RF-06, RF-16, RF-19–RF-23, RNF-02 | E2-07, E2-11–E2-13 | Hecha en la PR #20 (en revisión); falta revisarla a ojo a 360 px |
@@ -52,7 +52,7 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E2-16 | Adaptar miembros y ministerios a varias iglesias (`iglesiaId`, `alcanceIglesia`) | `specs.md §12.2`, P-20 de Oscar | P-20, migración de Santiago | Bloqueada: espera P-20 y la migración E1-06 de Santiago (`iglesiaId` en la gestión interna) |
+| E2-16 | Adaptar miembros y ministerios a varias iglesias (`iglesiaId`, `alcanceIglesia`) | `specs.md §12.2`, P-20 de Oscar | P-20, migración de Santiago | La hizo Santiago en el PR #26 (E1-06, supuesto S-05 de P-20); revisada por Nataly |
 | E2-17 | Completar en la matriz las filas de RF-01–23 con su código y prueba | Sección 9 | Tareas anteriores | Hecha en la PR #20 (en revisión) (RF-01–RF-23) |
 | E2-18 | Cobertura mínima de 70 % en dominio y servicios de estos módulos | RNF-18 | Tareas anteriores | Hecha: 97 % de sentencias y 89 % de ramas en catálogos, iglesias, patrimonio y consultas |
 
