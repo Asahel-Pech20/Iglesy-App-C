@@ -72,6 +72,35 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
       display: block;
       font-size: 24px;
     }
+    /* E2-15: el índice con el sello dorado del estilo colonial (igual que la ficha pública) */
+    .sello {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .circulo {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      width: 76px;
+      height: 76px;
+      margin: 4px;
+      border: 2px solid var(--acento);
+      outline: 1px solid var(--acento);
+      outline-offset: 3px;
+      border-radius: 50%;
+      color: var(--acento);
+      font-size: 26px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .dato .serifa {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
+    }
     .suave {
       color: var(--texto-suave);
       font-size: 12px;
@@ -125,13 +154,12 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
       }
       @if (indice(); as i) {
         <section class="resumen" aria-label="Índice patrimonial">
-          <div class="tarjeta dato">
-            <span class="suave">Índice ({{ i.anioCalculo }})</span>
-            <strong>{{ formatoIndice(i.indice) }}</strong>
-          </div>
-          <div class="tarjeta dato">
-            <span class="suave">Distinción</span>
-            <strong>{{ i.distincion ?? 'Sin distinción' }}</strong>
+          <div class="tarjeta dato sello">
+            <span class="circulo">{{ formatoIndice(i.indice) }}</span>
+            <div>
+              <span class="suave">Índice ({{ i.anioCalculo }})</span>
+              <strong class="serifa">{{ i.distincion ?? 'Sin distinción' }}</strong>
+            </div>
           </div>
           <div class="tarjeta dato">
             <span class="suave">Objetos vigentes</span>

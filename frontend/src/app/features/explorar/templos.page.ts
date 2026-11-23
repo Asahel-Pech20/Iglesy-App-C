@@ -13,6 +13,7 @@ import { ETIQUETAS_TIPO_IGLESIA, opcionesDe } from '@/app/core/formato';
 import { valorDe } from '@/app/core/recurso';
 import type { TipoIglesia } from '@/app/tipos/iglesias';
 import type { Lugar } from '@/app/tipos/patrimonio';
+import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
 import { TarjetaIglesia } from './tarjeta-iglesia';
@@ -37,118 +38,160 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     Paginacion,
     SelectorLugar,
     TarjetaIglesia,
+    TituloColonial,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
-    .filtros {
+    .pagina {
       display: grid;
-      gap: 8px 12px;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .filtros {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background: var(--superficie);
+      border: 1px solid var(--marco);
+      border-radius: 4px;
+    }
+    .filtros h2 {
+      margin: 0 0 8px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--primario);
+    }
+    .filtros mat-form-field,
+    .filtros app-campo-busqueda {
+      width: 100%;
+    }
+    .filtros mat-label {
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--primario);
     }
     .lista {
       display: grid;
-      gap: 12px;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
-    h1 {
-      font-size: 24px;
-      margin: 8px 0 4px;
+    @media (min-width: 768px) {
+      .pagina {
+        grid-template-columns: 200px minmax(0, 1fr);
+      }
+      .lista {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
-    .suave {
-      color: var(--texto-suave);
-      margin: 0 0 16px;
+    @media (min-width: 1200px) {
+      .lista {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
   `,
   template: `
-    <h1>Iglesias de México</h1>
-    <p class="suave">Elige un estado para ver sus iglesias y su valor patrimonial.</p>
+    <app-titulo-colonial
+      texto="Iglesias de México"
+      subtitulo="Elige un estado para ver sus iglesias y su valor patrimonial."
+    />
 
-    <div class="filtros">
-      <app-selector-lugar
-        textoSinEstado="Elige un estado"
-        [estado]="f().estado || undefined"
-        [municipio]="f().municipio || undefined"
-        [localidad]="f().localidad || undefined"
-        (cambio)="lugar($event)"
-      />
-      @if (f().estado) {
-        <mat-form-field>
-          <mat-label>Tipo</mat-label>
-          <mat-select
-            [value]="f().tipo"
-            (selectionChange)="filtros.cambiar({ tipo: $event.value })"
-          >
-            <mat-option value="">Todos</mat-option>
-            @for (t of tipos; track t.valor) {
-              <mat-option [value]="t.valor">{{ t.etiqueta }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <app-campo-busqueda
-          etiqueta="Nombre"
-          placeholder="Parte del nombre…"
-          [valor]="f().q"
-          (cambio)="filtros.cambiar({ q: $event })"
+    <div class="pagina">
+      <aside class="filtros" aria-label="Filtros">
+        <h2>Buscar</h2>
+        <app-selector-lugar
+          textoSinEstado="Elige un estado"
+          [estado]="f().estado || undefined"
+          [municipio]="f().municipio || undefined"
+          [localidad]="f().localidad || undefined"
+          (cambio)="lugar($event)"
         />
-        <mat-form-field>
-          <mat-label>Caben al menos</mat-label>
-          <input
-            matInput
-            type="number"
-            min="1"
-            inputmode="numeric"
-            [value]="f().capacidadMin || ''"
-            (change)="capacidad('capacidadMin', $event)"
+        @if (f().estado) {
+          <mat-form-field>
+            <mat-label>Tipo</mat-label>
+            <mat-select
+              [value]="f().tipo"
+              (selectionChange)="filtros.cambiar({ tipo: $event.value })"
+            >
+              <mat-option value="">Todos</mat-option>
+              @for (t of tipos; track t.valor) {
+                <mat-option [value]="t.valor">{{ t.etiqueta }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <app-campo-busqueda
+            etiqueta="Nombre"
+            placeholder="Parte del nombre…"
+            [valor]="f().q"
+            (cambio)="filtros.cambiar({ q: $event })"
           />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Caben como máximo</mat-label>
-          <input
-            matInput
-            type="number"
-            min="1"
-            inputmode="numeric"
-            [value]="f().capacidadMax || ''"
-            (change)="capacidad('capacidadMax', $event)"
-          />
-        </mat-form-field>
-      }
-    </div>
+          <mat-form-field>
+            <mat-label>Cupo mínimo</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              inputmode="numeric"
+              [value]="f().capacidadMin || ''"
+              (change)="capacidad('capacidadMin', $event)"
+            />
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Cupo máximo</mat-label>
+            <input
+              matInput
+              type="number"
+              min="1"
+              inputmode="numeric"
+              [value]="f().capacidadMax || ''"
+              (change)="capacidad('capacidadMax', $event)"
+            />
+          </mat-form-field>
+        }
+      </aside>
 
-    @if (!f().estado) {
-      <app-estado-vacio
-        [icono]="iconos.Church"
-        titulo="Elige un estado"
-        descripcion="Después puedes acotar por municipio, ciudad, tipo, nombre o capacidad."
-      />
-    } @else if (consulta.isLoading() && !consulta.hasValue()) {
-      <app-esqueleto [filas]="4" [columnas]="1" />
-    } @else if (consulta.error()) {
-      <app-estado-error [error]="consulta.error()" (reintentar)="consulta.reload()" />
-    } @else if (iglesias().length === 0) {
-      <app-estado-vacio
-        [icono]="iconos.Church"
-        titulo="No hay iglesias con esos filtros"
-        descripcion="Quita algún filtro para ver más iglesias del estado."
-      />
-    } @else {
-      <section class="lista" aria-label="Iglesias del estado">
-        @for (i of iglesias(); track i.id) {
-          <app-tarjeta-iglesia
-            [id]="i.id"
-            [nombre]="i.nombre"
-            [tipo]="i.tipo"
-            [municipio]="i.municipio"
-            [localidad]="i.localidad"
-            [indice]="i.indice"
-            [distincion]="i.distincion"
+      <div>
+        @if (!f().estado) {
+          <app-estado-vacio
+            [icono]="iconos.Church"
+            titulo="Elige un estado"
+            descripcion="Después puedes acotar por municipio, ciudad, tipo, nombre o capacidad."
+          />
+        } @else if (consulta.isLoading() && !consulta.hasValue()) {
+          <app-esqueleto [filas]="4" [columnas]="1" />
+        } @else if (consulta.error()) {
+          <app-estado-error [error]="consulta.error()" (reintentar)="consulta.reload()" />
+        } @else if (iglesias().length === 0) {
+          <app-estado-vacio
+            [icono]="iconos.Church"
+            titulo="No hay iglesias con esos filtros"
+            descripcion="Quita algún filtro para ver más iglesias del estado."
+          />
+        } @else {
+          <section class="lista" aria-label="Iglesias del estado">
+            @for (i of iglesias(); track i.id) {
+              <app-tarjeta-iglesia
+                [id]="i.id"
+                [nombre]="i.nombre"
+                [tipo]="i.tipo"
+                [municipio]="i.municipio"
+                [localidad]="i.localidad"
+                [indice]="i.indice"
+                [distincion]="i.distincion"
+              />
+            }
+          </section>
+          <app-paginacion
+            [meta]="consulta.value()!.meta"
+            (cambio)="filtros.cambiar({ page: $event })"
           />
         }
-      </section>
-      <app-paginacion
-        [meta]="consulta.value()!.meta"
-        (cambio)="filtros.cambiar({ page: $event })"
-      />
-    }
+      </div>
+    </div>
   `,
 })
 export class TemplosPage {

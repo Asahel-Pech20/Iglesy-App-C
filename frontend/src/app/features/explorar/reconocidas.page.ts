@@ -6,6 +6,7 @@ import { Paginacion } from '@/app/compartido/paginacion';
 import { filtrosURL } from '@/app/core/filtros-url';
 import { valorDe } from '@/app/core/recurso';
 import type { Lugar } from '@/app/tipos/patrimonio';
+import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
 import { TarjetaIglesia } from './tarjeta-iglesia';
@@ -24,74 +25,113 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     Paginacion,
     SelectorLugar,
     TarjetaIglesia,
+    TituloColonial,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
-    .filtros {
+    .pagina {
       display: grid;
-      gap: 8px 12px;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .filtros {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background: var(--superficie);
+      border: 1px solid var(--marco);
+      border-radius: 4px;
+    }
+    .filtros h2 {
+      margin: 0 0 8px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--primario);
+    }
+    .filtros mat-form-field,
+    .filtros app-campo-busqueda {
+      width: 100%;
+    }
+    .filtros mat-label {
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--primario);
     }
     .lista {
       display: grid;
-      gap: 12px;
+      gap: 14px;
       margin: 0;
       padding: 0;
       list-style: none;
     }
-    h1 {
-      font-size: 24px;
-      margin: 8px 0 4px;
+    @media (min-width: 768px) {
+      .pagina {
+        grid-template-columns: 200px minmax(0, 1fr);
+      }
+      .lista {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
-    .suave {
-      color: var(--texto-suave);
-      margin: 0 0 16px;
+    @media (min-width: 1200px) {
+      .lista {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
   `,
   template: `
-    <h1>Iglesias más reconocidas</h1>
-    <p class="suave">Ordenadas por su índice de valor patrimonial, de mayor a menor.</p>
-    <div class="filtros">
-      <app-selector-lugar
-        [estado]="f().estado || undefined"
-        [municipio]="f().municipio || undefined"
-        [localidad]="f().localidad || undefined"
-        (cambio)="lugar($event)"
-      />
-    </div>
-    @if (consulta.isLoading() && !consulta.hasValue()) {
-      <app-esqueleto [filas]="4" [columnas]="1" />
-    } @else if (consulta.error()) {
-      <app-estado-error [error]="consulta.error()" (reintentar)="consulta.reload()" />
-    } @else if (ranking().length === 0) {
-      <app-estado-vacio
-        [icono]="iconos.Award"
-        titulo="Aún no hay iglesias reconocidas aquí"
-        descripcion="Solo aparecen iglesias abiertas con objetos patrimoniales registrados."
-      />
-    } @else {
-      <ol class="lista" aria-label="Ranking de iglesias">
-        @for (i of ranking(); track i.id) {
-          <li>
-            <app-tarjeta-iglesia
-              [id]="i.id"
-              [nombre]="i.nombre"
-              [tipo]="i.tipo"
-              [estado]="i.estado"
-              [municipio]="i.municipio"
-              [localidad]="i.localidad"
-              [indice]="i.indice"
-              [distincion]="i.distincion"
-              [posicion]="i.posicion"
-            />
-          </li>
+    <app-titulo-colonial
+      texto="Iglesias más reconocidas"
+      subtitulo="Ordenadas por su índice de valor patrimonial, de mayor a menor."
+    />
+    <div class="pagina">
+      <aside class="filtros" aria-label="Lugar">
+        <h2>Lugar</h2>
+        <app-selector-lugar
+          [estado]="f().estado || undefined"
+          [municipio]="f().municipio || undefined"
+          [localidad]="f().localidad || undefined"
+          (cambio)="lugar($event)"
+        />
+      </aside>
+      <div>
+        @if (consulta.isLoading() && !consulta.hasValue()) {
+          <app-esqueleto [filas]="4" [columnas]="1" />
+        } @else if (consulta.error()) {
+          <app-estado-error [error]="consulta.error()" (reintentar)="consulta.reload()" />
+        } @else if (ranking().length === 0) {
+          <app-estado-vacio
+            [icono]="iconos.Award"
+            titulo="Aún no hay iglesias reconocidas aquí"
+            descripcion="Solo aparecen iglesias abiertas con objetos patrimoniales registrados."
+          />
+        } @else {
+          <ol class="lista" aria-label="Ranking de iglesias">
+            @for (i of ranking(); track i.id) {
+              <li>
+                <app-tarjeta-iglesia
+                  [id]="i.id"
+                  [nombre]="i.nombre"
+                  [tipo]="i.tipo"
+                  [estado]="i.estado"
+                  [municipio]="i.municipio"
+                  [localidad]="i.localidad"
+                  [indice]="i.indice"
+                  [distincion]="i.distincion"
+                  [posicion]="i.posicion"
+                />
+              </li>
+            }
+          </ol>
+          <app-paginacion
+            [meta]="consulta.value()!.meta"
+            (cambio)="filtros.cambiar({ page: $event })"
+          />
         }
-      </ol>
-      <app-paginacion
-        [meta]="consulta.value()!.meta"
-        (cambio)="filtros.cambiar({ page: $event })"
-      />
-    }
+      </div>
+    </div>
   `,
 })
 export class ReconocidasPage {

@@ -11,6 +11,7 @@ import { filtrosURL } from '@/app/core/filtros-url';
 import { ETIQUETAS_TIPO_OBJETO, opcionesDe } from '@/app/core/formato';
 import { valorDe } from '@/app/core/recurso';
 import type { Lugar, TipoObjeto } from '@/app/tipos/patrimonio';
+import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
 import { TarjetaIglesia } from './tarjeta-iglesia';
@@ -34,25 +35,60 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     Paginacion,
     SelectorLugar,
     TarjetaIglesia,
+    TituloColonial,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
-    .filtros {
+    .pagina {
       display: grid;
-      gap: 8px 12px;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .filtros {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background: var(--superficie);
+      border: 1px solid var(--marco);
+      border-radius: 4px;
+    }
+    .filtros h2 {
+      margin: 0 0 8px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--primario);
+    }
+    .filtros mat-form-field,
+    .filtros app-campo-busqueda {
+      width: 100%;
+    }
+    .filtros mat-label {
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--primario);
     }
     .lista {
       display: grid;
-      gap: 12px;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
     }
-    h1 {
-      font-size: 24px;
-      margin: 8px 0 4px;
+    @media (min-width: 768px) {
+      .pagina {
+        grid-template-columns: 200px minmax(0, 1fr);
+      }
+      .lista {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
-    .suave {
-      color: var(--texto-suave);
-      margin: 0 0 16px;
+    @media (min-width: 1200px) {
+      .lista {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
     ul {
       margin: 8px 0 0;
@@ -61,82 +97,89 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     }
   `,
   template: `
-    <h1>Búsqueda por patrimonio</h1>
-    <p class="suave">Por ejemplo: imágenes de 300 años o más en Puebla.</p>
-    <div class="filtros">
-      <mat-form-field>
-        <mat-label>Tipo de objeto</mat-label>
-        <mat-select
-          [value]="f().tipoObjeto"
-          (selectionChange)="filtros.cambiar({ tipoObjeto: $event.value })"
-        >
-          @for (t of tipos; track t.valor) {
-            <mat-option [value]="t.valor">{{ t.etiqueta }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Antigüedad mínima (años)</mat-label>
-        <input
-          matInput
-          type="number"
-          min="0"
-          inputmode="numeric"
-          [value]="f().antiguedadMin"
-          (change)="antiguedad($event)"
-        />
-      </mat-form-field>
-      <app-selector-lugar
-        textoSinEstado="Elige un estado"
-        [estado]="f().estado || undefined"
-        [municipio]="f().municipio || undefined"
-        [localidad]="f().localidad || undefined"
-        (cambio)="lugar($event)"
-      />
-    </div>
-
-    @if (!listo()) {
-      <app-estado-vacio
-        [icono]="iconos.Search"
-        titulo="Elige qué buscar y dónde"
-        descripcion="Un tipo de objeto, cuántos años como mínimo y un estado, municipio o ciudad."
-      />
-    } @else if (consulta.isLoading() && !consulta.hasValue()) {
-      <app-esqueleto [filas]="3" [columnas]="1" />
-    } @else if (consulta.error()) {
-      <app-estado-error [error]="consulta.error()" (reintentar)="consulta.reload()" />
-    } @else if (resultados().length === 0) {
-      <app-estado-vacio
-        [icono]="iconos.Search"
-        titulo="Ninguna iglesia cumple"
-        descripcion="Prueba con menos años o con otro lugar."
-      />
-    } @else {
-      <section class="lista" aria-label="Iglesias encontradas">
-        @for (r of resultados(); track r.id) {
-          <app-tarjeta-iglesia
-            [id]="r.id"
-            [nombre]="r.nombre"
-            [tipo]="r.tipo"
-            [estado]="r.estado"
-            [municipio]="r.municipio"
-            [localidad]="r.localidad"
-            [indice]="r.indice"
-            [distincion]="r.distincion"
+    <app-titulo-colonial
+      texto="Búsqueda por patrimonio"
+      subtitulo="Por ejemplo: imágenes de 300 años o más en Puebla."
+    />
+    <div class="pagina">
+      <aside class="filtros" aria-label="Qué buscar">
+        <h2>Qué buscar</h2>
+        <mat-form-field>
+          <mat-label>Tipo de objeto</mat-label>
+          <mat-select
+            [value]="f().tipoObjeto"
+            (selectionChange)="filtros.cambiar({ tipoObjeto: $event.value })"
           >
-            <ul aria-label="Objetos que cumplen">
-              @for (o of r.objetos; track o.id) {
-                <li>{{ o.descripcion }} ({{ o.epoca }}, {{ o.antiguedad }} años)</li>
-              }
-            </ul>
-          </app-tarjeta-iglesia>
+            @for (t of tipos; track t.valor) {
+              <mat-option [value]="t.valor">{{ t.etiqueta }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Antigüedad mínima (años)</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            inputmode="numeric"
+            [value]="f().antiguedadMin"
+            (change)="antiguedad($event)"
+          />
+        </mat-form-field>
+        <app-selector-lugar
+          textoSinEstado="Elige un estado"
+          [estado]="f().estado || undefined"
+          [municipio]="f().municipio || undefined"
+          [localidad]="f().localidad || undefined"
+          (cambio)="lugar($event)"
+        />
+      </aside>
+
+      <div>
+        @if (!listo()) {
+          <app-estado-vacio
+            [icono]="iconos.Search"
+            titulo="Elige qué buscar y dónde"
+            descripcion="Un tipo de objeto, cuántos años como mínimo y un estado, municipio o ciudad."
+          />
+        } @else if (consulta.isLoading() && !consulta.hasValue()) {
+          <app-esqueleto [filas]="3" [columnas]="1" />
+        } @else if (consulta.error()) {
+          <app-estado-error [error]="consulta.error()" (reintentar)="consulta.reload()" />
+        } @else if (resultados().length === 0) {
+          <app-estado-vacio
+            [icono]="iconos.Search"
+            titulo="Ninguna iglesia cumple"
+            descripcion="Prueba con menos años o con otro lugar."
+          />
+        } @else {
+          <section class="lista" aria-label="Iglesias encontradas">
+            @for (r of resultados(); track r.id) {
+              <app-tarjeta-iglesia
+                [id]="r.id"
+                [nombre]="r.nombre"
+                [tipo]="r.tipo"
+                [estado]="r.estado"
+                [municipio]="r.municipio"
+                [localidad]="r.localidad"
+                [indice]="r.indice"
+                [distincion]="r.distincion"
+              >
+                <ul aria-label="Objetos que cumplen">
+                  @for (o of r.objetos; track o.id) {
+                    <li>{{ o.descripcion }} ({{ o.epoca }}, {{ o.antiguedad }} años)</li>
+                  }
+                </ul>
+              </app-tarjeta-iglesia>
+            }
+          </section>
+          <app-paginacion
+            [meta]="consulta.value()!.meta"
+            (cambio)="filtros.cambiar({ page: $event })"
+          />
         }
-      </section>
-      <app-paginacion
-        [meta]="consulta.value()!.meta"
-        (cambio)="filtros.cambiar({ page: $event })"
-      />
-    }
+      </div>
+    </div>
   `,
 })
 export class BusquedaPage {
