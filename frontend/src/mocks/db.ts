@@ -53,6 +53,14 @@ const todasLasIglesias = () => [
   ...conDatosDeFicha(iglesiasIniciales()),
   ...iglesiasPatrimonioIniciales(),
 ];
+import {
+  type CotizacionMock,
+  cotizacionesIniciales,
+  type SolicitudEspacioMock,
+  solicitudesEspacioIniciales,
+  type TipoEspacioMock,
+  tiposEspacioIniciales,
+} from './datos/espacios';
 
 // "Base de datos" en memoria de los mocks. Cada dueño agrega aquí sus colecciones (B2–B4).
 export const db = {
@@ -85,6 +93,10 @@ export const db = {
   localidadesInegi: localidadesIniciales(),
   objetos: objetosIniciales(),
   criterios: criteriosIniciales(),
+  // Ecclesia: criptas y otros espacios
+  tiposEspacio: tiposEspacioIniciales(),
+  solicitudesEspacio: solicitudesEspacioIniciales(),
+  cotizacionesEspacio: cotizacionesIniciales(),
 } satisfies {
   usuarios: Usuario[];
   configuracion: ConfiguracionIglesia;
@@ -109,6 +121,9 @@ export const db = {
   misas: MisaMock[];
   diezmos: DiezmoMock[];
   correcciones: CorreccionMock[];
+  tiposEspacio: TipoEspacioMock[];
+  solicitudesEspacio: SolicitudEspacioMock[];
+  cotizacionesEspacio: CotizacionMock[];
 };
 
 /** Restaura los datos iniciales (se llama entre pruebas). */
@@ -136,6 +151,9 @@ export function reiniciarDb() {
   db.localidadesInegi = localidadesIniciales();
   db.objetos = objetosIniciales();
   db.criterios = criteriosIniciales();
+  db.tiposEspacio = tiposEspacioIniciales();
+  db.solicitudesEspacio = solicitudesEspacioIniciales();
+  db.cotizacionesEspacio = cotizacionesIniciales();
   sesionMock.cerrar();
 }
 // Sesión simulada: en el navegador sobrevive a recargas (como la cookie de refresh real)

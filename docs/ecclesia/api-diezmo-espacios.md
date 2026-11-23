@@ -50,9 +50,12 @@ Sin sesión. Los datos de contacto nunca salen de estas rutas.
 | `POST` | `/public/solicitudes-espacio/:folio/rechazar` | Rechaza el precio. Body `{ clave }` | RF-78 |
 | `POST` | `/public/solicitudes-espacio/:folio/cancelar` | Cancela. Body `{ clave }`. 422 si ya aceptó | RF-80, RN-52, CA-29 |
 
-- **Folio y clave** (ADR-0004): folio legible tipo `CR-2026-000123`; clave aleatoria de 32 bytes guardada con hash. La clave va en el **cuerpo**, no en la URL, para que no quede en bitácoras.
+- **Folio y clave** (ADR-0004, supuestos de P-25 en `espacios/dominio/supuestos.ts`): folio legible con prefijo genérico, `ESP-2026-000123` (consecutivo nacional); clave de 10 caracteres de un alfabeto sin ambiguos (sin 0/O ni 1/I/L), unos 50 bits, que se muestra como `ABCDE-FGHJK` y se acepta escrita de cualquier forma. Se guarda solo con SHA-256 y se compara con `timingSafeEqual`. La clave va en el **cuerpo**, no en la URL, para que no quede en bitácoras, y nunca vuelve a salir en ninguna respuesta.
 - Folio inexistente o clave incorrecta responden igual (404 `NOT_FOUND`), para no revelar qué folios existen.
-- Límite de intentos en las rutas con clave y en la creación (429 `RATE_LIMITED`). Cifra por definir; propuesta: la del login (5 por minuto por IP).
+- **Límites** (429 `RATE_LIMITED`): por IP, 10 creaciones por minuto, 30 consultas o respuestas por minuto y 60 lecturas de tipos por minuto. Además, **por folio**: 5 claves incorrectas seguidas lo bloquean 15 minutos (supuesto de P-25). Limitación aceptada por ahora: un tercero que conozca un folio ajeno podría bloquearlo esos 15 minutos.
+- **Iglesia cerrada:** las rutas públicas no pasan por `alcanceIglesia`, así que el service revisa que la iglesia esté activa: crear, aceptar, rechazar y cancelar responden 422; consultar sigue permitido y la lista de tipos sale vacía.
+- **Vencimiento:** al aceptar, rechazar o cancelar una cotización vencida, primero se **guarda** `VENCIDA` (en una transacción que confirma) y después se responde 422; no se hace dentro de la misma transacción del error.
+- **Contacto:** nombre y al menos un teléfono o un correo (supuesto de P-25). El parámetro se llama `:iglesiaId`, igual que la ficha pública de la iglesia.
 - Las acciones se validan con `evaluarTransicion(solicitud, accion, 'SOLICITANTE', ahora)`.
 
 ## Espacios (panel)
@@ -64,11 +67,12 @@ Sin sesión. Los datos de contacto nunca salen de estas rutas.
 | `PATCH` | `/iglesias/:iglesiaId/tipos-espacio/:id` | `espacios:gestionar` | Cambia el tipo o lo activa o desactiva (no se borra, para conservar las solicitudes) | RF-70 |
 | `GET` | `/iglesias/:iglesiaId/solicitudes-espacio?estado&page&limit` | `espacios:leer` | Solicitudes de la iglesia con datos de contacto. `estado` filtra por el estado **efectivo** | RF-75, RN-53 |
 | `GET` | `/iglesias/:iglesiaId/solicitudes-espacio/:id` | `espacios:leer` | Detalle con contacto y cotización | RF-75 |
-| `POST` | `/iglesias/:iglesiaId/solicitudes-espacio/:id/cotizacion` | `espacios:gestionar` | Cotiza. Body `{ precio, condiciones }`. Fija la fecha de emisión; vale 15 días. 422 si no está Recibida | RF-77, RN-50, RN-51, CA-28 |
+| `POST` | `/iglesias/:iglesiaId/solicitudes-espacio/:id/cotizacion` | `espacios:gestionar` | Cotiza. Body `{ monto, condiciones }`. Fija la fecha de emisión; vale 15 días. 422 si no está Recibida | RF-77, RN-50, RN-51, CA-28 |
 | `POST` | `/iglesias/:iglesiaId/solicitudes-espacio/:id/sin-lugar` | `espacios:gestionar` | Registra que no hay lugar. 422 si no está Recibida | RF-76, CA-27 |
 
 - Las acciones del administrador se validan con `evaluarTransicion(..., 'ADMINISTRADOR', ahora)`.
-- `precio` es texto con 2 decimales, mayor que cero, con el mismo formato de dinero que el diezmo.
+- `monto` es texto con 2 decimales, mayor que cero, con el mismo formato de dinero que el diezmo. Una solicitud puede tener varias cotizaciones, con a lo sumo una sin respuesta (índice único parcial): hoy solo se cotiza desde «Recibida» (supuesto de P-26), así que no hace falta otra migración si el cliente permite volver a cotizar.
+- La Coordinación no entra a estas rutas (`SUPUESTOS_ALCANCE.datosPrivados`). Una solicitud de otra iglesia responde 403 con la ruta ajena y 404 con la propia.
 
 ## Se deja fuera (con motivo)
 

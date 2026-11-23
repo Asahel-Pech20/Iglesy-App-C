@@ -6,6 +6,7 @@ import {
   FileBarChart,
   Gem,
   HandCoins,
+  Landmark,
   Home,
   type LucideIconData,
   Megaphone,
@@ -68,6 +69,7 @@ export const MENU: EntradaMenu[] = [
     icono: SlidersHorizontal,
     permiso: 'criterios:leer',
   },
+  { etiqueta: 'Espacios', ruta: '/espacios', icono: Landmark, permiso: 'espacios:leer' },
   {
     etiqueta: 'Diezmo',
     ruta: '/diezmo',

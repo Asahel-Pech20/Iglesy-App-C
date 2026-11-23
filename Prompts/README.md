@@ -21,8 +21,8 @@ Cita el ID en la entrada de `docs/bitacora-ia.md` (columna «Prompt») cuando us
 |---|---|---|---|
 | [OSC-01](Oscar/OSC-01-requerimientos-2.2-y-2.3.md) | Oscar | Requerimientos de las secciones 2.2 (Genaro) y 2.3 (Oscar) | Usado |
 | [OSC-02](Oscar/OSC-02-E4-06-dominio-espacios.md) | Oscar | E4-06: reglas puras de la solicitud de espacio | Usado (commit `54ea064`) |
-| [OSC-03](Oscar/OSC-03-E4-06-correccion-y-E4-14a-dominio-diezmo.md) | Oscar | Corrección de E4-06 y E4-14a: reglas puras del diezmo | Paso 2 hecho (commit `3268c9a`); paso 1 pendiente |
-| [OSC-04](Oscar/OSC-04-iglesia-cerrada-misas-diezmo.md) | Oscar | Una iglesia cerrada no acepta misas ni diezmo | Pendiente |
+| [OSC-03](Oscar/OSC-03-E4-06-correccion-y-E4-14a-dominio-diezmo.md) | Oscar | Corrección de E4-06 y E4-14a: reglas puras del diezmo | Paso 2 hecho (commit `3268c9a`); paso 1 hecho en el paso 0 de OSC-06 (commit `e02f131`) |
+| [OSC-04](Oscar/OSC-04-iglesia-cerrada-misas-diezmo.md) | Oscar | Una iglesia cerrada no acepta misas ni diezmo | Resuelto sin usar: lo cubre `alcanceIglesia` (A2-E1-01); lo comprueba `diezmo/iglesia-cerrada.test.ts` |
 | [OSC-05](Oscar/OSC-05-criptas-minimo-viernes.md) | Oscar | Criptas y otros espacios: lo mínimo para el viernes | Pendiente |
 | [GEN-01](Genaro/GEN-01-E3-01-plan-y-dominio-misas.md) | Genaro | Plan de Genaro y E3-01: choques de horario de misas | Pendiente |
 | [GEN-02](Genaro/GEN-02-horario-misas-y-platicas-minimo.md) | Genaro (lo ejecuta Oscar) | Horario de misas y pláticas: lo mínimo para el viernes | Pendiente; reemplaza a GEN-01 si no hubo avance |
