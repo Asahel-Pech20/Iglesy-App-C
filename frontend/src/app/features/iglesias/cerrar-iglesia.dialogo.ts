@@ -11,6 +11,7 @@ import {
 import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { errorDeCampo, normalizarError } from '@/app/core/api';
+import { aFechaApi } from '@/app/core/formato';
 import { NotificarService } from '@/app/core/notificar.service';
 import { errorServidor, maximo, mensajeError } from '@/app/core/validadores';
 import type { Iglesia } from '@/app/tipos/iglesias';
@@ -75,7 +76,7 @@ export class CerrarIglesiaDialogo {
   protected readonly enviando = signal(false);
   protected readonly errorGeneral = signal<string | null>(null);
   protected readonly form = inject(NonNullableFormBuilder).group({
-    fecha: [new Date().toISOString().slice(0, 10), fechaNoFutura],
+    fecha: [aFechaApi(new Date()), fechaNoFutura],
     motivo: [
       '',
       [

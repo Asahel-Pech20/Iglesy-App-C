@@ -1,4 +1,5 @@
 import type { ValidatorFn } from '@angular/forms';
+import { aFechaApi } from '@/app/core/formato';
 
 // Mismas reglas que backend/src/modules/iglesias y patrimonio (E2-06, E2-08). Vacío pasa:
 // los campos opcionales se envían como null.
@@ -35,9 +36,7 @@ export const telefono: ValidatorFn = (c) => {
 export const fechaNoFutura: ValidatorFn = (c) => {
   const v = String(c.value ?? '');
   if (v === '') return { mensaje: 'Elige la fecha.' };
-  return v > new Date().toISOString().slice(0, 10)
-    ? { mensaje: 'La fecha no puede ser futura.' }
-    : null;
+  return v > aFechaApi(new Date()) ? { mensaje: 'La fecha no puede ser futura.' } : null;
 };
 
 /** Texto → número o null. */

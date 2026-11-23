@@ -12,7 +12,7 @@ import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { errorDeCampo, normalizarError } from '@/app/core/api';
-import { ETIQUETAS_ESTADO_OBJETO } from '@/app/core/formato';
+import { ETIQUETAS_ESTADO_OBJETO, aFechaApi } from '@/app/core/formato';
 import { NotificarService } from '@/app/core/notificar.service';
 import { errorServidor, maximo, mensajeError, requerido } from '@/app/core/validadores';
 import { fechaNoFutura } from '@/app/features/iglesias/validadores-iglesia';
@@ -104,7 +104,7 @@ export class EstadoObjetoDialogo {
   protected readonly errorGeneral = signal<string | null>(null);
   protected readonly form = inject(NonNullableFormBuilder).group({
     estado: ['' as EstadoObjeto | '', requerido('Elige el nuevo estado.')],
-    fecha: [new Date().toISOString().slice(0, 10), fechaNoFutura],
+    fecha: [aFechaApi(new Date()), fechaNoFutura],
     motivo: ['', [requerido('Escribe el motivo.'), maximo(500)]],
   });
 

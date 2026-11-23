@@ -299,3 +299,20 @@ describe('GET /public/busqueda-patrimonio (E2-13)', () => {
       expect((await publica(url)).status, url).toBe(400);
   });
 });
+
+describe('ficha: tipos de espacio de Oscar (E2-11 + E4-08)', () => {
+  it('muestra los tipos activos y disponibles, sin precios; no los que no hay', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    const iglesia = await iglesiaCon('Parroquia con criptas', []);
+    await prisma.tipoEspacio.createMany({
+      data: [
+        { iglesiaId: iglesia.id, clase: 'CRIPTA' },
+        { iglesiaId: iglesia.id, clase: 'NICHO', disponible: false },
+        { iglesiaId: iglesia.id, clase: 'OSARIO', activo: false },
+      ],
+    });
+    const res = await publica(`/iglesias/${iglesia.id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.tiposEspacio).toEqual([{ id: expect.any(String), clase: 'CRIPTA' }]);
+  });
+});

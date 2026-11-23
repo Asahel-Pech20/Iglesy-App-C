@@ -2,6 +2,7 @@
 // lista por estado con su distinción, ficha, iglesias reconocidas y búsqueda del investigador.
 // Nunca devuelve iglesias cerradas (RN-07) ni objetos que no estén vigentes (RN-11).
 import { crearMeta, paginar } from '../../lib/paginacion';
+import * as espaciosService from '../espacios/espacios.service';
 import * as iglesiasService from '../iglesias/iglesias.service';
 import * as patrimonioService from '../patrimonio/patrimonio.service';
 import type {
@@ -31,14 +32,15 @@ export async function listaPorEstado(query: QueryListaPublica) {
 
 /**
  * E2-11 (RF-06, RF-16, RF-18, CA-04): todo lo de una iglesia en una sola respuesta.
- * `servicios`, `platicas` y `misas` (Genaro) y `tiposEspacio` (Oscar) se llenan con las funciones
- * de sus services cuando existan (plan-nataly.md, «Dependencias»); mientras, van vacíos.
+ * `tiposEspacio` viene del service de Oscar (E4-08, sin precios). `servicios`, `platicas` y `misas`
+ * (Genaro) se llenan cuando existan sus funciones (plan-nataly.md, «Dependencias»); mientras, vacíos.
  */
 export async function ficha(iglesiaId: string) {
   const iglesia = await iglesiasService.obtenerPublica(iglesiaId);
-  const [indices, objetos] = await Promise.all([
+  const [indices, objetos, espacios] = await Promise.all([
     patrimonioService.indicesDe([iglesia]),
     patrimonioService.objetosPublicos(iglesia.id),
+    espaciosService.tiposPublicos(iglesia.id),
   ]);
   const { indice, distincion, anioCalculo } = indices.get(iglesia.id) as {
     indice: number;
@@ -54,7 +56,7 @@ export async function ficha(iglesiaId: string) {
     servicios: [],
     platicas: [],
     misas: [],
-    tiposEspacio: [],
+    tiposEspacio: espacios.tipos,
   };
 }
 
