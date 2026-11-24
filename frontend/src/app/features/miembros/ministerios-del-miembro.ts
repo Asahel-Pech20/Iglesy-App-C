@@ -134,7 +134,7 @@ import type { MiembroDetalle, MinisterioDeMiembro } from '@/app/tipos/miembros';
       padding: 8px 0;
     }
     .lista li + li {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     .nombre {
       font-weight: 500;
