@@ -19,6 +19,16 @@ import type { Lugar } from '@/app/tipos/patrimonio';
     :host {
       display: contents;
     }
+    /* E2-14: etiquetas del estilo colonial; los campos conservan el contorno de Material (WCAG 1.4.11) */
+    mat-form-field {
+      width: 100%;
+    }
+    mat-label {
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--primario);
+    }
   `,
   template: `
     <mat-form-field>
