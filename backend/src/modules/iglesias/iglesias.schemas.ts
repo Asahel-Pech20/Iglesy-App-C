@@ -131,7 +131,38 @@ export const esquemaListarIglesias = esquemaPaginacion.extend({
 
 export const esquemaIdIglesia = z.object({ iglesiaId: z.uuid('Iglesia no válida.') });
 
+const capacidadFiltro = z.coerce
+  .number({ error: 'La capacidad es un número.' })
+  .int('La capacidad es un número entero.')
+  .positive('La capacidad debe ser mayor que 0.')
+  .max(100_000);
+
+/**
+ * E2-07: filtros de la lista pública (RF-02–RF-05). Supuestos mientras no haya respuesta:
+ * P-02, `q` busca parte del nombre sin distinguir mayúsculas (los acentos sí cuentan);
+ * P-03, se acepta mínimo y máximo, así sirve tanto «al menos 200» como un rango.
+ */
+export const esquemaListaPublica = esquemaPaginacion
+  .extend({
+    // RF-01: el visitante siempre elige un estado
+    estado: clave(2),
+    municipio: clave(5).optional(),
+    localidad: clave(9).optional(),
+    tipo: z.enum(TIPOS_IGLESIA, { error: 'Elige un tipo de iglesia válido.' }).optional(),
+    q: z.string().trim().max(100).optional(),
+    capacidadMin: capacidadFiltro.optional(),
+    capacidadMax: capacidadFiltro.optional(),
+  })
+  .refine(
+    (d) =>
+      d.capacidadMin === undefined ||
+      d.capacidadMax === undefined ||
+      d.capacidadMin <= d.capacidadMax,
+    { path: ['capacidadMax'], message: 'La capacidad máxima no puede ser menor que la mínima.' },
+  );
+
 export type CrearIglesia = z.infer<typeof esquemaCrearIglesia>;
 export type EditarIglesia = z.infer<typeof esquemaEditarIglesia>;
 export type CerrarIglesia = z.infer<typeof esquemaCerrarIglesia>;
 export type QueryListarIglesias = z.infer<typeof esquemaListarIglesias>;
+export type QueryListaPublica = z.infer<typeof esquemaListaPublica>;
