@@ -121,6 +121,11 @@ export class TituloColonial {
       letter-spacing: 2px;
       color: var(--marco);
     }
+    /* En oscuro la barra es azul claro: --marco solo daba 4.72:1 a 11 px (revisión de Santiago en el
+       PR #28). Se usa --primario-texto (9.9:1) sin oscurecer --marco, que también dibuja los marcos. */
+    :host-context(.dark) .lema {
+      color: var(--primario-texto);
+    }
     nav {
       display: flex;
       flex-wrap: wrap;
