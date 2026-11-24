@@ -151,7 +151,7 @@ export class TituloColonial {
   template: `
     <header>
       <div class="barra">
-        <a class="marca" routerLink="/templos">
+        <a class="marca" routerLink="/">
           <span class="nombre">Ecclesia</span>
           <span class="lema">PATRIMONIO DE MÉXICO</span>
         </a>

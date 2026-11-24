@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import type { CanActivateFn } from '@angular/router';
+import type { CanActivateFn, CanMatchFn } from '@angular/router';
 import { Router } from '@angular/router';
 import type { Permiso } from '@/app/tipos/comunes';
 import { SesionService } from './sesion.service';
@@ -25,3 +25,9 @@ export const soloAnonimo: CanActivateFn = () => {
   const sesion = inject(SesionService);
   return sesion.estado() === 'autenticado' ? inject(Router).createUrlTree(['/']) : true;
 };
+
+/**
+ * La página de entrada (`/`) solo es para quien llega sin sesión. Con sesión la ruta no coincide
+ * y `/` sigue mostrando el inicio del panel.
+ */
+export const sinSesion: CanMatchFn = () => inject(SesionService).estado() !== 'autenticado';
