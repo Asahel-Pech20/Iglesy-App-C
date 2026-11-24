@@ -10,7 +10,6 @@ import { AnunciosPage } from './features/anuncios/anuncios.page';
 import { CarteleraPage } from './features/anuncios/cartelera.page';
 import { AsistenciaPage } from './features/asistencia/asistencia.page';
 import { PaseListaPage } from './features/asistencia/pase-lista.page';
-import { ConfiguracionPage } from './features/configuracion/configuracion.page';
 import { EventoDetallePage } from './features/eventos/evento-detalle.page';
 import { EventoFormPage } from './features/eventos/evento-form.page';
 import { EventosPage } from './features/eventos/eventos.page';
@@ -124,7 +123,9 @@ export const routes: Routes = [
       },
       {
         path: 'configuracion',
-        component: ConfiguracionPage,
+        // Se carga al abrirla, como las pantallas de Ecclesia, para no sumar al paquete inicial
+        loadComponent: () =>
+          import('./features/configuracion/configuracion.page').then((m) => m.ConfiguracionPage),
         data: { permiso: 'configuracion:leer' },
         title: 'Configuración',
       },
