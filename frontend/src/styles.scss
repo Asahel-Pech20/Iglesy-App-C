@@ -22,6 +22,9 @@
   --peligro: #b91c1c;
   --peligro-texto: #ffffff;
   --anillo: #1e3a8a;
+  /* Estilo colonial de las pantallas públicas (E2-14): fondo y marcos decorativos */
+  --pergamino: #fbf7ef;
+  --marco: #e7d7b5;
   /* Fondo detrás de diálogos y menús laterales */
   --overlay: rgb(15 23 42 / 0.5);
   color-scheme: light;
@@ -44,6 +47,8 @@
   --peligro: #f87171;
   --peligro-texto: #0f172a;
   --anillo: #93c5fd;
+  --pergamino: #1a1f2e;
+  --marco: #5c4a2a;
   --overlay: rgb(2 6 23 / 0.7);
   color-scheme: dark;
 }

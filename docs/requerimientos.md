@@ -568,8 +568,20 @@ El diagrama se ajusta con las respuestas de P-26 y P-27.
 
 | Requerimiento | Párrafo del caso | Código | Prueba |
 |---|---|---|---|
-| RF-01 | Las iglesias, párrafo 2 | _por implementar_ | _por implementar_ |
-| RN-01 – RN-06, CA-01 | Las iglesias más reconocidas, párrafos 2–4 | _por implementar_ | _por implementar_ |
+| RF-01 – RF-05, CA-02, CA-03 | Las iglesias, párrafo 2 | `GET /public/iglesias?estado=` (`consultas.service.ts` `listaPorEstado`, `iglesias.service.ts` `listarPublicas`); pantalla `/templos` | `iglesias.test.ts` (E2-07), `consultas.test.ts` (CA-02), `prueba/patrimonio.spec.ts` |
+| RF-06, RF-16, CA-04 | Las iglesias · El patrimonio | `GET /public/iglesias/:iglesiaId` (`consultas.service.ts` `ficha`); pantalla `/templos/:id`. Servicios, pláticas, misas y espacios: pendientes de los services de Genaro y Oscar | `consultas.test.ts` (CA-04), `prueba/patrimonio.spec.ts` |
+| RF-07, RF-09, CA-09 | Las iglesias | `POST /iglesias` (`iglesias.service.ts` `crear`, `catalogos.service.ts` `validarUbicacion`); diálogo `iglesia-form.dialogo.ts` | `iglesias.test.ts` (E2-06, CA-09), `prueba/patrimonio.spec.ts` |
+| RF-08 | Quién usará el sistema | `PATCH /iglesias/:iglesiaId` con `alcanceIglesia` | `iglesias.test.ts` (E2-06, A2-E2-01/03) |
+| RF-10 | Las iglesias · Quién usará el sistema | `POST /catalogos/importacion`, `prisma/catalogos-inegi.ts` (`db:catalogos`) | `catalogos.test.ts` |
+| RF-11, RF-12, RN-07 | Las iglesias | `POST /iglesias/:iglesiaId/cierre`; `GET /iglesias?situacion=`; las consultas públicas filtran `activa` | `iglesias.test.ts`, `consultas.test.ts` (404 cerrada), `patrimonio.test.ts` (RF-12) |
+| RF-13, RF-14, RF-17, RN-10, RN-16 | El patrimonio | `/iglesias/:iglesiaId/objetos` (`patrimonio.service.ts`); `dominio/indice-patrimonial.ts` (`GRUPO_DE_TIPO`, `epoca`); pantalla `/patrimonio` | `patrimonio.test.ts`, `indice-patrimonial.test.ts`, `prueba/patrimonio.spec.ts` |
+| RF-15, RN-11, CA-05 | El patrimonio | `POST /iglesias/:iglesiaId/objetos/:objetoId/estado` (`cambiarEstadoObjeto`, `TRANSICIONES`) | `patrimonio.test.ts` (CA-05, P-08), `prueba/patrimonio.spec.ts` |
+| RF-18, RN-01 – RN-06, RN-14, RN-15, CA-01 | Las iglesias más reconocidas, párrafos 2–4 | `patrimonio/dominio/indice-patrimonial.ts` (`indiceIglesia`), `patrimonio.service.ts` (`indicesDe`, `anioDeCalculo`) | `indice-patrimonial.test.ts` (CA-01), `consultas.test.ts` |
+| RF-19 – RF-21, RN-12, RN-13, CA-06 | Las iglesias más reconocidas | `GET /public/reconocidas` (`consultas/dominio/ranking.ts`); pantalla `/reconocidas` | `ranking.test.ts`, `consultas.test.ts` (CA-06), `prueba/patrimonio.spec.ts` |
+| RF-22, CA-07 | Las iglesias más reconocidas | `/criterios-indice` (`patrimonio.service.ts` `guardarCriterios`); pantalla `/criterios-indice` | `patrimonio.test.ts` (CA-07), `consultas.test.ts` (CA-07 en el ranking), `prueba/patrimonio.spec.ts` |
+| RF-23, CA-08 | Las iglesias más reconocidas | `GET /public/busqueda-patrimonio` (`consultas.service.ts`, `patrimonio.service.ts` `iglesiasConObjeto`); pantalla `/busqueda-patrimonio` | `consultas.test.ts` (CA-08), `prueba/patrimonio.spec.ts` |
+
+Rutas de código relativas a `backend/src/modules/` y `frontend/src/app/`. Datos de prueba: `backend/prisma/seed-patrimonio.ts` (E2-09, `seed.test.ts`).
 
 ### 9.1 Requerimientos no funcionales (Santiago)
 

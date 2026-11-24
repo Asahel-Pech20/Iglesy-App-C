@@ -48,9 +48,50 @@ function publica(
   };
 }
 
+/**
+ * Pantallas públicas de Ecclesia dentro de su propio marco (E2-14). Se cargan al abrirlas
+ * (loadComponent), como espacios, para no sumar al paquete inicial.
+ */
+function explorar(path: string, children: Routes): Route {
+  return {
+    path,
+    loadComponent: () =>
+      import('./features/explorar/explorar-layout').then((m) => m.ExplorarLayout),
+    children,
+  };
+}
+
 export const routes: Routes = [
   // F3-13: cartelera pública, sin sesión ni layout administrativo
   { path: 'cartelera', component: CarteleraPage, title: 'Cartelera' },
+  // E2-14 (Nataly): consultas públicas de Ecclesia, sin sesión y para el celular
+  explorar('templos', [
+    {
+      path: '',
+      loadComponent: () => import('./features/explorar/templos.page').then((m) => m.TemplosPage),
+      title: 'Iglesias de México',
+    },
+    {
+      path: ':id',
+      loadComponent: () => import('./features/explorar/ficha.page').then((m) => m.FichaPage),
+      title: 'Ficha de la iglesia',
+    },
+  ]),
+  explorar('reconocidas', [
+    {
+      path: '',
+      loadComponent: () =>
+        import('./features/explorar/reconocidas.page').then((m) => m.ReconocidasPage),
+      title: 'Iglesias más reconocidas',
+    },
+  ]),
+  explorar('busqueda-patrimonio', [
+    {
+      path: '',
+      loadComponent: () => import('./features/explorar/busqueda.page').then((m) => m.BusquedaPage),
+      title: 'Búsqueda por patrimonio',
+    },
+  ]),
   // E4-19: espacios (criptas, nichos, columbarios y osarios) sin cuenta, con folio y clave.
   // «seguimiento» va antes de «:iglesiaId» para que no se tome como el id de una iglesia.
   {
@@ -184,6 +225,28 @@ export const routes: Routes = [
         component: IglesiasPage,
         data: { permiso: 'iglesias:leer' },
         title: 'Iglesias',
+      },
+      // E2-15 (Nataly): patrimonio de una iglesia y criterios del índice
+      {
+        path: 'iglesias/:id/patrimonio',
+        loadComponent: () =>
+          import('./features/patrimonio/patrimonio.page').then((m) => m.PatrimonioPage),
+        data: { permiso: 'patrimonio:leer' },
+        title: 'Patrimonio',
+      },
+      {
+        path: 'patrimonio',
+        loadComponent: () =>
+          import('./features/patrimonio/patrimonio.page').then((m) => m.PatrimonioPage),
+        data: { permiso: 'patrimonio:gestionar' },
+        title: 'Patrimonio',
+      },
+      {
+        path: 'criterios-indice',
+        loadComponent: () =>
+          import('./features/patrimonio/criterios.page').then((m) => m.CriteriosPage),
+        data: { permiso: 'criterios:leer' },
+        title: 'Criterios del índice',
       },
       // Ecclesia: solicitudes de espacio y su cotización (solo personal de iglesia)
       {

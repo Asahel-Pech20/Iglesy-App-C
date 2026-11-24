@@ -138,13 +138,13 @@ const iglesiaId = iglesiaAlcanceDe(req);
 const iglesiaId = iglesiaDe(req);
 ```
 
-| Caso | Respuesta |
-|---|---|
-| Sin sesión | 401 `UNAUTHENTICATED` |
-| Recurso o iglesia inexistente (el resolver devuelve `null`/`undefined`) | 404 `NOT_FOUND` |
-| Personal de otra iglesia | 403 `FORBIDDEN` |
-| `COORDINACION` | 403 por omisión; entra solo con `coordinacion: SUPUESTOS_ALCANCE.datosIglesia` |
-| Iglesia cerrada (`activa = false`) | GET se permite (consultar su historia); POST, PUT, PATCH y DELETE → 422 `BUSINESS_RULE`. Lo hace `alcanceIglesia`: tu módulo no tiene que repetirlo |
+| Caso                                                                    | Respuesta                                                                                                                                           |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sin sesión                                                              | 401 `UNAUTHENTICATED`                                                                                                                               |
+| Recurso o iglesia inexistente (el resolver devuelve `null`/`undefined`) | 404 `NOT_FOUND`                                                                                                                                     |
+| Personal de otra iglesia                                                | 403 `FORBIDDEN`                                                                                                                                     |
+| `COORDINACION`                                                          | 403 por omisión; entra solo con `coordinacion: SUPUESTOS_ALCANCE.datosIglesia`                                                                      |
+| Iglesia cerrada (`activa = false`)                                      | GET se permite (consultar su historia); POST, PUT, PATCH y DELETE → 422 `BUSINESS_RULE`. Lo hace `alcanceIglesia`: tu módulo no tiene que repetirlo |
 
 - Los valores de `SUPUESTOS_ALCANCE` son supuestos de P-21 y P-28 (S-02 de `docs/ecclesia/plan-santiago.md`); cuando el cliente responda, se cambian solo ahí.
 - `req.usuario.iglesiaId` es `null` solo en la Coordinación: lo garantiza el `CHECK usuarios_iglesia_segun_rol` en la BD. Una iglesia con personal no se puede borrar (`RESTRICT`); se cierra con `activa = false`.
@@ -156,14 +156,14 @@ const iglesiaId = iglesiaDe(req);
 
 Cada iglesia tiene su `zonaHoraria` (IANA, p. ej. `America/Mexico_City`). En la BD los instantes se guardan en **UTC**; lo que ve y escribe la persona es la **hora local de su iglesia** (RN-31, RNF-07). Las funciones están en `lib/dominio/zona.ts` y son puras (no usan la BD ni el reloj):
 
-| Función | Para qué |
-|---|---|
-| `instanteLocal(fecha, hora, zona)` | «2026-11-22» + «08:00» en la zona de la iglesia → `Date` en UTC, para **guardar** una misa o un horario. Devuelve `null` si la fecha, la hora o la zona no son válidas |
-| `fechaYHoraLocal(instante, zona)` | `Date` → `{ fecha, hora }` locales, para **mostrar** |
-| `partesLocales(instante, zona)` | Año, mes, día, hora, minuto y segundo locales (reportes por día o por mes) |
-| `desfaseDeZona(ms, zona)` | Milisegundos de diferencia con UTC en ese instante |
-| `esZonaValida(zona)` | Validar la zona antes de guardarla |
-| `inicioDelDia(fecha, zona)` (`lib/dominio/periodo.ts`) | Medianoche local de una fecha, para filtrar «del día» |
+| Función                                                | Para qué                                                                                                                                                               |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `instanteLocal(fecha, hora, zona)`                     | «2026-11-22» + «08:00» en la zona de la iglesia → `Date` en UTC, para **guardar** una misa o un horario. Devuelve `null` si la fecha, la hora o la zona no son válidas |
+| `fechaYHoraLocal(instante, zona)`                      | `Date` → `{ fecha, hora }` locales, para **mostrar**                                                                                                                   |
+| `partesLocales(instante, zona)`                        | Año, mes, día, hora, minuto y segundo locales (reportes por día o por mes)                                                                                             |
+| `desfaseDeZona(ms, zona)`                              | Milisegundos de diferencia con UTC en ese instante                                                                                                                     |
+| `esZonaValida(zona)`                                   | Validar la zona antes de guardarla                                                                                                                                     |
+| `inicioDelDia(fecha, zona)` (`lib/dominio/periodo.ts`) | Medianoche local de una fecha, para filtrar «del día»                                                                                                                  |
 
 ```ts
 import { fechaYHoraLocal, instanteLocal } from '../../lib/dominio/zona';
@@ -201,6 +201,8 @@ pnpm --filter backend db:catalogos ruta/al/archivo.csv [--localidades]
 | `PATCH /iglesias/:iglesiaId`                                               | Coordinación o el administrador de **esa** iglesia           | Edita; 422 si está cerrada                                                                                   |
 | `POST /iglesias/:iglesiaId/cierre`                                         | Coordinación                                                 | `{ fecha, motivo }`: la cierra sin borrar nada                                                               |
 
+**Lista pública (E2-07):** `GET /public/iglesias?estado&municipio&localidad&tipo&q&capacidadMin&capacidadMax&page&limit`, sin sesión. Solo activas (RN-07), sin contacto ni coordenadas. Supuestos hasta que respondan P-02 y P-03: `q` busca parte del nombre sin distinguir mayúsculas (los acentos sí cuentan) y la capacidad acepta mínimo, máximo o los dos. Cada iglesia trae su índice y su distinción (RF-18, E2-10).
+
 | Función                                                               | Uso                                                                                                             |
 | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | `catalogosService.validarUbicacion({ estado, municipio, localidad })` | RN-09: 400 con el campo que no coincide con el catálogo                                                         |
@@ -210,6 +212,34 @@ pnpm --filter backend db:catalogos ruta/al/archivo.csv [--localidades]
 - La ubicación se guarda con las tres claves en el mismo `UPDATE` (no con `connect`): si Prisma las cambia una por una, el `CHECK iglesias_ubicacion_consistente` rechaza el paso intermedio.
 - `PATCH` compara con lo guardado: solo un cambio real de estado borra municipio y localidad (reenviar el mismo estado no), y latitud y longitud deben quedar las dos o ninguna (400, no 500).
 - Pendiente de acordar con Oscar: el nombre hoy es único en todo el país; la propuesta de `plan-nataly.md` es que sea único por municipio.
+
+## Patrimonio, índice y consultas públicas (Ecclesia, E2-08–E2-13)
+
+**Objetos** (`modules/patrimonio`), bajo `/iglesias/:iglesiaId` y con `alcanceIglesia`:
+
+| Ruta                             | Permiso                                                     | Qué hace                                                                                       |
+| -------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `GET /objetos?estado&tipo`       | `patrimonio:leer` (administrador; la Coordinación consulta) | Todos los objetos, de cualquier estado, con `epoca`, `antiguedad` y los `puntos` que suman hoy |
+| `POST /objetos`                  | `patrimonio:gestionar` (administrador)                      | Registra. Año o siglo obligatorio (RN-10)                                                      |
+| `PATCH /objetos/:objetoId`       | `patrimonio:gestionar`                                      | Cambia datos (no el estado). Año y siglo se validan contra lo guardado                         |
+| `POST /objetos/:objetoId/estado` | `patrimonio:gestionar`                                      | `{ estado, fecha, motivo }`: perdido, prestado, baja o regreso. Nunca borra (RN-11)            |
+| `GET /indice`                    | `patrimonio:leer`                                           | `{ indice, distincion, anioCalculo, objetosRegistrados, objetosVigentes }`                     |
+
+**Criterios del índice** (solo la Coordinación): `GET /criterios-indice`, `PUT /criterios-indice` (versión nueva) y `GET /criterios-indice/historial`. Sin versiones guardadas se usan los del caso (`CRITERIOS_INICIALES`).
+
+**Públicas** (`modules/consultas`, sin sesión, solo iglesias activas y objetos vigentes):
+
+| Ruta                                                                                    | Qué hace                                                     |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `GET /public/iglesias?estado=…`                                                         | Lista del estado (E2-07) con `indice` y `distincion` (RF-18) |
+| `GET /public/iglesias/:iglesiaId`                                                       | Ficha (RF-06). 404 si está cerrada                           |
+| `GET /public/reconocidas?estado\|municipio\|localidad`                                  | Ranking del país o de un lugar, con `posicion`               |
+| `GET /public/busqueda-patrimonio?tipoObjeto&antiguedadMin&estado\|municipio\|localidad` | Búsqueda del investigador, con los objetos que cumplen       |
+
+- **Índice:** función pura `patrimonio/dominio/indice-patrimonial.ts` (copiada del módulo de referencia del arnés, ADR-0005), en décimas enteras. No se guarda: se calcula al consultar con los criterios vigentes. Año de cálculo = año en curso en la zona de cada iglesia (supuesto de P-01).
+- **Supuestos** mientras no respondan las preguntas: P-05 (en público no salen ubicación en el templo ni conservación), P-07 (sin objetos vigentes no entra al ranking; empates por nombre), P-08 (un objeto prestado o perdido puede regresar; la baja es definitiva) y P-09 (un tipo y una antigüedad mínima).
+- **Ficha:** `servicios`, `platicas`, `misas` y `tiposEspacio` van vacíos hasta que Genaro y Oscar publiquen las funciones de sus services.
+- **Seed (E2-09):** `prisma/seed-patrimonio.ts` carga los 32 estados, 12 municipios con sus cabeceras, 40 iglesias ficticias en 5 estados y 120 objetos. Verifica los mínimos del caso antes de escribir y es idempotente.
 
 ## Utilidades compartidas (B1)
 
@@ -227,16 +257,16 @@ pnpm --filter backend db:catalogos ruta/al/archivo.csv [--localidades]
 
 ## Checklist de seguridad (AGENTS.md §3) — B1-18
 
-| Regla                                                                                                              | Dónde                                        |
-| ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| Access token en header; refresh en cookie `httpOnly; Secure (prod); SameSite=Strict; Path=/api/v1/auth`            | `modules/auth/auth.controller.ts`            |
-| Refresh rota en cada uso, se guarda hasheado, reutilizar uno revocado cierra todas las sesiones, logout revoca     | `auth.service.ts` (`refrescar`, `logout`)    |
-| Reset: 32 bytes aleatorios, hasheado, 1 h, un solo uso; `forgot-password` responde 204 siempre                     | `auth.service.ts`, `lib/seguridad.ts`        |
-| Contraseña mínima 8 con letra y número; bcrypt costo 12                                                            | `lib/seguridad.ts`                           |
-| Login: mismo mensaje para correo inexistente, contraseña mala o usuario inactivo; tiempo constante; 5 intentos/min | `auth.service.ts`, `auth.routes.ts`          |
-| Usuario desactivado no entra y se revocan sus sesiones; el token deja de servir al instante                        | `usuarios.service.ts`, `middlewares/auth.ts` |
+| Regla                                                                                                                                                                                | Dónde                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| Access token en header; refresh en cookie `httpOnly; Secure (prod); SameSite=Strict; Path=/api/v1/auth`                                                                              | `modules/auth/auth.controller.ts`                                 |
+| Refresh rota en cada uso, se guarda hasheado, reutilizar uno revocado cierra todas las sesiones, logout revoca                                                                       | `auth.service.ts` (`refrescar`, `logout`)                         |
+| Reset: 32 bytes aleatorios, hasheado, 1 h, un solo uso; `forgot-password` responde 204 siempre                                                                                       | `auth.service.ts`, `lib/seguridad.ts`                             |
+| Contraseña mínima 8 con letra y número; bcrypt costo 12                                                                                                                              | `lib/seguridad.ts`                                                |
+| Login: mismo mensaje para correo inexistente, contraseña mala o usuario inactivo; tiempo constante; 5 intentos/min                                                                   | `auth.service.ts`, `auth.routes.ts`                               |
+| Usuario desactivado no entra y se revocan sus sesiones; el token deja de servir al instante                                                                                          | `usuarios.service.ts`, `middlewares/auth.ts`                      |
 | Un ADMIN no se desactiva a sí mismo; cada iglesia tiene **un solo** encargado activo (409 al segundo, índice `usuarios_un_encargado_por_iglesia`); solo la Coordinación lo reemplaza | `usuarios.service.ts`, migración `e1_09_un_encargado_por_iglesia` |
-| Subidas: MIME + firma real del archivo, ≤ 2 MB, nombre UUID, SVG con código activo rechazado                       | `configuracion.service.ts`                   |
-| Nunca se devuelve `passwordHash` ni tokens; logs con `redact` de contraseñas, tokens y cookies                     | `usuarios.tipos.ts`, `lib/logger.ts`        |
-| Autorización en cada ruta                                                                                          | `rutasProtegidas.test.ts`                    |
-| CORS limitado a `FRONTEND_URL`, helmet, errores 500 sin stack en producción                                        | `app.ts`, `middlewares/errores.ts`           |
+| Subidas: MIME + firma real del archivo, ≤ 2 MB, nombre UUID, SVG con código activo rechazado                                                                                         | `configuracion.service.ts`                                        |
+| Nunca se devuelve `passwordHash` ni tokens; logs con `redact` de contraseñas, tokens y cookies                                                                                       | `usuarios.tipos.ts`, `lib/logger.ts`                              |
+| Autorización en cada ruta                                                                                                                                                            | `rutasProtegidas.test.ts`                                         |
+| CORS limitado a `FRONTEND_URL`, helmet, errores 500 sin stack en producción                                                                                                          | `app.ts`, `middlewares/errores.ts`                                |
