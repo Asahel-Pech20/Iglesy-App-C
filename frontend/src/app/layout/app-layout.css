@@ -81,6 +81,10 @@
   padding: 0 16px;
   --mat-icon-button-icon-color: var(--primario-texto);
   --mat-button-text-label-text-color: var(--primario-texto);
+  /* Foco del teclado visible sobre la barra azul (WCAG 2.4.7, revisión de Santiago en el PR #30):
+     la capa de foco de Material era --primario, del mismo color que la barra */
+  --mat-icon-button-state-layer-color: var(--primario-texto);
+  --mat-button-text-state-layer-color: var(--primario-texto);
 }
 .barra app-marca-iglesia {
   flex: 1 1 auto;
