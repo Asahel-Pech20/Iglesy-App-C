@@ -159,7 +159,7 @@ export class BadgeEstadoEvento {
       padding: 12px 0;
     }
     .evento + .evento {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     .icono {
       display: inline-flex;

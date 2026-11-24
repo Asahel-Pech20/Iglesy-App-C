@@ -157,7 +157,7 @@ type Campo = (typeof CAMPOS)[number];
       min-height: 8rem;
       margin-top: 12px;
       padding: 12px;
-      border: 1px solid var(--borde);
+      border: 1px solid var(--marco);
       border-radius: 8px;
       font-size: 14px;
     }

@@ -237,7 +237,7 @@ function etiquetaPeriodo(periodo: string) {
       align-items: flex-end;
       justify-content: center;
       gap: 2px;
-      border-bottom: 1px solid var(--borde);
+      border-bottom: 1px solid var(--marco);
     }
     .barra {
       display: block;

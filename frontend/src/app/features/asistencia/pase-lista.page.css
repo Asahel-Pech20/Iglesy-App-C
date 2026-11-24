@@ -40,7 +40,7 @@
   padding: 8px 12px;
 }
 .fila-miembro + .fila-miembro {
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--marco);
 }
 .nombre {
   min-width: 0;
@@ -106,7 +106,7 @@
   left: 0;
   z-index: 20;
   padding: 12px;
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--marco);
   background: var(--superficie);
 }
 @media (min-width: 768px) {

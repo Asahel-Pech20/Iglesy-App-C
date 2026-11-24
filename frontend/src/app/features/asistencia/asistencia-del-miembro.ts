@@ -59,7 +59,7 @@ import { AsistenciaService } from './asistencia.service';
       padding: 12px 0;
     }
     li + li {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     .datos p {
       margin: 0;

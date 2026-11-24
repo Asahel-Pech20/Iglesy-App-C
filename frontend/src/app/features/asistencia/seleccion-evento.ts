@@ -118,7 +118,7 @@ import { PermisosMinisterioService } from '@/app/features/eventos/permisos-minis
       padding: 16px;
     }
     .evento + .evento {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     @media (min-width: 640px) {
       .evento {

@@ -24,7 +24,7 @@
   flex-direction: column;
   gap: 2px;
   padding: 4px;
-  border: 1px solid var(--borde);
+  border: 1px solid var(--marco);
   margin: -1px 0 0 -1px;
 }
 .celda.fuera {
@@ -101,13 +101,15 @@ a.numero:hover {
   flex-direction: column;
   gap: 4px;
   padding: 8px;
-  border: 1px solid var(--borde);
+  border: 1px solid var(--marco);
   border-radius: 8px;
 }
 .titulo-dia {
   margin: 0;
   font-size: 14px;
-  font-weight: 600;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  color: var(--primario);
   text-transform: capitalize;
 }
 .titulo-dia.hoy {
