@@ -102,7 +102,7 @@ a.numero:hover {
   gap: 4px;
   padding: 8px;
   border: 1px solid var(--marco);
-  border-radius: 8px;
+  border-radius: 4px;
 }
 .titulo-dia {
   margin: 0;
@@ -124,7 +124,7 @@ a.numero:hover {
 }
 .grupo-lista .titulo-dia {
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--superficie-suave);
 }
 .vacio {

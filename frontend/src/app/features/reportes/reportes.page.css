@@ -19,7 +19,7 @@
 .enlace-tarjeta {
   display: block;
   height: 100%;
-  border-radius: 8px;
+  border-radius: 4px;
   color: inherit;
   text-decoration: none;
 }
@@ -47,7 +47,7 @@
 .icono {
   display: inline-flex;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--superficie-suave);
   color: var(--primario);
 }

@@ -28,7 +28,7 @@
 .bloque {
   flex: 1;
   height: 20px;
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--superficie-suave);
   animation: pulso 1.5s ease-in-out infinite;
 }

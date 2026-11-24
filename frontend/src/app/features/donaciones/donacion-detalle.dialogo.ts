@@ -133,8 +133,10 @@ export type AccionDetalle =
     .monto {
       margin: 0;
       font-size: 24px;
-      font-weight: 600;
+      font-weight: 300;
+      letter-spacing: -0.5px;
       font-variant-numeric: tabular-nums;
+      color: var(--primario);
     }
     .tachado {
       text-decoration: line-through;
@@ -143,7 +145,7 @@ export type AccionDetalle =
       margin-top: 16px;
       padding: 12px;
       border: 1px solid var(--marco);
-      border-radius: 8px;
+      border-radius: 4px;
     }
     .auditoria h3 {
       margin: 0 0 8px;

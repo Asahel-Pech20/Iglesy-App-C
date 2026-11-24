@@ -169,7 +169,7 @@ export class BadgeEstadoEvento {
       align-items: center;
       justify-content: center;
       margin-top: 2px;
-      border-radius: 8px;
+      border-radius: 4px;
     }
     .cuerpo {
       min-width: 0;

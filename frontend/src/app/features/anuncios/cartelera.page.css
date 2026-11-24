@@ -33,7 +33,7 @@
 .logo {
   width: 48px;
   height: 48px;
-  border-radius: 8px;
+  border-radius: 4px;
   object-fit: contain;
 }
 .pantalla .logo {
@@ -58,7 +58,7 @@ h1 {
   gap: 8px;
   padding: 0 16px;
   border: 1px solid var(--marco);
-  border-radius: 8px;
+  border-radius: 4px;
   color: var(--primario-texto);
   font-size: 14px;
   font-weight: 500;
@@ -135,7 +135,7 @@ h1 {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 .textos {
   min-width: 0;

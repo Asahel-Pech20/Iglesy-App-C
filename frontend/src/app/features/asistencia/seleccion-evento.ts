@@ -140,7 +140,7 @@ import { PermisosMinisterioService } from '@/app/features/eventos/permisos-minis
       flex-shrink: 0;
       align-items: center;
       justify-content: center;
-      border-radius: 8px;
+      border-radius: 4px;
     }
     .titulo,
     .detalle {

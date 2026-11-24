@@ -38,7 +38,7 @@ import { ConfiguracionService } from '@/app/features/configuracion/configuracion
       width: 36px;
       height: 36px;
       flex-shrink: 0;
-      border-radius: 8px;
+      border-radius: 4px;
       object-fit: contain;
     }
     .grande .logo {

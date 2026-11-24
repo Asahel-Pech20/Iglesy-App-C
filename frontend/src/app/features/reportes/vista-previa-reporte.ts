@@ -107,7 +107,7 @@ import { formatearCelda, MAX_FILAS_VISTA } from './formato-celda';
     }
     .dato {
       padding: 12px;
-      border-radius: 8px;
+      border-radius: 4px;
       background: var(--superficie-suave);
     }
     .dato dt {

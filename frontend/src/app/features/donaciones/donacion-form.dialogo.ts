@@ -200,7 +200,7 @@ type Campo = (typeof CAMPOS_SERVIDOR)[number];
       margin-bottom: 16px;
       padding: 12px;
       border: 1px solid var(--marco);
-      border-radius: 8px;
+      border-radius: 4px;
     }
     .anonima {
       display: flex;
