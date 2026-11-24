@@ -13,12 +13,13 @@
 }
 .contenedor {
   min-height: 100dvh;
-  background: var(--fondo);
+  /* Estilo colonial en toda la app: fondo pergamino */
+  background: var(--pergamino);
 }
 .lateral {
   width: 240px;
   padding: 16px;
-  border-right: 1px solid var(--borde);
+  border-right: 1px solid var(--marco);
   background: var(--superficie);
   --mat-sidenav-container-shape: 0;
 }
@@ -48,6 +49,8 @@
 .enlace.activo {
   background: var(--primario);
   color: var(--primario-texto);
+  /* Detalle colonial: la opción activa lleva una franja dorada */
+  box-shadow: inset 3px 0 0 var(--acento);
 }
 .enlace.deshabilitado {
   opacity: 0.5;
@@ -66,9 +69,13 @@
   height: 56px;
   align-items: center;
   gap: 8px;
-  border-bottom: 1px solid var(--borde);
-  background: var(--superficie);
+  /* Barra azul con doble borde dorado, como la parte pública */
+  border-bottom: 3px double var(--acento);
+  background: var(--primario);
+  color: var(--primario-texto);
   padding: 0 16px;
+  --mat-icon-button-icon-color: var(--primario-texto);
+  --mat-button-text-label-text-color: var(--primario-texto);
 }
 .barra app-marca-iglesia {
   flex: 1 1 auto;
@@ -82,7 +89,7 @@
 }
 .cuenta {
   max-width: 14rem;
-  color: var(--texto);
+  color: var(--primario-texto);
 }
 .datos-cuenta {
   display: none;
@@ -109,12 +116,16 @@
 .rol {
   font-size: 12px;
   font-weight: 400;
-  color: var(--texto-suave);
+  /* Sobre la barra azul: --marco en claro; en oscuro, --primario-texto (ver abajo) */
+  color: var(--marco);
   /* El nombre de la iglesia puede ser largo: se recorta en vez de empujar los botones */
   max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+:host-context(.dark) .rol {
+  color: var(--primario-texto);
 }
 .cerrada {
   color: var(--alerta);

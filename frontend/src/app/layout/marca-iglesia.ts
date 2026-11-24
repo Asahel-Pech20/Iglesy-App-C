@@ -53,13 +53,16 @@ import { ConfiguracionService } from '@/app/features/configuracion/configuracion
       color: var(--primario-texto);
     }
     .nombre {
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      font-size: 17px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     .grande .nombre {
-      font-size: 18px;
+      font-size: 22px;
+      color: var(--primario);
       text-align: center;
       white-space: normal;
     }

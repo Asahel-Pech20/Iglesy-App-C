@@ -27,14 +27,18 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--marco);
     }
     .textos {
       min-width: 0;
     }
     h1 {
       margin: 0;
-      font-size: 20px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--primario);
     }
     p {
       margin: 4px 0 0;
