@@ -91,13 +91,15 @@ describe('iglesias', () => {
   it('un nombre repetido lo rechaza el servidor y el diálogo sigue abierto', async () => {
     await abrirApp('/iglesias', { como: 'coordinacion@iglesia.local' });
     await esperarA(() => textoPagina().includes('Capilla del Valle'));
+    // E2 agregó iglesias a los mocks: se compara contra las que había al abrir
+    const antes = db.iglesias.length;
     conTexto(/Nueva iglesia/)!.click();
     await esperarA(() => enDialogo('Guardar') !== undefined);
     escribir(document.querySelector('mat-dialog-container input'), 'capilla del valle');
     await elegir('Tipo', 'Capilla');
     enDialogo('Guardar')!.click();
     await esperarA(() => textoPagina().includes('Ya existe una iglesia con ese nombre.'));
-    expect(db.iglesias).toHaveLength(2);
+    expect(db.iglesias).toHaveLength(antes);
   });
 
   it('el administrador de una iglesia no las ve: ni menú ni ruta', async () => {
