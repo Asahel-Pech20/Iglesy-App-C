@@ -199,7 +199,7 @@ type Campo = (typeof CAMPOS_SERVIDOR)[number];
       gap: 12px;
       margin-bottom: 16px;
       padding: 12px;
-      border: 1px solid var(--borde);
+      border: 1px solid var(--marco);
       border-radius: 8px;
     }
     .anonima {

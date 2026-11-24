@@ -117,19 +117,23 @@ import { formatearCelda, MAX_FILAS_VISTA } from './formato-celda';
     .dato dd {
       margin: 4px 0 0;
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
       font-variant-numeric: tabular-nums;
     }
     .titulo-seccion {
       margin: 0;
       padding: 16px 16px 8px;
       font-size: 16px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .pie {
       margin: 0;
       padding: 12px 16px;
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
       font-size: 14px;
     }
     .totales {
@@ -138,7 +142,7 @@ import { formatearCelda, MAX_FILAS_VISTA } from './formato-celda';
       gap: 4px 24px;
       margin: 0;
       padding: 12px 16px;
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
       background: var(--superficie-suave);
       font-size: 14px;
       font-weight: 600;

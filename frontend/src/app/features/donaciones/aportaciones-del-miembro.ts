@@ -84,7 +84,7 @@ import { conceptoDe } from './formato-donacion';
       padding: 8px 0;
     }
     li + li {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     .datos {
       min-width: 0;

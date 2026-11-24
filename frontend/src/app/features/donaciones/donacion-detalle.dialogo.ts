@@ -142,13 +142,15 @@ export type AccionDetalle =
     .auditoria {
       margin-top: 16px;
       padding: 12px;
-      border: 1px solid var(--borde);
+      border: 1px solid var(--marco);
       border-radius: 8px;
     }
     .auditoria h3 {
       margin: 0 0 8px;
       font-size: 14px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .lista-datos {
       font-size: 14px;
