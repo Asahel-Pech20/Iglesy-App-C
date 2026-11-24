@@ -19,7 +19,8 @@
 .lateral {
   width: 240px;
   padding: 16px;
-  border-right: 1px solid var(--marco);
+  /* Estilo colonial: doble filete dorado entre el menú y el contenido */
+  border-right: 3px double var(--marco);
   background: var(--superficie);
   --mat-sidenav-container-shape: 0;
 }
@@ -27,9 +28,13 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin: 24px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
+}
+.adorno-lateral {
+  margin: 16px 0 0;
+  max-width: none;
 }
 .enlace {
   display: flex;
@@ -43,8 +48,8 @@
   text-decoration: none;
 }
 .enlace:hover {
-  background: var(--superficie-suave);
-  color: var(--texto);
+  background: var(--pergamino);
+  color: var(--primario);
 }
 .enlace.activo {
   background: var(--primario);

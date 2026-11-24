@@ -172,3 +172,7 @@ h1 {
   align-items: flex-start;
   gap: 8px;
 }
+/* Adorno colonial bajo el título de anuncios, alineado a la izquierda como el título */
+.adorno-seccion {
+  margin: -4px 0 12px;
+}

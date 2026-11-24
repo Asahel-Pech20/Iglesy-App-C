@@ -89,6 +89,12 @@ html {
   --mat-tab-active-indicator-color: var(--acento);
   --mat-tab-active-focus-indicator-color: var(--acento);
   --mat-tab-active-hover-indicator-color: var(--acento);
+  /* Botones rectos de 4 px (Material los hace redondos por defecto) */
+  --mat-button-filled-container-shape: 4px;
+  --mat-button-outlined-container-shape: 4px;
+  --mat-button-protected-container-shape: 4px;
+  --mat-button-tonal-container-shape: 4px;
+  --mat-button-text-container-shape: 4px;
   --mat-dialog-container-color: var(--superficie);
   --mat-menu-container-color: var(--superficie);
   --mat-select-panel-background-color: var(--superficie);
@@ -184,6 +190,17 @@ h2 {
   font-size: 17px;
   font-weight: 400;
   color: var(--primario);
+}
+/* Detalle colonial: un rombo dorado antes del título de cada tarjeta (decorativo, sin texto) */
+.tarjeta-titulo::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 10px 0 2px;
+  vertical-align: middle;
+  background: var(--acento);
+  transform: rotate(45deg);
 }
 
 .fila {

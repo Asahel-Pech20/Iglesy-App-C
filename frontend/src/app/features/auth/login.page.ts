@@ -31,7 +31,7 @@ export function destinoSeguro(redirect: string | null) {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="enviar()" novalidate class="columna">
-      <h1 class="titulo texto-suave">Inicia sesión</h1>
+      <h1 class="titulo">Inicia sesión</h1>
       @if (errorServidor()) {
         <p class="alerta alerta-peligro" role="alert">{{ errorServidor() }}</p>
       }

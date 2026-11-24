@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LogIn, LucideAngularModule } from 'lucide-angular';
+import { AdornoColonial } from '@/app/compartido/adorno-colonial';
 
 /** Marco de las pantallas públicas de espacios: sin menú lateral ni sesión, legible en celular. */
 @Component({
   selector: 'app-marco-publico',
-  imports: [RouterLink, LucideAngularModule],
+  imports: [RouterLink, LucideAngularModule, AdornoColonial],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="marco">
@@ -22,7 +23,10 @@ import { LogIn, LucideAngularModule } from 'lucide-angular';
           </a>
         </div>
       </header>
-      <main class="principal"><ng-content /></main>
+      <main class="principal">
+        <app-adorno-colonial class="adorno-inicio" />
+        <ng-content />
+      </main>
     </div>
   `,
   styles: `
@@ -72,6 +76,9 @@ import { LogIn, LucideAngularModule } from 'lucide-angular';
       gap: 16px;
       margin: 0 auto;
       padding: 16px;
+    }
+    .adorno-inicio {
+      margin: 0 auto 16px;
     }
   `,
 })
