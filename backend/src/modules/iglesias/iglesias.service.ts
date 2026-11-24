@@ -93,16 +93,25 @@ function columnasUbicacion(u: {
   return { estadoClave: u.estado, municipioClave: u.municipio, localidadClave: u.localidad };
 }
 
-async function nombreRepetido(nombre: string, exceptoId?: string) {
+/**
+ * A2-E2-06 (decisión de Oscar, 2026-11-21): el nombre es único **por municipio**, sin distinguir
+ * mayúsculas; dos «Parroquia de San Miguel» en municipios distintos son válidas. Las iglesias sin
+ * municipio se comparan entre sí. La BD lo respalda con el índice iglesias_nombre_por_municipio.
+ */
+async function nombreRepetido(nombre: string, municipioClave: string | null, exceptoId?: string) {
   const repetida = await prisma.iglesia.findFirst({
     where: {
       nombre: { equals: nombre, mode: 'insensitive' },
+      municipioClave,
       ...(exceptoId && { id: { not: exceptoId } }),
     },
     select: { id: true },
   });
-  // Regla de la base de Oscar: nombre único en el país. Propuesta en plan-nataly.md: por municipio.
-  if (repetida) throw AppError.conflicto('Ya existe una iglesia con ese nombre.');
+  if (repetida) {
+    throw AppError.conflicto('Ya existe una iglesia con ese nombre en el municipio.', [
+      { campo: 'nombre', mensaje: 'Ya existe una iglesia con ese nombre en el municipio.' },
+    ]);
+  }
 }
 
 export async function listar(query: QueryListarIglesias) {
@@ -244,8 +253,8 @@ export async function activasDelLugar(lugar: LugarPublico) {
 }
 
 export async function crear(datos: CrearIglesia) {
-  await nombreRepetido(datos.nombre);
   const { estado = null, municipio = null, localidad = null, ...resto } = datos;
+  await nombreRepetido(datos.nombre, municipio);
   await catalogosService.validarUbicacion({ estado, municipio, localidad });
   const creada = await prisma.iglesia.create({
     data: { ...aColumnas(resto), ...columnasUbicacion({ estado, municipio, localidad }) },
@@ -265,6 +274,7 @@ export async function editar(id: string, cambios: EditarIglesia) {
   const actual = await prisma.iglesia.findUnique({
     where: { id },
     select: {
+      nombre: true,
       activa: true,
       estadoClave: true,
       municipioClave: true,
@@ -275,7 +285,6 @@ export async function editar(id: string, cambios: EditarIglesia) {
   });
   if (!actual) throw AppError.noEncontrado('La iglesia no existe.');
   if (!actual.activa) throw AppError.reglaNegocio('La iglesia está cerrada; no se puede editar.');
-  if (cambios.nombre) await nombreRepetido(cambios.nombre, id);
   validarCoordenadas(cambios, actual);
 
   const { estado, municipio, localidad, ...resto } = cambios;
@@ -296,6 +305,12 @@ export async function editar(id: string, cambios: EditarIglesia) {
     };
     await catalogosService.validarUbicacion(nueva);
     ubicacion = columnasUbicacion(nueva);
+  }
+  // A2-E2-06: se revisa si cambia el nombre **o** el municipio (al mudarla puede chocar con otra)
+  const municipioFinal =
+    'municipioClave' in ubicacion ? ubicacion.municipioClave : actual.municipioClave;
+  if (cambios.nombre || municipioFinal !== actual.municipioClave) {
+    await nombreRepetido(cambios.nombre ?? actual.nombre, municipioFinal, id);
   }
 
   const editada = await prisma.iglesia.update({
