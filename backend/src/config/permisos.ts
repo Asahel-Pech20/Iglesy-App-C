@@ -70,6 +70,11 @@ export const PERMISOS = [
   'iglesias:editar',
   'iglesias:cerrar',
   'catalogos:gestionar',
+  // E2-08 y E2-10 (Nataly): objetos del patrimonio y criterios del índice
+  'patrimonio:leer',
+  'patrimonio:gestionar',
+  'criterios:leer',
+  'criterios:editar',
 ] as const;
 
 export type Permiso = (typeof PERMISOS)[number];
@@ -89,6 +94,10 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'iglesias:editar',
     'iglesias:cerrar',
     'catalogos:gestionar',
+    // Consulta los objetos de cualquier iglesia, también de las cerradas (RF-12); no los captura
+    'patrimonio:leer',
+    'criterios:leer',
+    'criterios:editar',
   ],
   ADMIN_IGLESIA: [
     ...CLED('usuarios'),
@@ -97,6 +106,8 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'configuracion:editar',
     // Datos de SU iglesia (RF-08); alcanceIglesia impide tocar otra
     'iglesias:editar',
+    'patrimonio:leer',
+    'patrimonio:gestionar',
     ...CLED('miembros'),
     ...CLED('ministerios'),
     ...CLED('eventos'),

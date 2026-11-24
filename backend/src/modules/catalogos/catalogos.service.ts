@@ -21,9 +21,15 @@ export async function listarEstados(query: QueryCatalogo) {
   return { datos, meta: crearMeta(total, page, limit) };
 }
 
-export async function municipiosDe(estadoClave: string, query: QueryCatalogo) {
-  const estado = await prisma.estado.findUnique({ where: { clave: estadoClave }, select: SELECT });
+/** El estado del catálogo, o 404. Lo usa también la lista pública de iglesias (E2-07). */
+export async function obtenerEstado(clave: string) {
+  const estado = await prisma.estado.findUnique({ where: { clave }, select: SELECT });
   if (!estado) throw AppError.noEncontrado('El estado no existe en el catálogo.');
+  return estado;
+}
+
+export async function municipiosDe(estadoClave: string, query: QueryCatalogo) {
+  await obtenerEstado(estadoClave);
   const { page, limit, skip, take } = paginar(query);
   const where = { estadoClave, ...porNombre(query.q) };
   const [total, datos] = await Promise.all([

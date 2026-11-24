@@ -33,6 +33,26 @@ import {
   padresIniciales,
 } from './datos/diezmo';
 import type { Padre } from '@/app/tipos/diezmo';
+import type { Iglesia, LugarInegi } from '@/app/tipos/iglesias';
+import type { VersionCriterios } from '@/app/tipos/patrimonio';
+import {
+  conDatosDeFicha,
+  criteriosIniciales,
+  estadosIniciales,
+  iglesiasPatrimonioIniciales,
+  type LocalidadMock,
+  localidadesIniciales,
+  type MunicipioMock,
+  municipiosIniciales,
+  type ObjetoMock,
+  objetosIniciales,
+} from './datos/patrimonio';
+
+/** Iglesias de Oscar (diezmo) con los datos de ficha de E2-06 y las de las consultas públicas. */
+const todasLasIglesias = () => [
+  ...conDatosDeFicha(iglesiasIniciales()),
+  ...iglesiasPatrimonioIniciales(),
+];
 import {
   type CotizacionMock,
   cotizacionesIniciales,
@@ -41,7 +61,6 @@ import {
   type TipoEspacioMock,
   tiposEspacioIniciales,
 } from './datos/espacios';
-import type { Iglesia } from '@/app/tipos/iglesias';
 
 // "Base de datos" en memoria de los mocks. Cada dueño agrega aquí sus colecciones (B2–B4).
 export const db = {
@@ -63,11 +82,17 @@ export const db = {
   // F4: donaciones
   donaciones: donacionesIniciales(),
   // Ecclesia: diezmo de las misas
-  iglesias: iglesiasIniciales(),
+  iglesias: todasLasIglesias(),
   padres: padresIniciales(),
   misas: misasIniciales(),
   diezmos: diezmosIniciales(),
   correcciones: correccionesIniciales(),
+  // E2 (Nataly): catálogo del INEGI, objetos del patrimonio y criterios del índice
+  estadosInegi: estadosIniciales(),
+  municipiosInegi: municipiosIniciales(),
+  localidadesInegi: localidadesIniciales(),
+  objetos: objetosIniciales(),
+  criterios: criteriosIniciales(),
   // Ecclesia: criptas y otros espacios
   tiposEspacio: tiposEspacioIniciales(),
   solicitudesEspacio: solicitudesEspacioIniciales(),
@@ -87,6 +112,11 @@ export const db = {
   anuncios: AnuncioMock[];
   donaciones: DonacionMock[];
   iglesias: Iglesia[];
+  estadosInegi: LugarInegi[];
+  municipiosInegi: MunicipioMock[];
+  localidadesInegi: LocalidadMock[];
+  objetos: ObjetoMock[];
+  criterios: VersionCriterios[];
   padres: Padre[];
   misas: MisaMock[];
   diezmos: DiezmoMock[];
@@ -111,11 +141,16 @@ export function reiniciarDb() {
   db.asistencias = asistenciasIniciales();
   db.anuncios = anunciosIniciales();
   db.donaciones = donacionesIniciales();
-  db.iglesias = iglesiasIniciales();
+  db.iglesias = todasLasIglesias();
   db.padres = padresIniciales();
   db.misas = misasIniciales();
   db.diezmos = diezmosIniciales();
   db.correcciones = correccionesIniciales();
+  db.estadosInegi = estadosIniciales();
+  db.municipiosInegi = municipiosIniciales();
+  db.localidadesInegi = localidadesIniciales();
+  db.objetos = objetosIniciales();
+  db.criterios = criteriosIniciales();
   db.tiposEspacio = tiposEspacioIniciales();
   db.solicitudesEspacio = solicitudesEspacioIniciales();
   db.cotizacionesEspacio = cotizacionesIniciales();
