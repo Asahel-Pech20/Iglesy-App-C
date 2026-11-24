@@ -66,7 +66,9 @@ import { AsistenciaService } from './asistencia.service';
       font-size: 14px;
     }
     .titulo {
-      font-weight: 500;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
   `,
 })

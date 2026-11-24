@@ -70,8 +70,9 @@ export function destinoSeguro(redirect: string | null) {
     .titulo {
       margin: 0;
       text-align: center;
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--primario);
     }
     .enlace {
       text-align: center;

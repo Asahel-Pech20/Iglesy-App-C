@@ -102,7 +102,7 @@ const fechaApi = (d: Date) => format(d, 'yyyy-MM-dd');
                 <tr>
                   <td>{{ fecha(m.fechaLocal) }}</td>
                   <td>{{ m.horaLocal }}</td>
-                  <td>{{ m.padre.nombre }}</td>
+                  <td class="nombre-colonial">{{ m.padre.nombre }}</td>
                   <td class="num">
                     @if (m.diezmo; as d) {
                       {{ moneda.formato(d.monto) }}
@@ -169,10 +169,13 @@ const fechaApi = (d: Date) => format(d, 'yyyy-MM-dd');
     .fecha {
       width: 10rem;
     }
-    .acciones {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
+    /* Sin display: flex en la celda: así sigue siendo celda de tabla y no se encima con el monto */
+    td.acciones {
+      text-align: right;
+      white-space: nowrap;
+    }
+    td.acciones > * + * {
+      margin-left: 8px;
     }
     @media (max-width: 639px) {
       .fecha {

@@ -153,7 +153,7 @@ function etiquetaPeriodo(periodo: string) {
               <tbody>
                 @for (f of datos(); track f.periodo) {
                   <tr>
-                    <td>{{ f.etiqueta }}</td>
+                    <td class="nombre-colonial">{{ f.etiqueta }}</td>
                     <td class="num">{{ f.eventos }}</td>
                     <td class="num">{{ f.presentes }}</td>
                     <td class="num">{{ f.ausentes }}</td>

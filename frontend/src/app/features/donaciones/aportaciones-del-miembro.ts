@@ -98,10 +98,16 @@ import { conceptoDe } from './formato-donacion';
       gap: 8px;
     }
     .monto {
+      font-size: 18px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
       font-variant-numeric: tabular-nums;
+      color: var(--primario);
     }
-    .fuerte {
-      font-weight: 500;
+    p.fuerte {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .anulada {
       color: var(--texto-suave);

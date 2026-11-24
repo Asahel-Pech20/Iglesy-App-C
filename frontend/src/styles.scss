@@ -285,8 +285,13 @@ h2 {
   width: 100%;
   background: transparent;
 }
-.contenedor-tabla .fuerte {
-  font-weight: 500;
+/* Estilo colonial: el nombre principal de cada fila en serifa azul (como en patrimonio) */
+.contenedor-tabla .fuerte,
+.nombre-colonial {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--primario);
 }
 .contenedor-tabla td.acciones {
   width: 48px;
@@ -369,8 +374,21 @@ a .lucide {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+/* Cifras de las tablas en Inter ligera de 18 px (nunca menos: el trazo es delgado) */
+.tabla-simple td.num,
+.mat-mdc-cell.num {
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--primario);
+  white-space: nowrap;
+}
 .tabla-simple tfoot td {
   font-weight: 600;
+}
+.tabla-simple tfoot td.num {
+  font-weight: 400;
 }
 
 /* Campos de formulario: espacio mínimo bajo cada campo; crece si hay ayuda o error de varias líneas */

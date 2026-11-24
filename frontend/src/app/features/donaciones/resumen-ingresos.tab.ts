@@ -116,7 +116,7 @@ import { DonacionesService } from './donaciones.service';
                 <tbody>
                   @for (g of r.grupos; track g.clave) {
                     <tr>
-                      <td>{{ etiqueta(g.clave) }}</td>
+                      <td class="nombre-colonial">{{ etiqueta(g.clave) }}</td>
                       <td class="num">{{ g.cantidad }}</td>
                       <td class="num">{{ moneda.formato(g.total) }}</td>
                     </tr>

@@ -180,8 +180,9 @@ export class BadgeEstadoEvento {
       font-size: 14px;
     }
     .titulo {
-      font-weight: 500;
-      color: inherit;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .titulo:hover {
       text-decoration: underline;
