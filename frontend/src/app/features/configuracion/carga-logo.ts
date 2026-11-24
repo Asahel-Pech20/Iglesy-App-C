@@ -95,7 +95,7 @@ import { ConfiguracionService, validarLogo } from './configuracion.service';
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      border: 1px solid var(--borde);
+      border: 1px solid var(--marco);
       border-radius: 8px;
       background: var(--superficie-suave);
     }
