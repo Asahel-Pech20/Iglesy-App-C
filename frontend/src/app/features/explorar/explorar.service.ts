@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Api } from '@/app/core/api';
+import type { Cartelera } from '@/app/tipos/anuncios';
 import type {
   FichaIglesia,
   IglesiaEnLista,
@@ -17,6 +18,11 @@ export class ExplorarService {
 
   iglesias(query: QueryListaPublica) {
     return this.api.lista<IglesiaEnLista>('/public/iglesias', { ...query });
+  }
+
+  /** Cartelera de la iglesia (E1-06b): anuncios vigentes, próximos eventos y horarios. */
+  cartelera(id: string) {
+    return this.api.objeto<Cartelera>(`/public/iglesias/${id}/cartelera`);
   }
 
   ficha(id: string) {

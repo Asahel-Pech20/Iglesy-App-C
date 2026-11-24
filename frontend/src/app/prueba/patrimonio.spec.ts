@@ -287,3 +287,18 @@ describe('pendientes de la integración (PR #26, #27 y #23)', () => {
     expect(enlace?.getAttribute('href')).toBe('/espacios/ig-comunidad');
   });
 });
+
+describe('cartelera en la ficha (E1-06b de Santiago)', () => {
+  it('la ficha muestra la cartelera de su iglesia: horarios y anuncios vigentes', async () => {
+    await abrirApp('/templos/ig-comunidad');
+    await esperarA(() => textoPagina().includes('Anuncios y próximos eventos'));
+    expect(textoPagina()).toContain('Horarios de reunión');
+  });
+
+  it('una iglesia sin anuncios, eventos ni horarios no muestra la sección', async () => {
+    await abrirApp('/templos/ig-santo-domingo');
+    await esperarA(() => textoPagina().includes('Templo de Santo Domingo'));
+    await esperarA(() => textoPagina().includes('Virgen del Rosario'));
+    expect(textoPagina()).not.toContain('Anuncios y próximos eventos');
+  });
+});
