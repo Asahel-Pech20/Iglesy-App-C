@@ -27,8 +27,7 @@ Cita el ID en la entrada de `docs/bitacora-ia.md` (columna «Prompt») cuando us
 | [GEN-01](Genaro/GEN-01-E3-01-plan-y-dominio-misas.md) | Genaro | Plan de Genaro y E3-01: choques de horario de misas | Pendiente |
 | [GEN-02](Genaro/GEN-02-horario-misas-y-platicas-minimo.md) | Genaro (lo ejecuta Oscar) | Horario de misas y pláticas: lo mínimo para el viernes | Pendiente; reemplaza a GEN-01 si no hubo avance |
 | [SAN-01](Santiago/SAN-01-E1-01-base-ecclesia.md) | Santiago | E1-01: base mínima (iglesia, roles, alcanceIglesia) | Enviado; E1-01 está en `feat/E1-01-base-fusion` |
-
-Nataly todavía no tiene prompts aquí.
+| [NAT-01](Nataly/NAT-01-E2-14-estilo-colonial.md) | Nataly (lo redactó el orquestador de Oscar) | E2-14 y E2-15: estilo colonial de las pantallas públicas | Usado (commit `8d20a84`, PR #28) |
 
 ## Cómo agregar uno
 
