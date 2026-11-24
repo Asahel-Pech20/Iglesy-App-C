@@ -66,26 +66,36 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
       margin-bottom: 16px;
     }
     .dato {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       padding: 12px 16px;
+      text-align: center;
     }
     .dato strong {
       display: block;
-      font-size: 24px;
+      font-size: 26px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--primario);
     }
     /* E2-15: el índice con el sello dorado del estilo colonial (igual que la ficha pública) */
     .sello {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
+      text-align: center;
     }
     .circulo {
       display: flex;
       flex-shrink: 0;
       align-items: center;
       justify-content: center;
-      width: 76px;
-      height: 76px;
-      margin: 4px;
+      width: 96px;
+      height: 96px;
+      margin: 8px 4px 4px;
       border: 2px solid var(--acento);
       outline: 1px solid var(--acento);
       outline-offset: 3px;
@@ -98,8 +108,31 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
     }
     .dato .serifa {
       font-family: Georgia, 'Times New Roman', serif;
+      font-size: 20px;
       font-weight: 400;
+      letter-spacing: 0;
       color: var(--primario);
+    }
+    /* Como el ejemplo elegido (opción 2): nombre en serifa y puntos en Inter ligera grande */
+    .nombre-objeto {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 15px;
+      color: var(--primario);
+    }
+    .puntos {
+      font-size: 19px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--acento);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .puntos.cero {
+      color: var(--texto-suave);
+    }
+    th.derecha {
+      text-align: right;
     }
     .suave {
       color: var(--texto-suave);
@@ -201,7 +234,7 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
                   <th scope="col">Tipo</th>
                   <th scope="col">Época</th>
                   <th scope="col">Estado</th>
-                  <th scope="col">Puntos</th>
+                  <th scope="col" class="derecha">Puntos</th>
                   <th scope="col"><span class="sr-only">Acciones</span></th>
                 </tr>
               </thead>
@@ -209,7 +242,7 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
                 @for (o of objetos(); track o.id) {
                   <tr>
                     <td>
-                      {{ o.descripcion }}
+                      <span class="nombre-objeto">{{ o.descripcion }}</span>
                       <div class="suave">
                         {{ o.material }} · {{ o.ubicacionEnTemplo }}
                         @if (o.catalogadoInah) {
@@ -231,7 +264,9 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
                         <div class="suave">{{ o.motivoEstado }}</div>
                       }
                     </td>
-                    <td>{{ formatoIndice(o.puntos) }}</td>
+                    <td class="puntos" [class.cero]="+o.puntos === 0">
+                      {{ formatoIndice(o.puntos) }}
+                    </td>
                     <td>
                       @if (puedeCapturar() && o.estado !== 'BAJA') {
                         <div class="acciones" *appPuede="'patrimonio:gestionar'">
