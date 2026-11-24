@@ -9,6 +9,7 @@ import type {
   TipoIglesia,
 } from '@/app/tipos/iglesias';
 import type { Usuario } from '@/app/tipos/usuarios';
+import { aFechaApi } from '@/app/core/formato';
 import { db } from '../db';
 import { ahora, autenticar, errorApi, paginarMock, ruta } from '../utils';
 
@@ -242,7 +243,7 @@ export const iglesiasHandlers = [
     const errores: DetalleError[] = [];
     if (!cuerpo.fecha)
       errores.push({ campo: 'fecha', mensaje: 'Fecha no válida (formato yyyy-MM-dd).' });
-    else if (cuerpo.fecha > new Date().toISOString().slice(0, 10))
+    else if (cuerpo.fecha > aFechaApi(new Date()))
       errores.push({ campo: 'fecha', mensaje: 'La fecha de cierre no puede ser futura.' });
     if ((cuerpo.motivo?.trim().length ?? 0) < 3)
       errores.push({ campo: 'motivo', mensaje: 'Escribe el motivo del cierre.' });

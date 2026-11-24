@@ -2,6 +2,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
+import { fechaYHoraLocal } from '../../lib/dominio/zona';
 import { prisma } from '../../lib/prisma';
 import { crearIglesia, loginComo } from '../../test/helpers';
 
@@ -182,7 +183,8 @@ describe('Objetos del patrimonio (E2-08)', () => {
 });
 
 describe('Estado de un objeto (RF-15, RN-11)', () => {
-  const hoy = new Date().toISOString().slice(0, 10);
+  // Día de la zona de la iglesia, como el service; en UTC fallaba de 18:00 a 24:00 en México
+  const hoy = fechaYHoraLocal(new Date(), 'America/Mexico_City').fecha;
 
   it('CA-05: con el piano prestado el índice baja a 33.1 y el piano sigue registrado', async () => {
     const { iglesia, auth, ids } = await parroquiaCA01();

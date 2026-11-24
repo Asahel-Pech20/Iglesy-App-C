@@ -18,7 +18,7 @@ export interface Supuestos {
   msPorDiaDeVigencia: number;
   /**
    * SUPUESTO (P-26): en el instante exacto en que se cumplen los 15 días la cotización ya está
-   * vencida (CA-29: «emitida hace 15 días» queda «Vencida»). Con `false` seguiría vigente hasta
+   * vencida (el caso no lo fija; CA-29 solo prueba 16 días). Con `false` seguiría vigente hasta
    * pasar ese instante.
    */
   vencidaEnElInstanteLimite: boolean;
@@ -41,4 +41,43 @@ export const SUPUESTOS: Supuestos = {
   vencidaEnElInstanteLimite: true,
   estadosDesdeLosQueSeCotiza: ['RECIBIDA'],
   estadosCancelables: ['RECIBIDA', 'COTIZADA'],
+};
+
+/** Supuestos del acceso sin cuenta (folio y clave). Ninguno es una regla del cliente: P-25 sigue abierta. */
+export interface SupuestosAcceso {
+  /**
+   * SUPUESTO (P-25): prefijo genérico del folio. «CR» sugeriría cripta y la solicitud puede ser de
+   * un nicho, un columbario o un osario. El consecutivo es nacional (no se repite entre iglesias).
+   */
+  prefijoFolio: string;
+  /**
+   * SUPUESTO (P-25): la clave es corta para que una persona la anote o la dicte por teléfono:
+   * 10 caracteres de un alfabeto sin ambiguos (sin 0/O ni 1/I/L) son 31^10, unos 49.5 bits.
+   * Se guarda solo con SHA-256 y se compara en tiempo constante. Con el bloqueo por folio y el
+   * límite de peticiones por IP alcanza para que no se adivine en línea; no es una contraseña.
+   */
+  longitudClave: number;
+  alfabetoClave: string;
+  /**
+   * SUPUESTO (P-25): tras este número de claves incorrectas seguidas, el folio se bloquea.
+   * LIMITACIÓN ACEPTADA POR AHORA: el bloqueo es por folio, así que un tercero que conozca un folio
+   * ajeno podría bloquearlo durante `minutosDeBloqueo` minutos haciendo consultas con claves falsas.
+   */
+  intentosAntesDeBloquear: number;
+  minutosDeBloqueo: number;
+  /**
+   * SUPUESTO (P-25): la persona debe dejar un teléfono o un correo (al menos uno) para que la
+   * iglesia pueda ponerse en contacto; el aviso de la cotización es solo al consultar con folio y
+   * clave, sin correo. Una persona puede hacer varias solicitudes, también a varias iglesias.
+   */
+  contactoMinimo: 'TELEFONO_O_CORREO';
+}
+
+export const SUPUESTOS_ACCESO: SupuestosAcceso = {
+  prefijoFolio: 'ESP',
+  longitudClave: 10,
+  alfabetoClave: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789',
+  intentosAntesDeBloquear: 5,
+  minutosDeBloqueo: 15,
+  contactoMinimo: 'TELEFONO_O_CORREO',
 };

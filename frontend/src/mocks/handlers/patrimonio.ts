@@ -21,6 +21,7 @@ import {
   indiceDe,
   puntosObjeto,
 } from '../datos/indice';
+import { aFechaApi } from '@/app/core/formato';
 import { db } from '../db';
 import { ahora, autenticar, errorApi, paginarMock, ruta } from '../utils';
 
@@ -194,7 +195,7 @@ export const patrimonioHandlers = [
     const errores: DetalleError[] = [];
     if (!c.fecha)
       errores.push({ campo: 'fecha', mensaje: 'Fecha no válida (formato yyyy-MM-dd).' });
-    else if (c.fecha > new Date().toISOString().slice(0, 10))
+    else if (c.fecha > aFechaApi(new Date()))
       errores.push({ campo: 'fecha', mensaje: 'La fecha no puede ser futura.' });
     if ((c.motivo?.trim().length ?? 0) < 3)
       errores.push({ campo: 'motivo', mensaje: 'Escribe el motivo.' });

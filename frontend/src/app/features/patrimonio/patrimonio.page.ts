@@ -6,7 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
-import { Gem, LucideAngularModule, Plus } from 'lucide-angular';
+import { Gem, LucideAngularModule, Pencil, Plus } from 'lucide-angular';
 import { of } from 'rxjs';
 import { BadgeEstado, type VarianteBadge } from '@/app/compartido/badge-estado';
 import { EstadoError, EstadoVacio, Esqueleto } from '@/app/compartido/estados';
@@ -21,6 +21,7 @@ import {
 import { PuedeDirective } from '@/app/core/puede.directive';
 import { valorDe } from '@/app/core/recurso';
 import { SesionService } from '@/app/core/sesion.service';
+import { IglesiaFormDialogo } from '@/app/features/iglesias/iglesia-form.dialogo';
 import { IglesiasService } from '@/app/features/iglesias/iglesias.service';
 import type { EstadoObjeto, ObjetoPatrimonial } from '@/app/tipos/patrimonio';
 import { EstadoObjetoDialogo } from './estado-objeto.dialogo';
@@ -87,6 +88,16 @@ const VARIANTE: Record<EstadoObjeto, VarianteBadge> = {
       descripcion="Objetos de la iglesia. Solo los vigentes suman al índice; ninguno se borra."
     >
       @if (puedeCapturar()) {
+        <!-- RF-08: el encargado edita los datos de SU iglesia (antes solo podía la Coordinación) -->
+        <button
+          *appPuede="'iglesias:editar'"
+          matButton="outlined"
+          type="button"
+          (click)="editarIglesia()"
+        >
+          <lucide-icon [img]="iconos.Pencil" [size]="16" aria-hidden="true" /> Editar datos de la
+          iglesia
+        </button>
         <button
           *appPuede="'patrimonio:gestionar'"
           matButton="filled"
@@ -226,7 +237,7 @@ export class PatrimonioPage {
   private readonly sesion = inject(SesionService);
   private readonly dialogo = inject(MatDialog);
 
-  protected readonly iconos = { Gem, Plus };
+  protected readonly iconos = { Gem, Pencil, Plus };
   protected readonly tiposObjeto = ETIQUETAS_TIPO_OBJETO;
   protected readonly estadosObjeto = ETIQUETAS_ESTADO_OBJETO;
   protected readonly estados = Object.entries(ETIQUETAS_ESTADO_OBJETO);
@@ -274,6 +285,17 @@ export class PatrimonioPage {
       width: '32rem',
       maxWidth: 'calc(100vw - 32px)',
       data: { iglesiaId, objeto },
+    });
+  }
+
+  /** Abre el formulario de la ficha (el mismo de la Coordinación) con los datos de esta iglesia. */
+  protected editarIglesia() {
+    const iglesia = this.iglesia();
+    if (!iglesia) return;
+    this.dialogo.open(IglesiaFormDialogo, {
+      width: '40rem',
+      maxWidth: 'calc(100vw - 32px)',
+      data: iglesia,
     });
   }
 

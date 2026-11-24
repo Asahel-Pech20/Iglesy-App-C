@@ -2,7 +2,7 @@
 
 - **Integrante:** Oscar
 - **Cubre:** RF-11, RF-12, RN-07 en misas y diezmo (Auditoría 2, A2-E4-01)
-- **Estado:** pendiente
+- **Estado:** resuelto sin usarlo (2026-11-21): `alcanceIglesia` ya rechaza las escrituras de una iglesia cerrada (A2-E1-01) y `backend/src/modules/diezmo/iglesia-cerrada.test.ts` lo comprueba en las rutas reales de padres, misas y diezmo.
 - **Antes de usar:** confirma con Santiago si lo resuelve en `alcanceIglesia` (Auditoría 2, A2-E1-01). Si lo hace él, este prompt ya no hace falta. Necesita PostgreSQL para las pruebas.
 
 ```text

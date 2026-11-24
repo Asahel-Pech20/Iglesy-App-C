@@ -104,7 +104,9 @@ export const explorarHandlers = [
         servicios: [],
         platicas: [],
         misas: [],
-        tiposEspacio: [],
+        tiposEspacio: db.tiposEspacio
+          .filter((t) => t.iglesiaId === i.id && t.activo && t.disponible)
+          .map((t) => ({ id: t.id, clase: t.clase })),
       },
     });
   }),

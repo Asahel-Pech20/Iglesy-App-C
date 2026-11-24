@@ -265,3 +265,25 @@ describe('criterios del índice (E2-15, RF-22)', () => {
     await esperarA(() => router.url.startsWith('/sin-acceso'));
   });
 });
+
+describe('pendientes de la integración (PR #26, #27 y #23)', () => {
+  it('RF-08: el encargado edita los datos de su iglesia desde Patrimonio', async () => {
+    await abrirApp('/patrimonio', { como: 'admin@iglesia.local' });
+    await esperarA(() => conTexto(/Editar datos de la iglesia/) !== undefined);
+    conTexto(/Editar datos de la iglesia/)!.click();
+    await esperarA(() => inputDe('Capacidad')?.value === '400');
+    escribir(inputDe('Capacidad'), '450');
+    enDialogo('Guardar')!.click();
+    await esperarA(() => db.iglesias.find((i) => i.id === 'ig-comunidad')?.capacidad === 450);
+  });
+
+  it('la ficha muestra los tipos de espacio de Oscar y enlaza a la solicitud', async () => {
+    await abrirApp('/templos/ig-comunidad');
+    await esperarA(() => textoPagina().includes('Esta iglesia ofrece'));
+    expect(textoPagina()).toContain('cripta y nicho');
+    const enlace = [...document.querySelectorAll('a')].find((a) =>
+      a.textContent?.includes('Solicitar un espacio'),
+    );
+    expect(enlace?.getAttribute('href')).toBe('/espacios/ig-comunidad');
+  });
+});

@@ -5,7 +5,9 @@ import { LucideAngularModule, Mail, MapPin, Phone, Users } from 'lucide-angular'
 import { BadgeEstado } from '@/app/compartido/badge-estado';
 import { EstadoError, Esqueleto } from '@/app/compartido/estados';
 import { ETIQUETAS_TIPO_IGLESIA, ETIQUETAS_TIPO_OBJETO, formatearIndice } from '@/app/core/formato';
+import { ETIQUETAS_CLASE } from '@/app/features/espacios/formato-espacios';
 import { valorDe } from '@/app/core/recurso';
+import type { FichaIglesia } from '@/app/tipos/patrimonio';
 import { ExplorarService } from './explorar.service';
 import { varianteDistincion } from './tarjeta-iglesia';
 
@@ -121,6 +123,17 @@ import { varianteDistincion } from './tarjeta-iglesia';
         }
       </section>
 
+      @if (f.tiposEspacio.length > 0) {
+        <section class="tarjeta datos" aria-labelledby="titulo-espacios">
+          <h2 id="titulo-espacios" style="margin: 0">Espacios</h2>
+          <p class="suave" style="margin: 0">
+            Esta iglesia ofrece:
+            {{ espacios(f.tiposEspacio) }}.
+          </p>
+          <a [routerLink]="['/espacios', f.id]">Solicitar un espacio</a>
+        </section>
+      }
+
       <h2>Patrimonio</h2>
       @if (f.objetos.length === 0) {
         <p class="suave">Esta iglesia no tiene objetos vigentes registrados.</p>
@@ -151,6 +164,14 @@ export class FichaPage {
   protected readonly tiposObjeto = ETIQUETAS_TIPO_OBJETO;
   protected readonly formato = formatearIndice;
   protected readonly variante = varianteDistincion;
+
+  /** «cripta, nicho y columbario» con las etiquetas de Oscar. */
+  protected espacios(tipos: FichaIglesia['tiposEspacio']) {
+    const nombres = tipos.map((t) => ETIQUETAS_CLASE[t.clase].toLowerCase());
+    return nombres.length > 1
+      ? `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`
+      : (nombres[0] ?? '');
+  }
 
   protected readonly consulta = rxResource({
     params: () => this.id(),

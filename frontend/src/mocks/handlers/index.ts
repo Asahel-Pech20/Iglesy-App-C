@@ -10,6 +10,7 @@ import { donacionesHandlers } from './donaciones';
 import { iglesiasHandlers } from './iglesias';
 import { explorarHandlers } from './explorar';
 import { patrimonioHandlers } from './patrimonio';
+import { espaciosHandlers } from './espacios';
 import { eventosHandlers } from './eventos';
 import { miembrosHandlers } from './miembros';
 import { ministeriosHandlers } from './ministerios';
@@ -35,4 +36,5 @@ export const handlers = [
   // E2 (Nataly): objetos, criterios y consultas públicas
   ...patrimonioHandlers,
   ...explorarHandlers,
+  ...espaciosHandlers,
 ];

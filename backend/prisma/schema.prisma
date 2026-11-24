@@ -374,10 +374,12 @@ model Iglesia {
   municipio Municipio? @relation(fields: [municipioClave], references: [clave], onDelete: Restrict)
   localidad Localidad? @relation(fields: [localidadClave], references: [clave], onDelete: Restrict)
 
-  usuarios Usuario[]
-  misas    MisaCelebrada[]
-  diezmos  Diezmo[]
-  objetos  ObjetoPatrimonial[]
+  usuarios           Usuario[]
+  misas              MisaCelebrada[]
+  diezmos            Diezmo[]
+  tiposEspacio       TipoEspacio[]
+  solicitudesEspacio SolicitudEspacio[]
+  objetos            ObjetoPatrimonial[]
 
   @@index([estadoClave, activa])
   @@index([municipioClave])
@@ -569,4 +571,94 @@ model CriteriosIndice {
 
   @@index([createdAt])
   @@map("criterios_indice")
+}
+
+// ───────────── Ecclesia · Criptas y otros espacios (E4-07, Oscar) ─────────────
+
+enum ClaseEspacio {
+  CRIPTA
+  NICHO
+  COLUMBARIO
+  OSARIO
+}
+
+// Mismos valores que el dominio puro (modules/espacios/dominio/tipos.ts)
+enum EstadoSolicitudEspacio {
+  RECIBIDA
+  SIN_LUGAR
+  COTIZADA
+  ACEPTADA
+  RECHAZADA
+  VENCIDA
+  CANCELADA
+}
+
+enum RespuestaCotizacion {
+  ACEPTADA
+  RECHAZADA
+  VENCIDA
+}
+
+// Lo que una iglesia ofrece. No se borra (conserva sus solicitudes): se desactiva. RN-47.
+model TipoEspacio {
+  id         String       @id @default(uuid())
+  iglesiaId  String
+  iglesia    Iglesia      @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+  clase      ClaseEspacio
+  // false = la iglesia dejó de ofrecerlo; disponible = false: ofrecido, pero sin lugar por ahora
+  activo     Boolean      @default(true)
+  disponible Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  solicitudes SolicitudEspacio[]
+
+  @@unique([iglesiaId, clase])
+  @@map("tipos_espacio")
+}
+
+// Solicitud hecha sin cuenta: se consulta con folio y clave (RN-49). Los datos de contacto son
+// privados de la iglesia (RN-53). La clave solo se guarda como hash.
+model SolicitudEspacio {
+  id               String                 @id @default(uuid())
+  folio            String                 @unique
+  claveHash        String
+  iglesiaId        String
+  iglesia          Iglesia                @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+  tipoEspacioId    String
+  tipoEspacio      TipoEspacio            @relation(fields: [tipoEspacioId], references: [id], onDelete: Restrict)
+  contactoNombre   String
+  contactoTelefono String?
+  contactoCorreo   String?
+  comentarios      String?
+  estado           EstadoSolicitudEspacio @default(RECIBIDA)
+  // Consultas con clave incorrecta; al llegar al límite se bloquea ese folio un rato (supuestos.ts)
+  intentosFallidos Int                    @default(0)
+  bloqueadoHasta   DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  cotizaciones Cotizacion[]
+
+  @@index([iglesiaId, estado])
+  @@index([tipoEspacioId])
+  @@map("solicitudes_espacio")
+}
+
+// Varias por solicitud, con a lo sumo una sin respuesta (índice parcial en la migración): así, si el
+// cliente permite volver a cotizar (P-26), no hace falta otra migración.
+model Cotizacion {
+  id           String               @id @default(uuid())
+  solicitudId  String
+  solicitud    SolicitudEspacio     @relation(fields: [solicitudId], references: [id], onDelete: Restrict)
+  monto        Decimal              @db.Decimal(12, 2)
+  condiciones  String
+  emitidaEn    DateTime
+  venceEn      DateTime
+  respuesta    RespuestaCotizacion?
+  respondidaEn DateTime?
+  createdAt    DateTime             @default(now())
+
+  @@index([solicitudId])
+  @@map("cotizaciones")
 }

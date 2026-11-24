@@ -1,4 +1,5 @@
 import type { QueryLista } from './comunes';
+import type { ClaseEspacio } from './espacios';
 import type { LugarInegi, TipoIglesia } from './iglesias';
 
 // Espejo de backend/src/modules/patrimonio y consultas (E2-08, E2-10–E2-13, Nataly).
@@ -143,7 +144,8 @@ export interface FichaIglesia {
   servicios: unknown[];
   platicas: unknown[];
   misas: unknown[];
-  tiposEspacio: unknown[];
+  /** Lo que la iglesia ofrece, sin precios (E4-08 de Oscar). */
+  tiposEspacio: { id: string; clase: ClaseEspacio }[];
 }
 
 export interface IglesiaReconocida {
