@@ -26,14 +26,16 @@ import { LogIn, LucideAngularModule } from 'lucide-angular';
     </div>
   `,
   styles: `
+    /* Estilo colonial, igual que las pantallas públicas de iglesias (explorar/) */
     .marco {
       min-height: 100dvh;
-      background: var(--fondo);
+      background: var(--pergamino);
       color: var(--texto);
     }
     .encabezado {
-      border-bottom: 1px solid var(--borde);
-      background: var(--superficie);
+      border-bottom: 3px double var(--acento);
+      background: var(--primario);
+      color: var(--primario-texto);
     }
     .contenido {
       display: flex;
@@ -47,19 +49,21 @@ import { LogIn, LucideAngularModule } from 'lucide-angular';
     }
     h1 {
       margin: 0;
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 22px;
     }
     p {
       margin: 0;
       font-size: 14px;
+    }
+    .encabezado .texto-suave {
+      color: var(--primario-texto);
     }
     .acceso {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       font-size: 14px;
-      color: var(--primario);
+      color: var(--primario-texto);
     }
     .principal {
       display: flex;
