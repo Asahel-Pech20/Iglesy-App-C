@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { AppError } from '../../lib/appError';
+import { validar } from '../../middlewares/validar';
 import * as c from './public.controller';
+import { esquemaIglesiaCartelera } from './public.schemas';
 import { crearCacheCartelera } from './public.service';
 
 /**
@@ -20,6 +22,13 @@ export function crearPublicRouter() {
       next(new AppError('RATE_LIMITED', 'Demasiadas solicitudes, espera un minuto.', 429)),
   });
 
+  // Alias heredado de AppIglesia: la cartelera de la iglesia inicial (E1-06b)
   router.get('/cartelera', limite, c.cartelera(obtenerCartelera));
+  router.get(
+    '/iglesias/:iglesiaId/cartelera',
+    limite,
+    validar({ params: esquemaIglesiaCartelera }),
+    c.cartelera(obtenerCartelera),
+  );
   return router;
 }

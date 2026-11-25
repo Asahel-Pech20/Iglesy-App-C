@@ -374,6 +374,10 @@ model Iglesia {
   nombre      String
   tipo        TipoIglesia
   zonaHoraria String      @default("America/Mexico_City")
+  // E1-06b: datos institucionales que antes vivían en ConfiguracionIglesia (fila única)
+  moneda      String      @default("MXN")
+  logoUrl     String?
+  sitioWeb    String?
   // Una iglesia cerrada conserva su historia pero no aparece en consultas públicas
   activa      Boolean     @default(true)
 
@@ -527,6 +531,8 @@ model DiezmoCorreccion {
 // ───────────── B1 · Configuración de la iglesia ─────────────
 
 // Fila única con id fijo = 1
+// E1-06b: YA NO SE USA. Sus datos pasaron a Iglesia (moneda, zona horaria, logo y sitio web).
+// La tabla se conserva hasta que el equipo confirme borrarla (no se borran datos sin confirmación).
 model ConfiguracionIglesia {
   id          Int      @id @default(1)
   nombre      String

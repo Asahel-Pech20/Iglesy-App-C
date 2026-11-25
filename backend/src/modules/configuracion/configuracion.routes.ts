@@ -8,6 +8,7 @@ import {
   esquemaCrearHorario,
   esquemaEditarHorario,
   esquemaIdHorario,
+  esquemaQueryConfiguracion,
 } from './configuracion.schemas';
 import { MAX_LOGO_BYTES } from './configuracion.service';
 
@@ -21,11 +22,21 @@ const editar = [autenticar, autorizar('configuracion:editar')];
 
 export const configuracionRouter = Router();
 
-configuracionRouter.get('/', c.obtener);
+configuracionRouter.get(
+  '/',
+  autenticarOpcional,
+  validar({ query: esquemaQueryConfiguracion }),
+  c.obtener,
+);
 configuracionRouter.put('/', ...editar, validar({ body: esquemaConfiguracion }), c.actualizar);
 configuracionRouter.post('/logo', ...editar, subida.single('logo'), c.subirLogo);
 
-configuracionRouter.get('/horarios', autenticarOpcional, c.listarHorarios);
+configuracionRouter.get(
+  '/horarios',
+  autenticarOpcional,
+  validar({ query: esquemaQueryConfiguracion }),
+  c.listarHorarios,
+);
 configuracionRouter.post(
   '/horarios',
   ...editar,

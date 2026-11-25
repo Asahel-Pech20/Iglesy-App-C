@@ -366,8 +366,10 @@ Respuestas de auth (B1):
 `GET /usuarios/opciones?rol=` → `[{ id, nombre, rol }]` solo activos (ADMIN y PASTOR; para elegir coordinadores)
 
 **Configuración** (B1)
-`GET /configuracion` (público; `logoUrl` es URL absoluta) · `PUT /configuracion` (ADMIN) · `POST /configuracion/logo` (ADMIN, multipart, png/jpg/svg/webp ≤ 2 MB)
-`GET /configuracion/horarios` (público) · `POST|PATCH|DELETE /configuracion/horarios[/:id]` (ADMIN)
+`GET /configuracion` (sesión opcional; `logoUrl` es URL absoluta) · `PUT /configuracion` (ADMIN) · `POST /configuracion/logo` (ADMIN, multipart, png/jpg/svg/webp ≤ 2 MB)
+`GET /configuracion/horarios` (sesión opcional) · `POST|PATCH|DELETE /configuracion/horarios[/:id]` (ADMIN)
+- **E1-06b:** la configuración es la de una **iglesia**. Con sesión de personal, la de su iglesia; la Coordinación indica `?iglesiaId=` (sin él, 400); sin sesión, `?iglesiaId=` o la iglesia inicial. `ciudad` es el municipio del catálogo del INEGI.
+- `PUT /configuracion` body `{ moneda, zonaHoraria, sitioWeb? }`, **estricto**: `nombre`, `direccion`, `ciudad`, `telefono` o `email` → 400, porque se editan en la ficha (`PATCH /iglesias/:iglesiaId`).
 
 **Miembros** (B2)
 `GET /miembros?q&estado=activo|inactivo|todos&ministerioId` · `POST /miembros` · `GET /miembros/:id` · `PATCH /miembros/:id` · `PATCH /miembros/:id/estado`
@@ -389,7 +391,7 @@ Actividades del ministerio → `GET /eventos?ministerioId=` (B3).
 `GET /anuncios?vigentes=true&prioridad&estado=vigentes|programados|expirados` · `GET /anuncios/:id` · `POST /anuncios` · `PATCH /anuncios/:id` · `DELETE /anuncios/:id`
 
 **Público** (B3)
-`GET /public/cartelera` → `{ iglesia, horarios, anuncios (vigentes), eventosProximos }`
+`GET /public/iglesias/:iglesiaId/cartelera` → `{ iglesia, horarios, anuncios (vigentes), eventosProximos }` de esa iglesia (E1-06b; 400 id no válido, 404 inexistente o cerrada) · `GET /public/cartelera`: alias de la iglesia inicial
 
 **Donaciones** (B4) — ADMIN, TESORERO (PASTOR solo lectura)
 `GET /donaciones?desde&hasta&concepto&metodo&miembroId&anonima&incluirAnuladas` · `POST /donaciones` · `GET /donaciones/:id` · `PATCH /donaciones/:id` · `PATCH /donaciones/:id/anular` (`{ motivo }`)
@@ -529,7 +531,7 @@ El sistema pasa de administrar **una** iglesia a ser el **sistema nacional** de 
 | `Evento` y `Asistencia` | Siguen para actividades internas; una misa **no** es un evento: usa `HorarioMisa` y `MisaCelebrada` | Convive |
 | `Donacion` | Sigue para aportaciones por persona; el diezmo de cada misa usa `Diezmo` | Convive |
 | Dashboard y reportes | Se limitan a la iglesia del usuario; se agregan los reportes de diezmo | Se amplía |
-| `/public/cartelera` | Una por iglesia, dentro de la ficha pública | Se amplía |
+| `/public/cartelera` | Una por iglesia: `/public/iglesias/:iglesiaId/cartelera` (E1-06b); la ficha pública la enlaza | Se amplía |
 | Auth, permisos, errores, paginación, OpenAPI, exportadores, CI, base de Angular | Se reutilizan | Sin cambio de fondo |
 
 Toda consulta de gestión interna se filtra por iglesia y pasa por `alcanceIglesia`. Los datos actuales se migran a una iglesia inicial. Los cambios a `schema.prisma` siguen la regla de siempre: PR propio revisado por B1 y el dueño del modelo.

@@ -55,7 +55,11 @@ export async function seedDonaciones(miembroIds: string[], iglesiaId: string) {
     select: { id: true },
   });
   if (!tesorero) throw new Error('Falta el usuario tesorero@iglesia.local (seed de B1).');
-  const { zonaHoraria } = await prisma.configuracionIglesia.findUniqueOrThrow({ where: { id: 1 } });
+  // E1-06b: la zona horaria es la de la iglesia (antes, la de la configuración única)
+  const { zonaHoraria } = await prisma.iglesia.findUniqueOrThrow({
+    where: { id: iglesiaId },
+    select: { zonaHoraria: true },
+  });
   const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: zonaHoraria }).format(new Date());
   const inicio = new Date(fechaDe(`${hoy.slice(0, 7)}-01`));
   inicio.setUTCMonth(inicio.getUTCMonth() - (MESES - 1));

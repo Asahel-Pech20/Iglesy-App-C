@@ -16,6 +16,8 @@ const PUBLICAS = new Set([
   'GET /configuracion/horarios',
   // B3-15: cartelera pública de solo lectura
   'GET /public/cartelera',
+  // E1-06b: cartelera de cada iglesia (la de arriba es el alias de la inicial)
+  'GET /public/iglesias/:iglesiaId/cartelera',
   // E2-05: catálogo del INEGI para elegir el lugar (RF-01, RF-09)
   'GET /public/estados',
   'GET /public/estados/:clave/municipios',

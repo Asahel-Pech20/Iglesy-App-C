@@ -55,7 +55,7 @@ Auditorías: `Auditorias/Auditoria_<n>/README.md` (índice) → `<Integrante>/{b
 - COORDINADOR solo gestiona asistencia/eventos/integrantes de **sus** ministerios.
 - Asistencia ligada a un **evento** (no a una fecha suelta); no se registra en eventos cancelados.
 - Respuestas: `{ data, meta? }` / `{ error: { code, message, details? } }`.
-- Configuración de la iglesia = fila única (`id = 1`); define moneda (default MXN) y zona horaria (default America/Mexico_City).
+- Configuración = la de **cada iglesia** (E1-06b): moneda (default MXN), zona horaria (default America/Mexico_City), logo y sitio web viven en `Iglesia`; `configuracion_iglesia` ya no se usa. La gestión interna se filtra por iglesia en el cliente de Prisma (ADR-0007).
 - Frontend arranca con mocks (`environment.usarMocks = true` en `src/environments/environment.ts`) para no depender del backend.
 
 ## Decisiones

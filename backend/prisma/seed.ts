@@ -28,13 +28,8 @@ async function main() {
   const password = process.env.SEED_PASSWORD;
   if (!password) throw new Error('Falta SEED_PASSWORD en backend/.env (ver .env.example).');
 
-  await prisma.configuracionIglesia.upsert({
-    where: { id: 1 },
-    create: { id: 1, nombre: 'Mi Iglesia' },
-    update: {},
-  });
-
-  // Iglesia inicial: la migración ya la crea con los datos de la configuración; en una BD nueva se crea aquí
+  // Iglesia inicial: la migración ya la crea con los datos de la configuración; en una BD nueva se crea aquí.
+  // E1-06b: moneda, zona horaria y logo son de la iglesia; configuracion_iglesia ya no se usa.
   const iglesia =
     (await prisma.iglesia.findFirst({ orderBy: { createdAt: 'asc' } })) ??
     (await prisma.iglesia.create({ data: { nombre: 'Mi Iglesia', tipo: 'PARROQUIA' } }));

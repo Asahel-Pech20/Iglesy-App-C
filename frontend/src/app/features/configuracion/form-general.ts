@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
@@ -7,30 +15,30 @@ import { MatOption, MatSelect } from '@angular/material/select';
 import { errorDeCampo } from '@/app/core/api';
 import { opcionesDe } from '@/app/core/formato';
 import { NotificarService } from '@/app/core/notificar.service';
-import {
-  errorServidor,
-  maximo,
-  mensajeError,
-  requerido,
-  textoONull,
-  validarEmail,
-  validarUrl,
-} from '@/app/core/validadores';
+import { SesionService } from '@/app/core/sesion.service';
+import { errorServidor, mensajeError, textoONull, validarUrl } from '@/app/core/validadores';
 import type { ConfiguracionIglesia } from '@/app/tipos/configuracion';
 import { MONEDAS, ZONAS_HORARIAS } from './catalogos';
 import { ConfiguracionService } from './configuracion.service';
 
-const CAMPOS_TEXTO = [
-  { campo: 'direccion', etiqueta: 'Dirección', tipo: 'text' },
-  { campo: 'ciudad', etiqueta: 'Ciudad', tipo: 'text' },
-  { campo: 'telefono', etiqueta: 'Teléfono', tipo: 'tel' },
-  { campo: 'email', etiqueta: 'Correo de contacto', tipo: 'email' },
-  { campo: 'sitioWeb', etiqueta: 'Sitio web', tipo: 'url' },
+/**
+ * E1-06b: datos de la FICHA de la iglesia. Aquí solo se muestran; se editan en la ficha
+ * (PATCH /iglesias/:id, módulo de Nataly) con sus reglas (nombre único por municipio, INEGI).
+ */
+const DATOS_FICHA = [
+  { campo: 'nombre', etiqueta: 'Nombre de la iglesia' },
+  { campo: 'direccion', etiqueta: 'Dirección' },
+  { campo: 'ciudad', etiqueta: 'Ciudad (municipio)' },
+  { campo: 'telefono', etiqueta: 'Teléfono' },
+  { campo: 'email', etiqueta: 'Correo de contacto' },
 ] as const;
 
-type Campo = 'nombre' | (typeof CAMPOS_TEXTO)[number]['campo'] | 'moneda' | 'zonaHoraria';
+type Campo = 'sitioWeb' | 'moneda' | 'zonaHoraria';
 
-/** Pestaña General. Solo ADMIN_IGLESIA edita; los demás roles la ven en modo lectura. */
+/**
+ * Pestaña General. Solo ADMIN_IGLESIA edita lo institucional (moneda, zona horaria y sitio web);
+ * los demás roles la ven en modo lectura. Nombre, dirección y contacto vienen de la ficha.
+ */
 @Component({
   selector: 'app-form-general',
   imports: [
@@ -46,19 +54,29 @@ type Campo = 'nombre' | (typeof CAMPOS_TEXTO)[number]['campo'] | 'moneda' | 'zon
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form [formGroup]="form" (ngSubmit)="enviar()" novalidate class="formulario">
+      <section class="ficha" aria-labelledby="titulo-ficha">
+        <h3 id="titulo-ficha">Datos de la ficha</h3>
+        <dl class="rejilla">
+          @for (d of datosFicha; track d.campo) {
+            <div>
+              <dt class="texto-suave">{{ d.etiqueta }}</dt>
+              <dd>{{ config()[d.campo] || '—' }}</dd>
+            </div>
+          }
+        </dl>
+        <p class="texto-suave nota">
+          Se editan en la ficha de la iglesia.
+          @if (iglesiaId(); as id) {
+            <a [href]="'/templos/' + id">Ver la ficha</a>
+          }
+        </p>
+      </section>
       <div class="rejilla">
         <mat-form-field class="doble">
-          <mat-label>Nombre de la iglesia</mat-label>
-          <input matInput formControlName="nombre" required />
-          <mat-error>{{ error('nombre') }}</mat-error>
+          <mat-label>Sitio web</mat-label>
+          <input matInput type="url" formControlName="sitioWeb" />
+          <mat-error>{{ error('sitioWeb') }}</mat-error>
         </mat-form-field>
-        @for (c of camposTexto; track c.campo) {
-          <mat-form-field>
-            <mat-label>{{ c.etiqueta }}</mat-label>
-            <input matInput [type]="c.tipo" [formControlName]="c.campo" />
-            <mat-error>{{ error(c.campo) }}</mat-error>
-          </mat-form-field>
-        }
         <mat-form-field>
           <mat-label>Moneda</mat-label>
           <mat-select formControlName="moneda" required>
@@ -110,6 +128,24 @@ type Campo = 'nombre' | (typeof CAMPOS_TEXTO)[number]['campo'] | 'moneda' | 'zon
     .boton {
       align-self: flex-start;
     }
+    .ficha h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    dl {
+      margin: 0;
+    }
+    dt {
+      font-size: 12px;
+    }
+    dd {
+      margin: 0 0 8px;
+      overflow-wrap: anywhere;
+    }
+    .nota {
+      margin: 0;
+      font-size: 14px;
+    }
   `,
 })
 export class FormGeneral {
@@ -118,16 +154,15 @@ export class FormGeneral {
   private readonly servicio = inject(ConfiguracionService);
   private readonly notificar = inject(NotificarService);
 
-  protected readonly camposTexto = CAMPOS_TEXTO;
+  private readonly sesion = inject(SesionService);
+
+  protected readonly datosFicha = DATOS_FICHA;
+  /** Iglesia del usuario, para el enlace a su ficha pública */
+  protected readonly iglesiaId = computed(() => this.sesion.iglesia()?.id ?? null);
   protected readonly monedas = opcionesDe(MONEDAS);
   protected readonly zonas = opcionesDe(ZONAS_HORARIAS);
   protected readonly enviando = signal(false);
   protected readonly form = inject(NonNullableFormBuilder).group({
-    nombre: ['', [requerido('Escribe el nombre de la iglesia.'), maximo(150)]],
-    direccion: [''],
-    ciudad: [''],
-    telefono: [''],
-    email: ['', validarEmail],
     sitioWeb: ['', validarUrl],
     moneda: [''],
     zonaHoraria: [''],
@@ -137,11 +172,6 @@ export class FormGeneral {
     effect(() => {
       const c = this.config();
       this.form.reset({
-        nombre: c.nombre,
-        direccion: c.direccion ?? '',
-        ciudad: c.ciudad ?? '',
-        telefono: c.telefono ?? '',
-        email: c.email ?? '',
         sitioWeb: c.sitioWeb ?? '',
         moneda: c.moneda,
         zonaHoraria: c.zonaHoraria,
@@ -162,11 +192,6 @@ export class FormGeneral {
     this.enviando.set(true);
     this.servicio
       .actualizar({
-        nombre: v.nombre.trim(),
-        direccion: textoONull(v.direccion),
-        ciudad: textoONull(v.ciudad),
-        telefono: textoONull(v.telefono),
-        email: textoONull(v.email)?.toLowerCase() ?? null,
         sitioWeb: textoONull(v.sitioWeb),
         moneda: v.moneda,
         zonaHoraria: v.zonaHoraria,
