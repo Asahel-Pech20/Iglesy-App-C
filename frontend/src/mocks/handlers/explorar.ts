@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw';
+import type { Cartelera } from '@/app/tipos/anuncios';
 import type { Iglesia } from '@/app/tipos/iglesias';
 import { anioCalculo, anioEfectivo, epoca } from '../datos/indice';
+import { IGLESIA_MOCK } from '../datos/b1';
 import { db } from '../db';
 import { errorApi, paginarMock, ruta } from '../utils';
 import { indiceDeIglesia } from './patrimonio';
@@ -34,7 +36,66 @@ const resumen = (i: Iglesia) => {
   };
 };
 
+/**
+ * GET /public/iglesias/:id/cartelera (E1-06b). Los anuncios, eventos y horarios de los mocks son de
+ * la iglesia de la demo; las demás iglesias activas responden con listas vacías.
+ */
+function carteleraDe(i: Iglesia): Cartelera {
+  const demo = i.id === IGLESIA_MOCK;
+  const ya = Date.now();
+  return {
+    iglesia: {
+      nombre: i.nombre,
+      logoUrl: null,
+      direccion: i.direccion ?? null,
+      ciudad: i.municipio?.nombre ?? null,
+      telefono: i.telefono ?? null,
+      email: i.correo ?? null,
+      sitioWeb: null,
+    },
+    horarios: demo ? db.horarios.filter((h) => h.activo).map(({ activo: _a, ...h }) => h) : [],
+    anuncios: demo
+      ? db.anuncios
+          .filter(
+            (a) =>
+              Date.parse(a.fechaPublicacion) <= ya &&
+              (a.fechaExpiracion === null || Date.parse(a.fechaExpiracion) > ya),
+          )
+          .map(({ id, titulo, contenido, prioridad, fechaPublicacion, fechaExpiracion }) => ({
+            id,
+            titulo,
+            contenido,
+            prioridad,
+            fechaPublicacion,
+            fechaExpiracion,
+          }))
+      : [],
+    eventosProximos: demo
+      ? db.eventos
+          .filter((e) => e.estado === 'PROGRAMADO' && Date.parse(e.fechaInicio) >= ya)
+          .sort((a, b) => a.fechaInicio.localeCompare(b.fechaInicio))
+          .slice(0, 10)
+          .map(({ id, titulo, descripcion, tipo, categoria, fechaInicio, fechaFin, lugar }) => ({
+            id,
+            titulo,
+            descripcion,
+            tipo,
+            categoria,
+            fechaInicio,
+            fechaFin,
+            lugar,
+          }))
+      : [],
+  };
+}
+
 export const explorarHandlers = [
+  http.get(ruta('/public/iglesias/:id/cartelera'), ({ params }) => {
+    const i = activas().find((x) => x.id === params['id']);
+    if (!i) return errorApi(404, 'NOT_FOUND', 'La iglesia no existe.');
+    return HttpResponse.json({ data: carteleraDe(i) });
+  }),
+
   http.get(ruta('/public/iglesias'), ({ request }) => {
     const url = new URL(request.url);
     const estado = url.searchParams.get('estado');

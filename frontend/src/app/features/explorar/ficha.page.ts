@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import {
   ArrowLeft,
@@ -11,7 +12,13 @@ import {
   Users,
 } from 'lucide-angular';
 import { EstadoError, Esqueleto } from '@/app/compartido/estados';
-import { ETIQUETAS_TIPO_IGLESIA, ETIQUETAS_TIPO_OBJETO, formatearIndice } from '@/app/core/formato';
+import {
+  DIAS_SEMANA,
+  ETIQUETAS_TIPO_IGLESIA,
+  ETIQUETAS_TIPO_OBJETO,
+  formatearFechaHora,
+  formatearIndice,
+} from '@/app/core/formato';
 import { ETIQUETAS_CLASE } from '@/app/features/espacios/formato-espacios';
 import { valorDe } from '@/app/core/recurso';
 import type { FichaIglesia } from '@/app/tipos/patrimonio';
@@ -169,6 +176,39 @@ import { PildoraDistincion } from './tarjeta-iglesia';
       font-size: 13px;
       color: var(--texto-suave);
     }
+    .cartelera {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+    .cartelera h2 {
+      margin: 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--primario);
+    }
+    .cartelera h3 {
+      margin: 0 0 4px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--texto-suave);
+    }
+    .cartelera ul {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 14px;
+    }
+    .cartelera .fecha {
+      display: block;
+      font-size: 12px;
+      color: var(--texto-suave);
+    }
     .inah {
       display: inline-block;
       padding: 1px 10px;
@@ -263,6 +303,51 @@ import { PildoraDistincion } from './tarjeta-iglesia';
               <a [routerLink]="['/espacios', f.id]">Solicitar un espacio</a>
             </section>
           }
+          @if (tieneCartelera()) {
+            <section
+              class="marco cartelera"
+              aria-labelledby="titulo-cartelera"
+              style="margin-top: 16px"
+            >
+              <h2 id="titulo-cartelera">Anuncios y próximos eventos</h2>
+              @if (cartelera()!.anuncios.length > 0) {
+                <div>
+                  <h3>Anuncios</h3>
+                  <ul>
+                    @for (a of cartelera()!.anuncios.slice(0, 3); track a.id) {
+                      <li>{{ a.titulo }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+              @if (cartelera()!.eventosProximos.length > 0) {
+                <div>
+                  <h3>Próximos eventos</h3>
+                  <ul>
+                    @for (e of cartelera()!.eventosProximos.slice(0, 3); track e.id) {
+                      <li>
+                        {{ e.titulo }}
+                        <span class="fecha">{{ fechaHora(e.fechaInicio) }} · {{ e.lugar }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+              @if (cartelera()!.horarios.length > 0) {
+                <div>
+                  <h3>Horarios de reunión</h3>
+                  <ul>
+                    @for (h of cartelera()!.horarios; track h.id) {
+                      <li>
+                        {{ dias[h.diaSemana] }} {{ h.horaInicio }}
+                        <span class="fecha">{{ h.nombre }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </section>
+          }
         </div>
 
         <section aria-labelledby="titulo-patrimonio">
@@ -299,6 +384,8 @@ export class FichaPage {
   protected readonly tipos = ETIQUETAS_TIPO_IGLESIA;
   protected readonly tiposObjeto = ETIQUETAS_TIPO_OBJETO;
   protected readonly formato = formatearIndice;
+  protected readonly fechaHora = formatearFechaHora;
+  protected readonly dias = DIAS_SEMANA;
 
   /** «cripta, nicho y columbario» con las etiquetas de Oscar. */
   protected espacios(tipos: FichaIglesia['tiposEspacio']) {
@@ -313,6 +400,22 @@ export class FichaPage {
     stream: ({ params }) => this.servicio.ficha(params),
   });
   protected readonly ficha = computed(() => valorDe(this.consulta) ?? null);
+
+  /**
+   * Cartelera de la iglesia (E1-06b de Santiago, specs.md §12.2: «la ficha pública la enlaza»).
+   * Si no responde, la ficha se muestra igual, sin esta sección.
+   */
+  private readonly datosCartelera = rxResource({
+    params: () => this.id(),
+    stream: ({ params }) => this.servicio.cartelera(params).pipe(catchError(() => of(null))),
+  });
+  protected readonly cartelera = computed(() => valorDe(this.datosCartelera) ?? null);
+  protected readonly tieneCartelera = computed(() => {
+    const c = this.cartelera();
+    return Boolean(
+      c && (c.anuncios.length > 0 || c.eventosProximos.length > 0 || c.horarios.length > 0),
+    );
+  });
   protected readonly lugar = computed(() => {
     const u = this.ficha()?.ubicacion;
     return (
