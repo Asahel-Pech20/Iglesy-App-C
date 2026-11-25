@@ -1,24 +1,13 @@
-// Versión mínima del módulo de misas (padres y misas celebradas). Lo usa el diezmo.
+// Misas celebradas (versión mínima que usa el diezmo; E3-09 la amplía con el horario y la
+// sustitución). Los padres están en padres.service.ts y el horario semanal en horario.service.ts.
 import { AppError } from '../../lib/appError';
 import { crearMeta, paginar } from '../../lib/paginacion';
 import { prisma } from '../../lib/prisma';
 import { resolverPeriodo } from '../../lib/dominio/periodo';
 import { fechaYHoraLocal } from '../../lib/dominio/zona';
-import type { CrearMisa, CrearPadre, QueryListarMisas } from './misas.schemas';
+import type { CrearMisa, QueryListarMisas } from './misas.schemas';
 
 const SELECT_PADRE = { id: true, nombre: true } as const;
-
-export async function listarPadres() {
-  return prisma.padre.findMany({
-    where: { activo: true },
-    orderBy: { nombre: 'asc' },
-    select: SELECT_PADRE,
-  });
-}
-
-export async function crearPadre(datos: CrearPadre) {
-  return prisma.padre.create({ data: { nombre: datos.nombre }, select: SELECT_PADRE });
-}
 
 /** Zona horaria de la iglesia; las fechas y horas de sus misas son locales (RN-31). */
 async function zonaDe(iglesiaId: string) {

@@ -49,8 +49,8 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 |---|---|---|---|---|
 | E3-04 | Dominio puro `misas/dominio/solapes.ts`: intervalo de una misa (hora local → UTC con `instanteLocal` de E1-04), duración por defecto de 60 min y detección de choques; el «ahora» llega como parámetro | RN-26, RN-27, RN-31, P-15 | E1-04 (hecha) | Hecha (en revisión) |
 | E3-05 | Migración: `Padre` + título; `PadreIglesia` (padre ↔ iglesia); `HorarioMisa` (día, hora local, tipo, idioma, duración, padre); `MisaCelebrada` + `horarioMisaId` y `padreProgramadoId`; `SustitucionMisa` inmutable. Sin romper el diezmo de Oscar | RF-40–43, RF-46, RN-20, RN-21, RN-28–30 | E3-02, revisión de Santiago y Oscar | Hecha (en revisión de Santiago y Oscar) |
-| E3-06 | Padres: la Coordinación crea y edita; la iglesia asocia y desasocia los suyos; listar padres de una iglesia | RF-40, RF-41, RN-28, RN-32 | E3-05 | Pendiente |
-| E3-07 | Horario semanal: crear, cambiar y dar de baja misas con su padre; rechaza el choque (409) e indica la iglesia, el día y la hora de la misa con la que choca | RF-42, RF-43, RF-45, RF-46, RN-26, CA-12–14 | E3-04, E3-06 | Pendiente |
+| E3-06 | Padres: la Coordinación crea y edita; la iglesia asocia y desasocia los suyos; listar padres de una iglesia | RF-40, RF-41, RN-28, RN-32 | E3-05 | Hecha (en revisión) |
+| E3-07 | Horario semanal: crear, cambiar y dar de baja misas con su padre; rechaza el choque (409) e indica la iglesia, el día y la hora de la misa con la que choca | RF-42, RF-43, RF-45, RF-46, RN-26, CA-12–14 | E3-04, E3-06 | Hecha (en revisión) |
 | E3-08 | Agenda semanal de un padre: sus misas de todas las iglesias, en la hora local de cada una | RF-47, CA-17, P-18 | E3-07 | Pendiente |
 | E3-09 | Misa celebrada a partir del horario y sustitución con motivo; la sustitución guarda quién cambió, programado, real, motivo y fecha, y no se edita | RF-48–51, RN-29, RN-30, CA-15, P-17 | E3-07 | Pendiente |
 | E3-10 | Consulta pública del horario de misas con su padre, en la hora local de la iglesia; función del `service` para la ficha de Nataly (E2-11) | RF-44, RF-52, RN-31, RN-33, CA-12, CA-16 | E3-07 | Pendiente |

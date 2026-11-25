@@ -14,7 +14,7 @@ import { crearEspaciosPublicRouter } from './modules/espacios/espacios.public.ro
 import { espaciosRouter } from './modules/espacios/espacios.routes';
 import { eventosRouter } from './modules/eventos/eventos.routes';
 import { miembrosRouter } from './modules/miembros/miembros.routes';
-import { misasRouter } from './modules/misas/misas.routes';
+import { misasRouter, padresRouter } from './modules/misas/misas.routes';
 import { ministeriosRouter } from './modules/ministerios/ministerios.routes';
 import { crearPublicRouter } from './modules/public/public.routes';
 import { reportesRouter } from './modules/reportes/reportes.routes';
@@ -52,6 +52,8 @@ export function crearModulos(): ModuloApi[] {
     // E2-10 (Nataly): criterios del índice, solo la Coordinación
     { prefijo: '/criterios-indice', router: criteriosRouter },
     { prefijo: '/catalogos', router: catalogosRouter },
+    // E3-06 (Genaro): padres de todo el país (Coordinación) y búsqueda para asociarlos
+    { prefijo: '/padres', router: padresRouter },
     // Ecclesia: datos internos de una iglesia; cada ruta pasa por alcanceIglesia
     { prefijo: '/iglesias/:iglesiaId', router: misasRouter },
     { prefijo: '/iglesias/:iglesiaId', router: diezmoRouter },

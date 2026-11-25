@@ -162,6 +162,13 @@ describe('matriz de permisos (specs.md §3)', () => {
     expect(quien('misas:registrar')).toEqual(['ADMIN_IGLESIA']);
   });
 
+  it('E3-06 y E3-07: la Coordinación administra padres; cada iglesia arma su horario de misas', () => {
+    const quien = (permiso: (typeof PERMISOS)[number]) =>
+      ROLES.filter((rol) => tienePermiso(rol, permiso));
+    expect(quien('padres:gestionar')).toEqual(['COORDINACION']);
+    expect(quien('misas:programar')).toEqual(['ADMIN_IGLESIA']);
+  });
+
   it('E2-05 y E2-06: la Coordinación carga el catálogo y cierra iglesias; el administrador edita la suya', () => {
     const quien = (permiso: (typeof PERMISOS)[number]) =>
       ROLES.filter((rol) => tienePermiso(rol, permiso));

@@ -76,6 +76,52 @@ components:
       description: json (vista previa), pdf o xlsx (archivo adjunto reporte-<tipo>-<fecha>)
       schema: { type: string, enum: [json, pdf, xlsx], default: json }
   schemas:
+    PadreEntrada:
+      type: object
+      required: [nombre]
+      additionalProperties: false
+      properties:
+        nombre: { type: string, maxLength: 120 }
+        titulo: { type: [string, 'null'], maxLength: 30, description: 'Pbro., Fr., Mons. (P-19)' }
+    IdiomaMisa:
+      type: string
+      enum:
+        [
+          ESPANOL,
+          NAHUATL,
+          MAYA,
+          TSELTAL,
+          TSOTSIL,
+          MIXTECO,
+          ZAPOTECO,
+          OTOMI,
+          TOTONACO,
+          MAZATECO,
+          CHOL,
+          OTRO,
+        ]
+    HorarioMisaEntrada:
+      type: object
+      required: [diaSemana, hora, tipo, padreId]
+      additionalProperties: false
+      properties:
+        diaSemana: { type: integer, minimum: 0, maximum: 6, description: '0 = domingo, 6 = sábado' }
+        hora:
+          {
+            type: string,
+            pattern: '^([01]\d|2[0-3]):[0-5]\d$',
+            description: 'HH:mm en la hora local de la iglesia',
+          }
+        tipo: { type: string, enum: [DIARIA, DOMINICAL, ESPECIAL] }
+        idioma: { $ref: '#/components/schemas/IdiomaMisa' }
+        duracionMin:
+          {
+            type: [integer, 'null'],
+            minimum: 1,
+            maximum: 720,
+            description: 'null = una hora (RN-27)',
+          }
+        padreId: { type: string, format: uuid }
     Rol:
       type: string
       enum: [COORDINACION, ADMIN_IGLESIA, PASTOR, SECRETARIO, TESORERO, COORDINADOR]
@@ -2461,26 +2507,167 @@ paths:
     parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
     get:
       tags: [Misas]
-      summary: Padres registrados (misas:leer)
+      summary: Padres activos asociados a la iglesia (misas:leer o padres:gestionar; E3-06, RF-40)
       responses:
-        '200': { description: OK }
+        '200': { description: 'Lista de id, nombre y titulo' }
         '403': { $ref: '#/components/responses/Prohibido' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
     post:
       tags: [Misas]
-      summary: Registrar un padre (misas:registrar)
+      summary: Registrar un padre nuevo y asociarlo a la iglesia (misas:programar o misas:registrar)
+      description: >
+        Supuesto P-19: si ya hay un padre activo con el mismo nombre (sin distinguir mayúsculas), responde 409
+        con su id en `details` para asociarlo con PUT en lugar de duplicarlo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PadreEntrada' }
+      responses:
+        '201': { description: Creado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/padres/{padreId}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { name: padreId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Misas]
+      summary: Asociar a la iglesia un padre que ya existe (misas:programar; RF-41, RN-28). Idempotente
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    delete:
+      tags: [Misas]
+      summary: Quitar al padre de la iglesia sin perder su historial (misas:programar)
+      description: 422 si todavía tiene misas en el horario de esta iglesia; primero se reasignan.
+      responses:
+        '204': { description: Quitado }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/horario-misas:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Misas]
+      summary: Horario semanal vigente por día y hora local (misas:leer o padres:gestionar; RF-42)
+      responses:
+        '200': { description: 'Lista de misas del horario con su padre' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+    post:
+      tags: [Misas]
+      summary: Programar una misa en el horario semanal (misas:programar; RF-42, RF-43, RF-46)
+      description: >
+        La hora es la local de la iglesia (RN-31). 409 si el padre ya tiene una misa que se empalma, aunque sea
+        en otra iglesia o en otra zona horaria (RF-45, RN-26; supuesto P-15); el mensaje dice el día, la hora y la
+        iglesia de la misa con la que choca. 422 si el padre no está asociado a la iglesia.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HorarioMisaEntrada' }
+      responses:
+        '201': { description: Creado }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/horario-misas/{horarioId}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { name: horarioId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [Misas]
+      summary: Cambiar una misa del horario; vuelve a revisar los choques del padre (misas:programar)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [nombre]
-              properties: { nombre: { type: string, maxLength: 120 } }
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                diaSemana: { type: integer, minimum: 0, maximum: 6 }
+                hora: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+                tipo: { type: string, enum: [DIARIA, DOMINICAL, ESPECIAL] }
+                idioma: { $ref: '#/components/schemas/IdiomaMisa' }
+                duracionMin: { type: [integer, 'null'], minimum: 1, maximum: 720 }
+                padreId: { type: string, format: uuid }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+    delete:
+      tags: [Misas]
+      summary: Quitar la misa del horario; baja lógica, las misas celebradas la conservan (misas:programar)
+      responses:
+        '204': { description: Quitada }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /padres:
+    get:
+      tags: [Misas]
+      summary: Padres de todo el país con sus iglesias (padres:gestionar o misas:programar; E3-06)
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 120 } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200': { description: 'Lista paginada con id, nombre, titulo, activo e iglesias' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+    post:
+      tags: [Misas]
+      summary: Registrar un padre sin asociarlo todavía (padres:gestionar, Coordinación; supuesto P-19)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PadreEntrada' }
       responses:
         '201': { description: Creado }
         '400': { $ref: '#/components/responses/Validacion' }
         '403': { $ref: '#/components/responses/Prohibido' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+
+  /padres/{padreId}:
+    parameters:
+      - { name: padreId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [Misas]
+      summary: Corregir los datos del padre o darlo de baja (padres:gestionar, Coordinación)
+      description: 422 al darlo de baja si todavía tiene misas en algún horario.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                nombre: { type: string, maxLength: 120 }
+                titulo: { type: [string, 'null'], maxLength: 30 }
+                activo: { type: boolean }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
 
   /iglesias/{iglesiaId}/misas-celebradas:
     parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
