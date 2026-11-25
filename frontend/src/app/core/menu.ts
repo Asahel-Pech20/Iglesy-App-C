@@ -1,5 +1,7 @@
 import {
   Banknote,
+  BookOpen,
+  CalendarClock,
   CalendarDays,
   ClipboardCheck,
   Church,
@@ -14,6 +16,7 @@ import {
   Settings,
   SlidersHorizontal,
   UserCog,
+  UserRound,
   Users,
 } from 'lucide-angular';
 import type { Permiso } from '@/app/tipos/comunes';
@@ -70,6 +73,15 @@ export const MENU: EntradaMenu[] = [
     permiso: 'criterios:leer',
   },
   { etiqueta: 'Espacios', ruta: '/espacios', icono: Landmark, permiso: 'espacios:leer' },
+  // E3-15 a E3-17 (Genaro): misas y padres de la iglesia, padres del país, servicios y pláticas
+  { etiqueta: 'Misas', ruta: '/misas', icono: CalendarClock, permiso: 'misas:leer' },
+  { etiqueta: 'Padres', ruta: '/padres', icono: UserRound, permiso: 'padres:gestionar' },
+  {
+    etiqueta: 'Servicios y pláticas',
+    ruta: '/servicios',
+    icono: BookOpen,
+    permiso: 'servicios:gestionar',
+  },
   {
     etiqueta: 'Diezmo',
     ruta: '/diezmo',

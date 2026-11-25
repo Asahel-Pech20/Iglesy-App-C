@@ -6,6 +6,16 @@ import type { QueryLista } from './comunes';
 export interface Padre {
   id: string;
   nombre: string;
+  /** «Pbro.», «Fr.»… (E3-05); no viene en la misa celebrada */
+  titulo?: string | null;
+}
+
+/** Si la misa la dio un padre distinto del programado (E3-09, RF-50, RF-51) */
+export interface SustitucionMisa {
+  padreProgramado: Padre;
+  motivo: string;
+  hechaPor: { id: string; nombre: string };
+  hechaEn: string;
 }
 
 /** Misa celebrada con su diezmo; la fecha y la hora ya vienen en la hora local de la iglesia (RN-31) */
@@ -17,7 +27,11 @@ export interface MisaCelebrada {
   fechaLocal: string;
   /** "HH:mm" en la zona horaria de la iglesia */
   horaLocal: string;
+  /** Quién la dio realmente (RN-29) */
   padre: Padre;
+  /** Misa del horario de la que sale (E3-09); null en las registradas con instante y padre */
+  horarioMisaId: string | null;
+  sustitucion: SustitucionMisa | null;
   diezmo: { monto: string; actualizadoEn: string } | null;
 }
 

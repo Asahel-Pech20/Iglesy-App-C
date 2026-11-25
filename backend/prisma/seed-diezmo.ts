@@ -61,6 +61,12 @@ async function llenarIglesia(iglesiaId: string, indice: number, capturadoPorId: 
       const misa = await prisma.misaCelebrada.create({
         data: { iglesiaId, inicio, padreId: padre.id },
       });
+      // E3-06 (Genaro): el padre que oficia en la iglesia queda asociado a ella (RF-41, RN-28)
+      await prisma.padreIglesia.upsert({
+        where: { padreId_iglesiaId: { padreId: padre.id, iglesiaId } },
+        create: { padreId: padre.id, iglesiaId },
+        update: {},
+      });
       await prisma.diezmo.create({
         data: {
           misaId: misa.id,

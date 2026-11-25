@@ -10,6 +10,7 @@ import { seedDonaciones } from './seed-b4';
 import { seedDiezmo } from './seed-diezmo';
 import { seedPatrimonio } from './seed-patrimonio';
 import { seedEspacios } from './seed-espacios';
+import { seedMisasYServicios } from './seed-misas-servicios';
 
 const NOMBRES: Record<(typeof ROLES)[number], string> = {
   COORDINACION: 'Coordinación Nacional de Templos',
@@ -59,12 +60,14 @@ async function main() {
   const patrimonio = await seedPatrimonio();
   // Ecclesia: tipos de espacio y 12 solicitudes (clave de demostración ABCDE-FGHJK)
   const espacios = await seedEspacios();
+  // E3-19 (Genaro): 15 padres, horario semanal sin choques, servicios y pláticas en cada iglesia
+  const misas = await seedMisasYServicios();
 
   // B3: eventos (con asistencia), anuncios y un evento cancelado para la demo
   const b3 = await seedB3({ ministerios, iglesiaId: iglesia.id });
 
   console.warn(
-    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos.`,
+    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; misas y servicios en ${misas.iglesias} iglesias: ${misas.padres} padres, ${misas.misas} misas del horario, ${misas.servicios} servicios y ${misas.platicas} pláticas nuevos; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos.`,
   );
 }
 

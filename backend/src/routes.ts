@@ -14,7 +14,8 @@ import { crearEspaciosPublicRouter } from './modules/espacios/espacios.public.ro
 import { espaciosRouter } from './modules/espacios/espacios.routes';
 import { eventosRouter } from './modules/eventos/eventos.routes';
 import { miembrosRouter } from './modules/miembros/miembros.routes';
-import { misasRouter } from './modules/misas/misas.routes';
+import { misasRouter, padresRouter } from './modules/misas/misas.routes';
+import { serviciosPublicoRouter, serviciosRouter } from './modules/servicios/servicios.routes';
 import { ministeriosRouter } from './modules/ministerios/ministerios.routes';
 import { crearPublicRouter } from './modules/public/public.routes';
 import { reportesRouter } from './modules/reportes/reportes.routes';
@@ -52,8 +53,13 @@ export function crearModulos(): ModuloApi[] {
     // E2-10 (Nataly): criterios del índice, solo la Coordinación
     { prefijo: '/criterios-indice', router: criteriosRouter },
     { prefijo: '/catalogos', router: catalogosRouter },
+    // E3-06 (Genaro): padres de todo el país (Coordinación) y búsqueda para asociarlos
+    { prefijo: '/padres', router: padresRouter },
     // Ecclesia: datos internos de una iglesia; cada ruta pasa por alcanceIglesia
     { prefijo: '/iglesias/:iglesiaId', router: misasRouter },
+    // E3-11 a E3-14 (Genaro): servicios y pláticas; las pláticas por tipo también sin sesión
+    { prefijo: '/iglesias/:iglesiaId', router: serviciosRouter },
+    { prefijo: '/public', router: serviciosPublicoRouter },
     { prefijo: '/iglesias/:iglesiaId', router: diezmoRouter },
     // E2-08 (Nataly): objetos del patrimonio e índice de la iglesia
     { prefijo: '/iglesias/:iglesiaId', router: objetosRouter },

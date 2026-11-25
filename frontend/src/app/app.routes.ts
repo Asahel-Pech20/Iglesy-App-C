@@ -273,6 +273,34 @@ export const routes: Routes = [
         data: { permiso: 'espacios:leer' },
         title: 'Espacios',
       },
+      // E3-15 y E3-16 (Genaro): horario de misas, padres, misas celebradas y agenda del padre
+      {
+        path: 'misas',
+        loadComponent: () => import('./features/misas/misas.page').then((m) => m.MisasPage),
+        data: { permiso: 'misas:leer' },
+        title: 'Misas',
+      },
+      {
+        path: 'padres',
+        loadComponent: () =>
+          import('./features/misas/padres-nacional.page').then((m) => m.PadresNacionalPage),
+        data: { permiso: 'padres:gestionar' },
+        title: 'Padres',
+      },
+      {
+        path: 'padres/:padreId/agenda',
+        loadComponent: () => import('./features/misas/agenda.page').then((m) => m.AgendaPadrePage),
+        data: { permiso: ['misas:leer', 'padres:gestionar'] },
+        title: 'Agenda del padre',
+      },
+      // E3-17 (Genaro): servicios y pláticas de la iglesia
+      {
+        path: 'servicios',
+        loadComponent: () =>
+          import('./features/servicios/servicios.page').then((m) => m.ServiciosPage),
+        data: { permiso: 'servicios:gestionar' },
+        title: 'Servicios y pláticas',
+      },
       // Ecclesia: diezmo de las misas (solo personal de iglesia)
       {
         path: 'diezmo',
