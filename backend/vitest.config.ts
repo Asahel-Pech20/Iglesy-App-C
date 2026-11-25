@@ -24,5 +24,18 @@ export default defineConfig({
       UPLOAD_DIR: 'uploads-test',
       BCRYPT_COST: '4',
     },
+    // RNF-18: `pnpm test:cobertura`. El curso pide 70 % en dominio y servicios; si baja, falla.
+    // Solo corre con --coverage, así que `pnpm test` no se hace más lento.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: ['src/generated/**', 'src/test/**', 'src/**/*.test.ts'],
+      reporter: ['text-summary', 'html', 'json-summary'],
+      reportsDirectory: 'coverage',
+      thresholds: {
+        'src/**/dominio/**': { lines: 70, statements: 70, branches: 70, functions: 70 },
+        'src/**/*.service.ts': { lines: 70, statements: 70, branches: 70, functions: 70 },
+      },
+    },
   },
 });
