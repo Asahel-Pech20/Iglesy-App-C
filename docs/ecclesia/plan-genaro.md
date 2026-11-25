@@ -40,7 +40,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
 | E3-01 | Llevar P-10–P-19 (con los supuestos de arriba) a la sesión con el docente y anotar las respuestas en la sección 8 | Sección 8 | Sesión con el docente | Pendiente |
-| E3-02 | Definir en `docs/modelo-datos.md`: `PadreIglesia`, `HorarioMisa`, `SustitucionMisa`, ampliar `Padre` y `MisaCelebrada`; `Servicio`, `HorarioServicio` y `Platica` | RN-20–33 | Santiago integra el modelo | Pendiente |
+| E3-02 | Definir en `docs/modelo-datos.md`: `PadreIglesia`, `HorarioMisa`, `SustitucionMisa`, ampliar `Padre` y `MisaCelebrada`; `Servicio`, `HorarioServicio` y `Platica` | RN-20–33 | Santiago integra el modelo | En curso: misas hecho en E3-05; faltan servicios y pláticas |
 | E3-03 | Diseñar las rutas (`docs/ecclesia/api-misas-servicios.md`) y agregarlas a `openapi.yaml` y a Postman | RF-30–52 | E3-02 | Pendiente |
 
 ### Fase 2 · Misas y padres (prioridad)
@@ -48,7 +48,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
 | E3-04 | Dominio puro `misas/dominio/solapes.ts`: intervalo de una misa (hora local → UTC con `instanteLocal` de E1-04), duración por defecto de 60 min y detección de choques; el «ahora» llega como parámetro | RN-26, RN-27, RN-31, P-15 | E1-04 (hecha) | Hecha (en revisión) |
-| E3-05 | Migración: `Padre` + título; `PadreIglesia` (padre ↔ iglesia); `HorarioMisa` (día, hora local, tipo, idioma, duración, padre); `MisaCelebrada` + `horarioMisaId` y `padreProgramadoId`; `SustitucionMisa` inmutable. Sin romper el diezmo de Oscar | RF-40–43, RF-46, RN-20, RN-21, RN-28–30 | E3-02, revisión de Santiago y Oscar | Pendiente |
+| E3-05 | Migración: `Padre` + título; `PadreIglesia` (padre ↔ iglesia); `HorarioMisa` (día, hora local, tipo, idioma, duración, padre); `MisaCelebrada` + `horarioMisaId` y `padreProgramadoId`; `SustitucionMisa` inmutable. Sin romper el diezmo de Oscar | RF-40–43, RF-46, RN-20, RN-21, RN-28–30 | E3-02, revisión de Santiago y Oscar | Hecha (en revisión de Santiago y Oscar) |
 | E3-06 | Padres: la Coordinación crea y edita; la iglesia asocia y desasocia los suyos; listar padres de una iglesia | RF-40, RF-41, RN-28, RN-32 | E3-05 | Pendiente |
 | E3-07 | Horario semanal: crear, cambiar y dar de baja misas con su padre; rechaza el choque (409) e indica la iglesia, el día y la hora de la misa con la que choca | RF-42, RF-43, RF-45, RF-46, RN-26, CA-12–14 | E3-04, E3-06 | Pendiente |
 | E3-08 | Agenda semanal de un padre: sus misas de todas las iglesias, en la hora local de cada una | RF-47, CA-17, P-18 | E3-07 | Pendiente |

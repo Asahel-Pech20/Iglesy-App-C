@@ -23,7 +23,14 @@ erDiagram
   Localidad |o--o{ Iglesia : "ubica"
   Iglesia |o--o{ Usuario : "personal (null = Coordinación)"
   Iglesia ||--o{ MisaCelebrada : "celebra"
-  Padre ||--o{ MisaCelebrada : "oficia"
+  Padre ||--o{ MisaCelebrada : "oficia (real)"
+  Padre ||--o{ PadreIglesia : "celebra en"
+  Iglesia ||--o{ PadreIglesia : "tiene"
+  Iglesia ||--o{ HorarioMisa : "horario semanal"
+  Padre ||--o{ HorarioMisa : "programado"
+  HorarioMisa |o--o{ MisaCelebrada : "se celebra"
+  MisaCelebrada ||--o| SustitucionMisa : "si cambió el padre"
+  Usuario ||--o{ SustitucionMisa : "hace el cambio"
   MisaCelebrada ||--o| Diezmo : "una captura"
   Iglesia ||--o{ Diezmo : "recibe"
   Diezmo ||--o{ DiezmoCorreccion : "historial"
@@ -77,6 +84,23 @@ erDiagram
   Padre {
     uuid id PK
     string nombre
+    string titulo
+    bool activo
+  }
+  PadreIglesia {
+    uuid padreId PK,FK
+    uuid iglesiaId PK,FK
+    bool activo
+  }
+  HorarioMisa {
+    uuid id PK
+    uuid iglesiaId FK
+    int diaSemana
+    string hora
+    TipoMisa tipo
+    IdiomaMisa idioma
+    int duracionMin
+    uuid padreId FK
     bool activo
   }
   MisaCelebrada {
@@ -84,6 +108,19 @@ erDiagram
     uuid iglesiaId FK
     datetime inicio
     uuid padreId FK
+    uuid horarioMisaId FK
+    date fecha
+    int duracionMin
+    uuid registradoPorId FK
+  }
+  SustitucionMisa {
+    uuid id PK
+    uuid misaCelebradaId FK,UK
+    uuid padreProgramadoId FK
+    uuid padreRealId FK
+    string motivo
+    uuid hechaPorId FK
+    datetime hechaEn
   }
   Diezmo {
     uuid id PK
@@ -180,8 +217,11 @@ erDiagram
 
 | Entidad | Dueño | Puntos clave | Requerimientos |
 |---|---|---|---|
-| `Padre` | Oscar (mínimo) → Genaro | Versión mínima que necesita el diezmo; Genaro la amplía (varias iglesias, agenda) | RF-36 |
-| `MisaCelebrada` | Oscar (mínimo) → Genaro | Un instante `inicio` (UTC) en una iglesia, con el padre que ofició | RN-29 |
+| `Padre` | Genaro (E3-05; mínimo de Oscar) | Nombre y `titulo` (Pbro., Fr., Mons.…); el público ve solo título y nombre (supuesto P-19). `activo` (no se borra) | RF-40, P-19 |
+| `PadreIglesia` | Genaro (E3-05) | Un padre en varias iglesias (`@@id` padre + iglesia); `activo = false` lo desasocia sin perder historial | RF-41, RN-28 |
+| `HorarioMisa` | Genaro (E3-05) | Horario semanal: `diaSemana` 0 (domingo)–6, `hora` «HH:mm» **local de la iglesia**, `tipo` (`DIARIA`, `DOMINICAL`, `ESPECIAL`), `idioma` (español o lengua indígena), `duracionMin` (nulo = 60) y el padre programado. El choque de un padre lo valida el service con `misas/dominio/solapes.ts` (mismo momento real, aun entre zonas horarias). Baja lógica con `activo` | RF-42, RF-43, RF-45, RF-46, RN-20, RN-21, RN-26, RN-27, RN-31 |
+| `MisaCelebrada` | Genaro (E3-05; mínimo de Oscar) | Un instante `inicio` (UTC) en una iglesia, con el padre que **realmente** ofició. Campos opcionales para no romper el diezmo: `horarioMisaId` (de qué misa del horario sale), `fecha` local (**una** celebración por misa del horario y día), `duracionMin` y `registradoPorId` | RF-48, RN-29, P-17 |
+| `SustitucionMisa` | Genaro (E3-05) | Una por misa celebrada: padre programado, padre real (el de la misa), motivo, quién hizo el cambio y cuándo. **Solo se inserta** | RF-49–51, RN-30, RNF-12 |
 | `Diezmo` | Oscar | **Una** captura por misa (`misaId` único); monto `Decimal(12,2)` no negativo; misma iglesia que su misa | RF-60–63, RN-40–42 |
 | `DiezmoCorreccion` | Oscar | Historial de **solo inserción**: monto anterior, nuevo, quién y cuándo | RN-43, RNF-12 |
 
@@ -205,6 +245,14 @@ erDiagram
 | `diezmos_misaId_key` | Único | `diezmos` | Dos capturas de la misma misa | `ecclesia_misas_y_diezmo` |
 | `diezmo_correcciones_inmutable` | Disparador | `diezmo_correcciones` | Editar o borrar el historial | `ecclesia_misas_y_diezmo` |
 | `diezmos_iglesia_de_la_misa` | Disparador | `diezmos` | Un diezmo en otra iglesia que su misa | `ecclesia_misas_y_diezmo` |
+| `horarios_misa_dia_valido` · `_hora_valida` · `_duracion_valida` | `CHECK` | `horarios_misa` | Día fuera de 0–6, hora que no es «HH:mm» y duración fuera de 1–720 min | `e3_05_padres_horario_misas` |
+| `misas_celebradas_duracion_valida` · `_fecha_con_horario` | `CHECK` | `misas_celebradas` | Duración fuera de 1–720 min; una misa del horario sin su fecha local | `e3_05_padres_horario_misas` |
+| `misas_celebradas_horarioMisaId_fecha_key` | Único | `misas_celebradas` | Dos celebraciones de la misma misa del horario el mismo día (P-17) | `e3_05_padres_horario_misas` |
+| `misas_celebradas_iglesia_del_horario` | Disparador | `misas_celebradas` | Una misa celebrada en otra iglesia que su misa del horario | `e3_05_padres_horario_misas` |
+| `sustituciones_misa_padres_distintos` · `_motivo_no_vacio` | `CHECK` | `sustituciones_misa` | Sustituir a un padre por él mismo; un motivo vacío | `e3_05_padres_horario_misas` |
+| `sustituciones_misa_padre_real` | Disparador | `sustituciones_misa` | Un padre real distinto del que ofició la misa | `e3_05_padres_horario_misas` |
+| `sustituciones_misa_inmutable` | Disparador | `sustituciones_misa` | Editar o borrar una sustitución | `e3_05_padres_horario_misas` |
+| `horarios_misa_*_fkey` · `misas_celebradas_horarioMisaId_fkey` | FK `RESTRICT` | `horarios_misa`, `misas_celebradas` | Borrar un horario con misas celebradas, o un padre o iglesia con horario | `e3_05_padres_horario_misas` |
 | `cotizaciones_monto_positivo` | `CHECK` | `cotizaciones` | Cotizaciones de monto cero o negativo | `e4_07_espacios` |
 | `cotizaciones_vence_despues_de_emitirse` | `CHECK` | `cotizaciones` | Un vencimiento anterior a la emisión | `e4_07_espacios` |
 | `cotizaciones_una_vigente_por_solicitud` | Único parcial | `cotizaciones` | Dos cotizaciones sin respuesta en la misma solicitud (si P-26 permite volver a cotizar, se cierra la anterior) | `e4_07_espacios` |
@@ -232,7 +280,6 @@ Además, en la API: una iglesia cerrada solo acepta lecturas (`alcanceIglesia`, 
 | Módulo | Entidades | Dueño | Lo que ya está definido | Fuente |
 |---|---|---|---|---|
 | `servicios` | `Servicio`, `Platica` y sus horarios | Genaro | Costo (gratuito, donativo o monto `Decimal(12,2)`), requisitos, duración, cita; sesiones, cupo, lugar y quién imparte | `specs.md` §12.4 · campos por definir en el plan de Genaro |
-| `misas` | `PadreIglesia`, `HorarioMisa`; ampliar `Padre` y `MisaCelebrada` | Genaro | Tipo e idioma; un padre sin choques de horario; hora por defecto; sustitución con quién ofició, quién cambió y por qué (RNF-12) | `specs.md` §12.4 · por definir |
 
 ## Integración con AppIglesia (E1-06 y E1-06b, hechas)
 

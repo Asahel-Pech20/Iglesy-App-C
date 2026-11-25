@@ -109,6 +109,9 @@ model Usuario {
   iglesia            Iglesia?           @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
   diezmosCapturados  Diezmo[]           @relation("DiezmoCapturador")
   correccionesDiezmo DiezmoCorreccion[] @relation("DiezmoCorrector")
+  // E3-05 (Genaro): quién registró cada misa celebrada y cada sustitución (RF-50)
+  misasRegistradas   MisaCelebrada[]    @relation("MisaRegistrador")
+  sustitucionesMisa  SustitucionMisa[]  @relation("SustitucionAutor")
   // E2-10 (Nataly): quién guardó cada versión de los criterios del índice
   criteriosIndice    CriteriosIndice[]
   activo             Boolean            @default(true)
@@ -406,6 +409,9 @@ model Iglesia {
 
   usuarios           Usuario[]
   misas              MisaCelebrada[]
+  // E3-05 (Genaro): padres asociados y horario semanal de misas
+  padres             PadreIglesia[]
+  horariosMisa       HorarioMisa[]
   diezmos            Diezmo[]
   tiposEspacio       TipoEspacio[]
   solicitudesEspacio SolicitudEspacio[]
@@ -463,35 +469,142 @@ model Localidad {
 
 // ───────────── Ecclesia · Misas y diezmo ─────────────
 
-// Padre que oficia misas. Versión mínima que necesita el diezmo; el módulo de misas la amplía
-// (asociación a varias iglesias, agenda, horario semanal).
+// Padre que oficia misas (RF-40). E3-05: título y asociación a varias iglesias (RF-41, RN-28).
+// Supuesto P-19: la Coordinación edita sus datos; cada iglesia solo lo asocia o desasocia.
 model Padre {
   id        String   @id @default(uuid())
   nombre    String
+  // «Pbro.», «Fr.», «Mons.»… El público ve solo título y nombre (P-19)
+  titulo    String?
   activo    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  misas MisaCelebrada[]
+  misas                   MisaCelebrada[]   @relation("MisaPadreReal")
+  iglesias                PadreIglesia[]
+  horarios                HorarioMisa[]
+  sustitucionesProgramado SustitucionMisa[] @relation("SustitucionProgramado")
+  sustitucionesReal       SustitucionMisa[] @relation("SustitucionReal")
 
   @@map("padres")
 }
 
-// Hecho: un día, una hora y el padre que realmente ofició la misa (RN-29). Versión mínima.
-model MisaCelebrada {
-  id        String   @id @default(uuid())
-  iglesiaId String
-  iglesia   Iglesia  @relation(fields: [iglesiaId], references: [id])
-  // Instante de inicio (UTC); la hora local es la de la zona horaria de la iglesia
-  inicio    DateTime
+// Un padre celebra en varias iglesias (RF-41, RN-28). Baja lógica: `activo = false` lo desasocia
+// sin perder el historial de sus misas.
+model PadreIglesia {
   padreId   String
-  padre     Padre    @relation(fields: [padreId], references: [id])
+  padre     Padre    @relation(fields: [padreId], references: [id], onDelete: Restrict)
+  iglesiaId String
+  iglesia   Iglesia  @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+  activo    Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  diezmo Diezmo?
+  @@id([padreId, iglesiaId])
+  @@index([iglesiaId, activo])
+  @@map("padres_iglesias")
+}
 
+// RN-20: diaria, dominical o especial (P-16: una especial también puede ir en el horario)
+enum TipoMisa {
+  DIARIA
+  DOMINICAL
+  ESPECIAL
+}
+
+// RN-21, supuesto P-19: español y las lenguas indígenas más habladas; «OTRO» para las demás
+enum IdiomaMisa {
+  ESPANOL
+  NAHUATL
+  MAYA
+  TSELTAL
+  TSOTSIL
+  MIXTECO
+  ZAPOTECO
+  OTOMI
+  TOTONACO
+  MAZATECO
+  CHOL
+  OTRO
+}
+
+// Horario semanal de misas de una iglesia (RF-42, RF-43, RF-46). Lo que normalmente pasa (RN-29).
+// La hora es la local de la iglesia (RN-31); el choque de un padre lo valida el service (RN-26,
+// misas/dominio/solapes.ts). Baja lógica: las misas celebradas siguen apuntando a su horario.
+model HorarioMisa {
+  id          String     @id @default(uuid())
+  iglesiaId   String
+  iglesia     Iglesia    @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+  // 0 = domingo … 6 = sábado, como HorarioReunion
+  diaSemana   Int
+  // «HH:mm» en la hora local de la iglesia
+  hora        String
+  tipo        TipoMisa
+  idioma      IdiomaMisa @default(ESPANOL)
+  // Nulo = una hora (RN-27)
+  duracionMin Int?
+  padreId     String
+  padre       Padre      @relation(fields: [padreId], references: [id], onDelete: Restrict)
+  activo      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  celebraciones MisaCelebrada[]
+
+  @@index([iglesiaId, activo, diaSemana])
+  @@index([padreId, activo])
+  @@map("horarios_misa")
+}
+
+// Hecho: un día, una hora y el padre que realmente ofició la misa (RN-29).
+// E3-05 agrega campos opcionales para no romper las misas que ya registra el diezmo (E4).
+model MisaCelebrada {
+  id              String       @id @default(uuid())
+  iglesiaId       String
+  iglesia         Iglesia      @relation(fields: [iglesiaId], references: [id])
+  // Instante de inicio (UTC); la hora local es la de la zona horaria de la iglesia
+  inicio          DateTime
+  // Padre que la ofició realmente (RN-29); si hubo sustitución, el programado está en SustitucionMisa
+  padreId         String
+  padre           Padre        @relation("MisaPadreReal", fields: [padreId], references: [id])
+  // Misa del horario de la que sale (RF-48). Nulo en una especial de una sola fecha (P-16)
+  horarioMisaId   String?
+  horarioMisa     HorarioMisa? @relation(fields: [horarioMisaId], references: [id], onDelete: Restrict)
+  // Fecha local de la iglesia: una celebración por misa del horario y día (P-17)
+  fecha           DateTime?    @db.Date
+  // Nulo = una hora (RN-27)
+  duracionMin     Int?
+  registradoPorId String?
+  registradoPor   Usuario?     @relation("MisaRegistrador", fields: [registradoPorId], references: [id], onDelete: Restrict)
+  createdAt       DateTime     @default(now())
+
+  diezmo      Diezmo?
+  sustitucion SustitucionMisa?
+
+  @@unique([horarioMisaId, fecha])
   @@index([iglesiaId, inicio])
+  @@index([padreId, inicio])
   @@map("misas_celebradas")
+}
+
+// Sustitución de padre en una misa celebrada (RF-49, RF-50, RN-30). Solo se inserta: un disparador
+// de la BD impide editarla o borrarla, como el historial del diezmo (RNF-12).
+model SustitucionMisa {
+  id                String        @id @default(uuid())
+  misaCelebradaId   String        @unique
+  misaCelebrada     MisaCelebrada @relation(fields: [misaCelebradaId], references: [id], onDelete: Restrict)
+  padreProgramadoId String
+  padreProgramado   Padre         @relation("SustitucionProgramado", fields: [padreProgramadoId], references: [id], onDelete: Restrict)
+  // Siempre es el padre de la misa celebrada (lo comprueba un disparador)
+  padreRealId       String
+  padreReal         Padre         @relation("SustitucionReal", fields: [padreRealId], references: [id], onDelete: Restrict)
+  motivo            String
+  hechaPorId        String
+  hechaPor          Usuario       @relation("SustitucionAutor", fields: [hechaPorId], references: [id], onDelete: Restrict)
+  hechaEn           DateTime      @default(now())
+
+  @@index([padreProgramadoId])
+  @@map("sustituciones_misa")
 }
 
 // Diezmo recogido en una misa. Una sola captura por misa (RN-41); se corrige, no se borra.
