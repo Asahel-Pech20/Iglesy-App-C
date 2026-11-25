@@ -4,6 +4,7 @@ import path from 'node:path';
 import { env } from '../../config/env';
 import type { ConfiguracionIglesia } from '../../generated/prisma/client';
 import { AppError } from '../../lib/appError';
+import { conIglesia, iglesiaDelContexto } from '../../lib/contextoIglesia';
 import { prisma } from '../../lib/prisma';
 import type { CrearHorario, DatosConfiguracion, EditarHorario } from './configuracion.schemas';
 
@@ -100,14 +101,37 @@ export async function guardarLogo(archivo: { mimetype: string; buffer: Buffer } 
   return aRespuesta(config);
 }
 
+// ───────── Iglesia de las páginas públicas heredadas (E1-06; E1-06b las hace por iglesia) ─────────
+
+/**
+ * La iglesia inicial: la más antigua, la misma a la que la migración pasó los datos de AppIglesia
+ * (supuesto S-03). La cartelera y los horarios públicos la usan hasta E1-06b.
+ */
+export async function iglesiaInicial(): Promise<string | null> {
+  const iglesia = await prisma.iglesia.findFirst({
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    select: { id: true },
+  });
+  return iglesia?.id ?? null;
+}
+
+/** Ejecuta `fn` con la gestión interna de la iglesia inicial; sin iglesias, devuelve `vacio`. */
+export async function enIglesiaInicial<T>(fn: () => Promise<T>, vacio: T): Promise<T> {
+  const iglesiaId = await iglesiaInicial();
+  return iglesiaId ? conIglesia(iglesiaId, fn) : vacio;
+}
+
 // ───────── Horarios ─────────
 
 export function listarHorarios() {
   return prisma.horarioReunion.findMany({
     orderBy: [{ diaSemana: 'asc' }, { horaInicio: 'asc' }],
-    omit: { createdAt: true, updatedAt: true },
+    omit: OMITIR_HORARIO,
   });
 }
+
+// E1-06: iglesiaId es interno; el contrato de horarios no cambia
+const OMITIR_HORARIO = { createdAt: true, updatedAt: true, iglesiaId: true } as const;
 
 function validarHoras(h: { horaInicio: string; horaFin: string | null }) {
   if (h.horaFin && h.horaFin <= h.horaInicio) {
@@ -119,7 +143,10 @@ function validarHoras(h: { horaInicio: string; horaFin: string | null }) {
 }
 
 export function crearHorario(datos: CrearHorario) {
-  return prisma.horarioReunion.create({ data: datos, omit: { createdAt: true, updatedAt: true } });
+  return prisma.horarioReunion.create({
+    data: { ...datos, iglesiaId: iglesiaDelContexto('HorarioReunion') },
+    omit: OMITIR_HORARIO,
+  });
 }
 
 async function horarioOFallar(id: string) {
@@ -134,7 +161,7 @@ export async function editarHorario(id: string, datos: EditarHorario) {
   return prisma.horarioReunion.update({
     where: { id },
     data: datos,
-    omit: { createdAt: true, updatedAt: true },
+    omit: OMITIR_HORARIO,
   });
 }
 

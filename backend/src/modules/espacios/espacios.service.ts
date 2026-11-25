@@ -372,6 +372,7 @@ export async function tiposPublicos(iglesiaId: string) {
 }
 
 async function siguienteFolio(anio: number): Promise<string> {
+  // sql-sin-iglesia: secuencia nacional de folios, no lee filas de una iglesia
   const filas = await prisma.$queryRaw<
     { n: bigint }[]
   >`SELECT nextval('solicitudes_espacio_folio_seq') AS n`;

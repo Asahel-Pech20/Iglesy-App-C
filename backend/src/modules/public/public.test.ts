@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
-import { crearUsuario } from '../../test/helpers';
+import { iglesiaDePrueba, prisma } from '../../test/bd';
+import { crearUsuario, deOtraIglesia } from '../../test/helpers';
 
 let app: ReturnType<typeof crearApp>;
 beforeEach(() => {
@@ -19,15 +19,33 @@ async function prepararDatos() {
   });
   await prisma.horarioReunion.createMany({
     data: [
-      { nombre: 'Culto dominical', diaSemana: 0, horaInicio: '10:00', lugar: 'Templo' },
-      { nombre: 'Horario retirado', diaSemana: 3, horaInicio: '19:00', activo: false },
+      {
+        iglesiaId: await iglesiaDePrueba(),
+        nombre: 'Culto dominical',
+        diaSemana: 0,
+        horaInicio: '10:00',
+        lugar: 'Templo',
+      },
+      {
+        iglesiaId: await iglesiaDePrueba(),
+        nombre: 'Horario retirado',
+        diaSemana: 3,
+        horaInicio: '19:00',
+        activo: false,
+      },
     ],
   });
   const miembro = await prisma.miembro.create({
-    data: { nombre: 'Responsable', apellidos: 'Oculto', fechaIngreso: new Date('2025-01-01') },
+    data: {
+      iglesiaId: await iglesiaDePrueba(),
+      nombre: 'Responsable',
+      apellidos: 'Oculto',
+      fechaIngreso: new Date('2025-01-01'),
+    },
   });
   const evento = await prisma.evento.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: 'Concierto de alabanza',
       tipo: 'RELIGIOSO',
       categoria: 'ACTIVIDAD',
@@ -39,6 +57,7 @@ async function prepararDatos() {
   await prisma.eventoResponsable.create({ data: { eventoId: evento.id, miembroId: miembro.id } });
   await prisma.evento.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: 'Cancelado',
       tipo: 'RELIGIOSO',
       categoria: 'CULTO',
@@ -50,8 +69,20 @@ async function prepararDatos() {
   });
   await prisma.anuncio.createMany({
     data: [
-      { titulo: 'Vigente', contenido: 'Hola', fechaPublicacion: enDias(-1), autorId: autor.id },
-      { titulo: 'Programado', contenido: 'Pronto', fechaPublicacion: enDias(1), autorId: autor.id },
+      {
+        iglesiaId: await iglesiaDePrueba(),
+        titulo: 'Vigente',
+        contenido: 'Hola',
+        fechaPublicacion: enDias(-1),
+        autorId: autor.id,
+      },
+      {
+        iglesiaId: await iglesiaDePrueba(),
+        titulo: 'Programado',
+        contenido: 'Pronto',
+        fechaPublicacion: enDias(1),
+        autorId: autor.id,
+      },
     ],
   });
 }
@@ -122,5 +153,46 @@ describe('GET /public/cartelera (B3-15)', () => {
     const res = await request(app).get('/api/v1/public/cartelera');
     expect(res.status).toBe(429);
     expect(res.body.error.code).toBe('RATE_LIMITED');
+  });
+});
+
+describe('cartelera e iglesia inicial (E1-06, hasta E1-06b)', () => {
+  it('muestra la gestión interna de la iglesia INICIAL (la más antigua), no la de otras', async () => {
+    const inicial = await iglesiaDePrueba();
+    const otra = await deOtraIglesia();
+    const autor = await crearUsuario('SECRETARIO');
+    for (const [iglesiaId, titulo] of [
+      [inicial, 'Aviso de la inicial'],
+      [otra.iglesiaId, 'Aviso de otra'],
+    ] as const) {
+      await prisma.anuncio.create({
+        data: {
+          titulo,
+          contenido: 'x',
+          fechaPublicacion: enDias(-1),
+          autorId: autor.id,
+          iglesiaId,
+        },
+      });
+      await prisma.horarioReunion.create({
+        data: { nombre: titulo, diaSemana: 0, horaInicio: '10:00', iglesiaId },
+      });
+    }
+    const res = await request(app).get('/api/v1/public/cartelera');
+    expect(res.status).toBe(200);
+    expect(res.body.data.anuncios.map((a: { titulo: string }) => a.titulo)).toEqual([
+      'Aviso de la inicial',
+    ]);
+    expect(res.body.data.horarios.map((h: { nombre: string }) => h.nombre)).toEqual([
+      'Aviso de la inicial',
+    ]);
+    // El evento de la otra iglesia (fixture) tampoco aparece
+    expect(res.body.data.eventosProximos).toEqual([]);
+  });
+
+  it('sin iglesias responde con listas vacías', async () => {
+    const res = await request(app).get('/api/v1/public/cartelera');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ horarios: [], anuncios: [], eventosProximos: [] });
   });
 });

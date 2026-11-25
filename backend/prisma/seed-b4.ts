@@ -49,7 +49,7 @@ interface Aportacion {
 const ESPECIALES = ['Remodelación del templo', 'Campamento de jóvenes', 'Ayuda a misiones'];
 
 /** Aportaciones de los últimos 12 meses para los miembros activos. Devuelve cuántas se guardaron. */
-export async function seedDonaciones(miembroIds: string[]) {
+export async function seedDonaciones(miembroIds: string[], iglesiaId: string) {
   const tesorero = await prisma.usuario.findUnique({
     where: { email: 'tesorero@iglesia.local' },
     select: { id: true },
@@ -141,7 +141,11 @@ export async function seedDonaciones(miembroIds: string[]) {
       anuladaEn: anulada ? fechaDe(a.fecha) : null,
       registradoPorId: tesorero.id,
     };
-    await prisma.donacion.upsert({ where: { id }, create: { id, ...datos }, update: datos });
+    await prisma.donacion.upsert({
+      where: { id },
+      create: { id, iglesiaId, ...datos },
+      update: datos,
+    });
   }
   return vigentes.length;
 }

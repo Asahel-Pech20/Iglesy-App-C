@@ -2,7 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import { seedB2 } from '../../../prisma/seed-b2';
 import { seedDonaciones } from '../../../prisma/seed-b4';
-import { prisma } from '../../lib/prisma';
+import { sinAlcance } from '../../lib/contextoIglesia';
+import { iglesiaDePrueba, prisma } from '../../test/bd';
 import { crearUsuario } from '../../test/helpers';
 import { hoyIglesia } from '../miembros/miembros.service';
 
@@ -10,9 +11,10 @@ describe('seed de aportaciones (B4)', () => {
   it('crea 12 meses de aportaciones, anónimas e identificadas, sin repetir al volver a correrlo', async () => {
     await crearUsuario('TESORERO', { email: 'tesorero@iglesia.local' });
     await prisma.configuracionIglesia.create({ data: { id: 1, nombre: 'Iglesia de prueba' } });
-    const { miembroIds } = await seedB2();
+    const iglesiaId = await iglesiaDePrueba();
+    const { miembroIds } = await sinAlcance('seed', () => seedB2(iglesiaId));
 
-    const total = await seedDonaciones(miembroIds);
+    const total = await sinAlcance('seed', () => seedDonaciones(miembroIds, iglesiaId));
     expect(total).toBeGreaterThan(100);
     expect(await prisma.donacion.count()).toBe(total);
     expect(
@@ -27,7 +29,7 @@ describe('seed de aportaciones (B4)', () => {
     expect(ultima!.fecha.toISOString().slice(0, 10) <= (await hoyIglesia())).toBe(true);
 
     const antes = await prisma.donacion.findMany({ orderBy: { id: 'asc' } });
-    expect(await seedDonaciones(miembroIds)).toBe(total);
+    expect(await sinAlcance('seed', () => seedDonaciones(miembroIds, iglesiaId))).toBe(total);
     const despues = await prisma.donacion.findMany({ orderBy: { id: 'asc' } });
     expect(despues.map(({ updatedAt: _u, ...d }) => d)).toEqual(
       antes.map(({ updatedAt: _u, ...d }) => d),

@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { enIglesiaDePrueba, iglesiaDePrueba, prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 import * as anunciosService from './anuncios.service';
 
 let app: ReturnType<typeof crearApp>;
@@ -27,9 +27,10 @@ const ID_INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 const DIA = 86_400_000;
 const enDias = (dias: number) => new Date(Date.now() + dias * DIA);
 
-function crearEvento(estado: 'PROGRAMADO' | 'CANCELADO' = 'PROGRAMADO') {
+async function crearEvento(estado: 'PROGRAMADO' | 'CANCELADO' = 'PROGRAMADO') {
   return prisma.evento.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: 'Concierto',
       tipo: 'RELIGIOSO',
       categoria: 'ACTIVIDAD',
@@ -41,7 +42,7 @@ function crearEvento(estado: 'PROGRAMADO' | 'CANCELADO' = 'PROGRAMADO') {
   });
 }
 
-function crearAnuncio(datos: {
+async function crearAnuncio(datos: {
   titulo: string;
   fechaPublicacion?: Date;
   fechaExpiracion?: Date | null;
@@ -49,6 +50,7 @@ function crearAnuncio(datos: {
 }) {
   return prisma.anuncio.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: datos.titulo,
       contenido: 'Texto',
       prioridad: datos.prioridad ?? 'NORMAL',
@@ -215,29 +217,56 @@ describe('GET/PATCH/DELETE /anuncios (B3-13)', () => {
 });
 
 describe('anunciosService.vigentes (B3-14)', () => {
-  it('solo vigentes (no expirados ni programados), IMPORTANTE primero, con límite y filtro', async () => {
-    await crearAnuncio({ titulo: 'Vigente normal' });
-    await crearAnuncio({ titulo: 'Vigente importante', prioridad: 'IMPORTANTE' });
-    await crearAnuncio({ titulo: 'Sin expirar aún', fechaExpiracion: enDias(1) });
-    await crearAnuncio({
-      titulo: 'Expirado',
-      fechaPublicacion: enDias(-5),
-      fechaExpiracion: enDias(-1),
-    });
-    await crearAnuncio({
-      titulo: 'Programado',
-      fechaPublicacion: enDias(1),
-      prioridad: 'IMPORTANTE',
-    });
+  it('solo vigentes (no expirados ni programados), IMPORTANTE primero, con límite y filtro', () =>
+    enIglesiaDePrueba(async () => {
+      await crearAnuncio({ titulo: 'Vigente normal' });
+      await crearAnuncio({ titulo: 'Vigente importante', prioridad: 'IMPORTANTE' });
+      await crearAnuncio({ titulo: 'Sin expirar aún', fechaExpiracion: enDias(1) });
+      await crearAnuncio({
+        titulo: 'Expirado',
+        fechaPublicacion: enDias(-5),
+        fechaExpiracion: enDias(-1),
+      });
+      await crearAnuncio({
+        titulo: 'Programado',
+        fechaPublicacion: enDias(1),
+        prioridad: 'IMPORTANTE',
+      });
 
-    const todos = await anunciosService.vigentes();
-    expect(todos.map((a) => a.titulo)).toHaveLength(3);
-    expect(todos[0]?.titulo).toBe('Vigente importante');
-    expect(todos.map((a) => a.titulo)).not.toContain('Expirado');
-    expect(todos.map((a) => a.titulo)).not.toContain('Programado');
+      const todos = await anunciosService.vigentes();
+      expect(todos.map((a) => a.titulo)).toHaveLength(3);
+      expect(todos[0]?.titulo).toBe('Vigente importante');
+      expect(todos.map((a) => a.titulo)).not.toContain('Expirado');
+      expect(todos.map((a) => a.titulo)).not.toContain('Programado');
 
-    const importantes = await anunciosService.vigentes({ soloImportantes: true });
-    expect(importantes.map((a) => a.titulo)).toEqual(['Vigente importante']);
-    expect(await anunciosService.vigentes({ limit: 1 })).toHaveLength(1);
+      const importantes = await anunciosService.vigentes({ soloImportantes: true });
+      expect(importantes.map((a) => a.titulo)).toEqual(['Vigente importante']);
+      expect(await anunciosService.vigentes({ limit: 1 })).toHaveLength(1);
+    }));
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('vincular un anuncio a un evento de otra iglesia → 422', async () => {
+    const otra = await deOtraIglesia();
+    const res = await api().post('/anuncios', {
+      titulo: 'Aviso',
+      contenido: 'Hola',
+      eventoId: otra.evento.id,
+    });
+    expect(res.status).toBe(422);
+  });
+
+  it('el listado no trae anuncios de otra iglesia', async () => {
+    const otra = await deOtraIglesia();
+    await prisma.anuncio.create({
+      data: {
+        titulo: 'Ajeno',
+        contenido: 'x',
+        fechaPublicacion: enDias(-1),
+        autorId: otra.coordinador.id,
+        iglesiaId: otra.iglesiaId,
+      },
+    });
+    expect((await api().get('/anuncios')).body.meta.total).toBe(0);
   });
 });

@@ -25,6 +25,7 @@ function azar(clave: string) {
 }
 
 interface Contexto {
+  iglesiaId: string;
   zona: string;
   hoy: string;
   creadoPorId: string;
@@ -67,7 +68,7 @@ async function guardarEvento(ctx: Contexto, e: EventoSeed) {
   } as const;
   await prisma.evento.upsert({
     where: { id },
-    create: { id, ...datos, creadoPorId: ctx.creadoPorId },
+    create: { id, ...datos, creadoPorId: ctx.creadoPorId, iglesiaId: ctx.iglesiaId },
     update: datos,
   });
   return id;
@@ -96,19 +97,26 @@ async function asignarResponsables(eventoId: string, miembroIds: string[]) {
  * Eventos (cultos y reuniones pasados con asistencia, próximos y uno cancelado) y anuncios
  * (vigentes, programado y expirado). Requiere el seed de B1 (usuarios) y de B2 (miembros y ministerios).
  */
-export async function seedB3({ ministerios }: { ministerios: Map<string, string> }) {
+export async function seedB3({
+  ministerios,
+  iglesiaId,
+}: {
+  ministerios: Map<string, string>;
+  iglesiaId: string;
+}) {
   const config = await prisma.configuracionIglesia.findUniqueOrThrow({ where: { id: 1 } });
   const secretaria = await prisma.usuario.findUniqueOrThrow({
     where: { email: 'secretario@iglesia.local' },
   });
   const ctx: Contexto = {
+    iglesiaId,
     zona: config.zonaHoraria,
     hoy: fechaEnZona(new Date(), config.zonaHoraria),
     creadoPorId: secretaria.id,
   };
   const activos = (
     await prisma.miembro.findMany({
-      where: { activo: true },
+      where: { activo: true, iglesiaId },
       select: { id: true },
       orderBy: [{ apellidos: 'asc' }, { nombre: 'asc' }],
     })
@@ -256,7 +264,11 @@ export async function seedB3({ ministerios }: { ministerios: Map<string, string>
   ];
   for (const { clave, ...datos } of anuncios) {
     const id = uuidDe(`anuncio:${clave}`);
-    await prisma.anuncio.upsert({ where: { id }, create: { id, ...datos }, update: datos });
+    await prisma.anuncio.upsert({
+      where: { id },
+      create: { id, iglesiaId, ...datos },
+      update: datos,
+    });
   }
 
   return { eventos, asistencias, anuncios: anuncios.length };

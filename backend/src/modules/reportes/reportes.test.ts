@@ -11,8 +11,8 @@ import {
   MAX_FILAS_PDF,
   type Reporte,
 } from '../../lib/exportadores/reporte';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { iglesiaDePrueba, prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 import { etiquetaPeriodo } from './reportes.service';
 
 let app: ReturnType<typeof crearApp>;
@@ -50,9 +50,10 @@ async function leerExcel(buffer: Buffer) {
 // 1 de enero del año en curso: nunca es futura y cuenta como "alta del año" sin depender de la fecha de ejecución
 const INGRESO = `${new Date().getUTCFullYear()}-01-01`;
 
-function miembro(nombre: string, apellidos: string, activo = true) {
+async function miembro(nombre: string, apellidos: string, activo = true) {
   return prisma.miembro.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       nombre,
       apellidos,
       email: `${nombre.toLowerCase()}@correo.mx`,
@@ -68,17 +69,22 @@ async function escenario() {
     miembro('Beto', 'Álvarez'),
     miembro('Carla', 'Inactiva', false),
   ]);
-  const jovenes = await prisma.ministerio.create({ data: { nombre: 'Jóvenes' } });
-  const musica = await prisma.ministerio.create({ data: { nombre: 'Música' } });
+  const jovenes = await prisma.ministerio.create({
+    data: { iglesiaId: await iglesiaDePrueba(), nombre: 'Jóvenes' },
+  });
+  const musica = await prisma.ministerio.create({
+    data: { iglesiaId: await iglesiaDePrueba(), nombre: 'Música' },
+  });
   await prisma.miembroMinisterio.createMany({
     data: [
       { miembroId: ana.id, ministerioId: jovenes.id },
       { miembroId: beto.id, ministerioId: musica.id },
     ],
   });
-  const evento = (titulo: string, ministerioId: string | null, fechaInicio: string) =>
+  const evento = async (titulo: string, ministerioId: string | null, fechaInicio: string) =>
     prisma.evento.create({
       data: {
+        iglesiaId: await iglesiaDePrueba(),
         titulo,
         tipo: 'RELIGIOSO',
         categoria: 'REUNION',
@@ -116,6 +122,7 @@ async function escenario() {
   await prisma.donacion.createMany({
     data: [
       {
+        iglesiaId: await iglesiaDePrueba(),
         fecha: new Date('2026-09-01T00:00:00.000Z'),
         monto: '1000.00',
         concepto: 'DIEZMO',
@@ -124,6 +131,7 @@ async function escenario() {
         registradoPorId: admin.usuario.id,
       },
       {
+        iglesiaId: await iglesiaDePrueba(),
         fecha: new Date('2026-09-20T00:00:00.000Z'),
         monto: '250.50',
         concepto: 'OTRO',
@@ -133,6 +141,7 @@ async function escenario() {
         registradoPorId: admin.usuario.id,
       },
       {
+        iglesiaId: await iglesiaDePrueba(),
         fecha: new Date('2026-09-21T00:00:00.000Z'),
         monto: '5000.00',
         concepto: 'OFRENDA',
@@ -474,6 +483,7 @@ describe('seguridad financiera (B4-14)', () => {
   });
 
   it(`PDF con más de ${MAX_FILAS_PDF} filas → 422`, async () => {
+    const iglesiaId = await iglesiaDePrueba();
     const filas = Array.from({ length: MAX_FILAS_PDF + 1 }, (_, i) => ({
       fecha: new Date('2026-09-01T00:00:00.000Z'),
       monto: '1.00',
@@ -482,6 +492,7 @@ describe('seguridad financiera (B4-14)', () => {
       anonima: true,
       registradoPorId: admin.usuario.id,
       notas: String(i),
+      iglesiaId,
     }));
     await prisma.donacion.createMany({ data: filas });
     const res = await pedir(
@@ -499,5 +510,15 @@ describe('etiquetaPeriodo', () => {
     expect(etiquetaPeriodo('2026-10-30')).toBe('30/10/2026');
     expect(etiquetaPeriodo('DONACION_ESPECIAL')).toBe('Donación especial');
     expect(etiquetaPeriodo('TRANSFERENCIA')).toBe('Transferencia');
+  });
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('el reporte de miembros solo trae los de la iglesia del usuario', async () => {
+    await deOtraIglesia();
+    await miembro('Pérez', 'Ana');
+    const res = await pedir('/reportes/miembros?estado=todos');
+    expect(res.status).toBe(200);
+    expect(res.body.data.secciones[0].filas).toHaveLength(1);
   });
 });

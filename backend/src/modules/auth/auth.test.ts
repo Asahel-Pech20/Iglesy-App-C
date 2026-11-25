@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
 import { env } from '../../config/env';
 import { correosEnviados } from '../../lib/mailer';
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../../test/bd';
 import { crearIglesia, crearUsuario, loginComo, PASSWORD_PRUEBA } from '../../test/helpers';
 
 let app: ReturnType<typeof crearApp>;

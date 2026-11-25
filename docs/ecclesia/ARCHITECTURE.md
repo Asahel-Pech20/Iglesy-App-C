@@ -57,7 +57,7 @@ backend/src/
 | diezmo, espacios; donaciones, dashboard, reportes | Oscar | RF-60–89, RN-40–59 |
 | infraestructura, auth, alcance, usuarios, configuración, arnés | Santiago | RNF-01–20 |
 
-Propuesta pendiente de revisión del equipo: los módulos después del `;` son la gestión interna que se conserva de AppIglesia, ahora por iglesia ([ADR-0006](adr/0006-complemento-de-appiglesia.md), `specs.md §12`). `public` lo reparte cada dueño según sus consultas.
+Propuesta pendiente de revisión del equipo: los módulos después del `;` son la gestión interna que se conserva de AppIglesia, ahora por iglesia ([ADR-0006](adr/0006-complemento-de-appiglesia.md), `specs.md §12`). Su alcance por iglesia va en el cliente de Prisma, que lanza sin contexto de iglesia ([ADR-0007](adr/0007-alcance-de-la-gestion-interna.md)). `public` lo reparte cada dueño según sus consultas.
 
 ## 4. Reglas que verifica el arnés
 

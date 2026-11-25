@@ -2,7 +2,7 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../../test/bd';
 import { crearIglesia, loginComo } from '../../test/helpers';
 import * as catalogosService from './catalogos.service';
 

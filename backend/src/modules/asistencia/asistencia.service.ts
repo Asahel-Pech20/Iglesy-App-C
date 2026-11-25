@@ -10,7 +10,12 @@ import { type Permiso, tienePermiso } from '../../config/permisos';
 import { Prisma } from '../../generated/prisma/client';
 import { AppError, type DetalleError } from '../../lib/appError';
 import { crearMeta, paginar } from '../../lib/paginacion';
-import { prisma } from '../../lib/prisma';
+import {
+  consultarDeIglesia,
+  ejecutarDeIglesia,
+  exigirMismaIglesia,
+  prisma,
+} from '../../lib/prisma';
 import * as configuracionService from '../configuracion/configuracion.service';
 import { fechaEnZona, finDiaEnZona, inicioDiaEnZona } from '../eventos/eventos.fechas';
 import * as eventosService from '../eventos/eventos.service';
@@ -140,6 +145,8 @@ export async function registrar(
     !tienePermiso(solicitante.rol, 'asistencia:crear') && evento.ministerioId
       ? new Set((await ministeriosService.miembrosDe(evento.ministerioId)).map((m) => m.id))
       : null;
+  // E1-06: asistencia de un miembro de otra iglesia → 422 (con el filtro parecería no existir)
+  await exigirMismaIglesia('miembro', miembroIds, 'registros');
   await prisma.$transaction(async (tx) => {
     // Secuenciales: una transacción usa una sola conexión
     const miembros = await tx.miembro.findMany({
@@ -177,18 +184,23 @@ export async function registrar(
         invalidos,
       );
     }
-    await tx.$executeRaw`
+    // E1-06: el EXISTS repite en SQL que el evento es de la iglesia del contexto
+    await ejecutarDeIglesia(
+      (iglesiaId) => Prisma.sql`
       INSERT INTO asistencias
         (id, "eventoId", "miembroId", presente, "registradoPorId", "registradoEn", "createdAt", "updatedAt")
       SELECT gen_random_uuid()::text, ${eventoId}, r.miembro, r.presente, ${solicitante.id},
              (now() AT TIME ZONE 'UTC'), (now() AT TIME ZONE 'UTC'), (now() AT TIME ZONE 'UTC')
       FROM unnest(${miembroIds}::text[], ${registros.map((r) => r.presente)}::boolean[])
         AS r(miembro, presente)
+      WHERE EXISTS (SELECT 1 FROM eventos WHERE id = ${eventoId} AND "iglesiaId" = ${iglesiaId})
       ON CONFLICT ("eventoId", "miembroId") DO UPDATE SET
         presente = EXCLUDED.presente,
         "registradoPorId" = EXCLUDED."registradoPorId",
         "registradoEn" = EXCLUDED."registradoEn",
-        "updatedAt" = EXCLUDED."updatedAt"`;
+        "updatedAt" = EXCLUDED."updatedAt"`,
+      tx,
+    );
   });
   await eventosService.marcarRealizadoSiPaso(eventoId, ahora);
   return listaDeEvento(eventoId, solicitante);
@@ -336,20 +348,23 @@ export async function resumenPorPeriodo(
   const filtroMinisterio = ministerioIds
     ? Prisma.sql`AND e."ministerioId" = ANY(${ministerioIds}::text[])`
     : Prisma.empty;
-  const filas = await prisma.$queryRaw<
+  const filas = await consultarDeIglesia<
     { periodo: string; eventos: bigint; presentes: bigint; ausentes: bigint }[]
-  >`
+  >(
+    (iglesiaId) => Prisma.sql`
     SELECT ${etiqueta} AS periodo,
            COUNT(DISTINCT e.id) AS eventos,
            COUNT(*) FILTER (WHERE a.presente) AS presentes,
            COUNT(*) FILTER (WHERE NOT a.presente) AS ausentes
     FROM asistencias a
     JOIN eventos e ON e.id = a."eventoId"
-    WHERE e.estado <> 'CANCELADO'
+    WHERE e."iglesiaId" = ${iglesiaId}
+      AND e.estado <> 'CANCELADO'
       AND ${local} >= ${desde}::date
       AND ${local} < (${hasta}::date + 1)
       ${filtroMinisterio}
-    GROUP BY 1`;
+    GROUP BY 1`,
+  );
   const porPeriodo = new Map(filas.map((f) => [f.periodo, f]));
   return periodosEntre(periodo, desde, hasta).map((p) => {
     const f = porPeriodo.get(p);
@@ -430,18 +445,21 @@ export function contarRegistradas(desde: Date, hasta: Date) {
 export async function participacionPorMinisterio(desde: Date, hasta: Date) {
   const [integrantes, filas] = await Promise.all([
     ministeriosService.participacionPorMinisterio(),
-    prisma.$queryRaw<
+    consultarDeIglesia<
       { ministerioId: string; eventos: bigint; presentes: bigint; ausentes: bigint }[]
-    >`
+    >(
+      (iglesiaId) => Prisma.sql`
       SELECT e."ministerioId" AS "ministerioId",
              COUNT(DISTINCT e.id) AS eventos,
              COUNT(*) FILTER (WHERE a.presente) AS presentes,
              COUNT(*) FILTER (WHERE NOT a.presente) AS ausentes
       FROM asistencias a
       JOIN eventos e ON e.id = a."eventoId"
-      WHERE e.estado <> 'CANCELADO' AND e."ministerioId" IS NOT NULL
+      WHERE e."iglesiaId" = ${iglesiaId}
+        AND e.estado <> 'CANCELADO' AND e."ministerioId" IS NOT NULL
         AND e."fechaInicio" >= ${desde} AND e."fechaInicio" < ${hasta}
       GROUP BY e."ministerioId"`,
+    ),
   ]);
   const porMinisterio = new Map(filas.map((f) => [f.ministerioId, f]));
   return integrantes.map(({ ministerioId, ministerio, total }) => {

@@ -1,8 +1,8 @@
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { iglesiaDePrueba, prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 import { hoyIglesia } from '../miembros/miembros.service';
 import * as donacionesService from './donaciones.service';
 
@@ -24,9 +24,10 @@ const api = () => ({
 
 const ID_INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 
-function crearMiembro(datos: { nombre?: string; activo?: boolean } = {}) {
+async function crearMiembro(datos: { nombre?: string; activo?: boolean } = {}) {
   return prisma.miembro.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       nombre: datos.nombre ?? 'Ana',
       apellidos: 'López',
       fechaIngreso: new Date('2025-01-10T00:00:00.000Z'),
@@ -35,7 +36,7 @@ function crearMiembro(datos: { nombre?: string; activo?: boolean } = {}) {
   });
 }
 
-function crearDonacion(datos: {
+async function crearDonacion(datos: {
   fecha: string;
   monto: string;
   concepto?: 'DIEZMO' | 'OFRENDA' | 'OTRO';
@@ -45,6 +46,7 @@ function crearDonacion(datos: {
 }) {
   return prisma.donacion.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       fecha: new Date(`${datos.fecha}T00:00:00.000Z`),
       monto: datos.monto,
       concepto: datos.concepto ?? 'OFRENDA',
@@ -402,5 +404,37 @@ describe('funciones de servicio', () => {
     expect(donacionesService.inicioMes('2026-03-15', 2)).toBe('2026-01-01');
     expect(donacionesService.inicioMes('2026-01-15', 1)).toBe('2025-12-01');
     expect(donacionesService.finMes('2028-02-10')).toBe('2028-02-29');
+  });
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('registrar una aportación de un miembro de otra iglesia → 422', async () => {
+    const otra = await deOtraIglesia();
+    const res = await api().post('/donaciones', {
+      fecha: '2026-10-01',
+      monto: '100.00',
+      concepto: 'OFRENDA',
+      metodo: 'EFECTIVO',
+      miembroId: otra.miembro.id,
+    });
+    expect(res.status).toBe(422);
+  });
+
+  it('el listado y el resumen no incluyen aportaciones de otra iglesia', async () => {
+    const otra = await deOtraIglesia();
+    await prisma.donacion.create({
+      data: {
+        fecha: new Date('2026-10-01'),
+        monto: '999.00',
+        concepto: 'OFRENDA',
+        metodo: 'EFECTIVO',
+        anonima: true,
+        registradoPorId: otra.coordinador.id,
+        iglesiaId: otra.iglesiaId,
+      },
+    });
+    expect((await api().get('/donaciones')).body.meta.total).toBe(0);
+    const resumen = await api().get('/donaciones/resumen?desde=2026-10-01&hasta=2026-10-31');
+    expect(resumen.body.data.total).toBe('0.00');
   });
 });

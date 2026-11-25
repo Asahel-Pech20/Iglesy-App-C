@@ -2,8 +2,8 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
 import { ROLES } from '../../config/permisos';
-import { prisma } from '../../lib/prisma';
-import { loginComo } from '../../test/helpers';
+import { enIglesiaDePrueba, iglesiaDePrueba, prisma } from '../../test/bd';
+import { deOtraIglesia, loginComo } from '../../test/helpers';
 import { hoyIglesia } from '../miembros/miembros.service';
 import { crearCacheDashboard } from './dashboard.service';
 
@@ -19,27 +19,36 @@ const DIA = 86_400_000;
 async function datosDePrueba(usuarioId: string) {
   const hoy = await hoyIglesia();
   const [ana, beto] = await Promise.all(
-    ['Ana', 'Beto'].map((nombre) =>
+    ['Ana', 'Beto'].map(async (nombre) =>
       prisma.miembro.create({
-        data: { nombre, apellidos: 'Pérez', fechaIngreso: new Date(`${hoy}T00:00:00.000Z`) },
+        data: {
+          iglesiaId: await iglesiaDePrueba(),
+          nombre,
+          apellidos: 'Pérez',
+          fechaIngreso: new Date(`${hoy}T00:00:00.000Z`),
+        },
       }),
     ),
   );
   await prisma.miembro.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       nombre: 'Inactivo',
       apellidos: 'Ruiz',
       fechaIngreso: new Date('2020-01-01T00:00:00.000Z'),
       activo: false,
     },
   });
-  const ministerio = await prisma.ministerio.create({ data: { nombre: 'Jóvenes' } });
+  const ministerio = await prisma.ministerio.create({
+    data: { iglesiaId: await iglesiaDePrueba(), nombre: 'Jóvenes' },
+  });
   await prisma.miembroMinisterio.create({
     data: { miembroId: ana!.id, ministerioId: ministerio.id },
   });
   // Evento de hace un minuto (mes y semana actuales) con un presente y un ausente
   const evento = await prisma.evento.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: 'Culto',
       tipo: 'RELIGIOSO',
       categoria: 'CULTO',
@@ -56,6 +65,7 @@ async function datosDePrueba(usuarioId: string) {
   });
   await prisma.evento.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: 'Ensayo',
       tipo: 'RELIGIOSO',
       categoria: 'ACTIVIDAD',
@@ -66,6 +76,7 @@ async function datosDePrueba(usuarioId: string) {
   });
   await prisma.anuncio.create({
     data: {
+      iglesiaId: await iglesiaDePrueba(),
       titulo: 'Aviso importante',
       contenido: 'Texto',
       prioridad: 'IMPORTANTE',
@@ -76,6 +87,7 @@ async function datosDePrueba(usuarioId: string) {
   await prisma.donacion.createMany({
     data: [
       {
+        iglesiaId: await iglesiaDePrueba(),
         fecha: new Date(`${hoy}T00:00:00.000Z`),
         monto: '150.50',
         concepto: 'OFRENDA',
@@ -84,6 +96,7 @@ async function datosDePrueba(usuarioId: string) {
         registradoPorId: usuarioId,
       },
       {
+        iglesiaId: await iglesiaDePrueba(),
         fecha: new Date(`${hoy}T00:00:00.000Z`),
         monto: '999.00',
         concepto: 'OFRENDA',
@@ -163,58 +176,77 @@ describe('GET /dashboard (B4-07)', () => {
     expect((await request(app).get('/api/v1/dashboard')).status).toBe(401);
   });
 
-  it('responde en menos de 500 ms', async () => {
-    const admin = await loginComo('ADMIN_IGLESIA');
-    await datosDePrueba(admin.usuario.id);
-    await get(admin.auth); // calienta conexiones
-    const inicio = performance.now();
-    await crearCacheDashboard(0)('ADMIN_IGLESIA');
-    expect(performance.now() - inicio).toBeLessThan(500);
-  });
+  it('responde en menos de 500 ms', () =>
+    enIglesiaDePrueba(async () => {
+      const admin = await loginComo('ADMIN_IGLESIA');
+      await datosDePrueba(admin.usuario.id);
+      await get(admin.auth); // calienta conexiones
+      const inicio = performance.now();
+      await crearCacheDashboard(0)('ADMIN_IGLESIA');
+      expect(performance.now() - inicio).toBeLessThan(500);
+    }));
 });
 
 describe('cache del dashboard (B4-08)', () => {
-  it('reutiliza la respuesta mientras los datos no cambian', async () => {
-    const obtener = crearCacheDashboard();
-    const primera = await obtener('ADMIN_IGLESIA');
-    expect(await obtener('ADMIN_IGLESIA')).toBe(primera);
-    // Otra vista (sin ingresos) no comparte la entrada
-    const sinIngresos = await obtener('SECRETARIO');
-    expect(sinIngresos).not.toBe(primera);
-    expect(Object.hasOwn(sinIngresos, 'ingresos')).toBe(false);
-  });
+  it('reutiliza la respuesta mientras los datos no cambian', () =>
+    enIglesiaDePrueba(async () => {
+      const obtener = crearCacheDashboard();
+      const primera = await obtener('ADMIN_IGLESIA');
+      expect(await obtener('ADMIN_IGLESIA')).toBe(primera);
+      // Otra vista (sin ingresos) no comparte la entrada
+      const sinIngresos = await obtener('SECRETARIO');
+      expect(sinIngresos).not.toBe(primera);
+      expect(Object.hasOwn(sinIngresos, 'ingresos')).toBe(false);
+    }));
 
-  it('se invalida al registrar asistencia y al crear o anular una aportación', async () => {
-    const admin = await loginComo('ADMIN_IGLESIA');
-    const { hoy, evento, ana } = await datosDePrueba(admin.usuario.id);
-    const obtener = crearCacheDashboard();
-    expect((await obtener('ADMIN_IGLESIA')).asistenciasRegistradas.mesActual).toBe(1);
+  it('se invalida al registrar asistencia y al crear o anular una aportación', () =>
+    enIglesiaDePrueba(async () => {
+      const admin = await loginComo('ADMIN_IGLESIA');
+      const { hoy, evento, ana } = await datosDePrueba(admin.usuario.id);
+      const obtener = crearCacheDashboard();
+      expect((await obtener('ADMIN_IGLESIA')).asistenciasRegistradas.mesActual).toBe(1);
 
-    await prisma.asistencia.update({
-      where: { eventoId_miembroId: { eventoId: evento.id, miembroId: ana.id } },
-      data: { presente: false },
-    });
-    expect((await obtener('ADMIN_IGLESIA')).asistenciasRegistradas.mesActual).toBe(0);
+      await prisma.asistencia.update({
+        where: { eventoId_miembroId: { eventoId: evento.id, miembroId: ana.id } },
+        data: { presente: false },
+      });
+      expect((await obtener('ADMIN_IGLESIA')).asistenciasRegistradas.mesActual).toBe(0);
 
-    const nueva = await prisma.donacion.create({
-      data: {
-        fecha: new Date(`${hoy}T00:00:00.000Z`),
-        monto: '49.50',
-        concepto: 'DIEZMO',
-        metodo: 'EFECTIVO',
-        anonima: true,
-        registradoPorId: admin.usuario.id,
-      },
-    });
-    expect((await obtener('ADMIN_IGLESIA')).ingresos?.mesActual).toBe('200.00');
+      const nueva = await prisma.donacion.create({
+        data: {
+          iglesiaId: await iglesiaDePrueba(),
+          fecha: new Date(`${hoy}T00:00:00.000Z`),
+          monto: '49.50',
+          concepto: 'DIEZMO',
+          metodo: 'EFECTIVO',
+          anonima: true,
+          registradoPorId: admin.usuario.id,
+        },
+      });
+      expect((await obtener('ADMIN_IGLESIA')).ingresos?.mesActual).toBe('200.00');
 
-    await prisma.donacion.update({ where: { id: nueva.id }, data: { anulada: true } });
-    expect((await obtener('ADMIN_IGLESIA')).ingresos?.mesActual).toBe('150.50');
-  });
+      await prisma.donacion.update({ where: { id: nueva.id }, data: { anulada: true } });
+      expect((await obtener('ADMIN_IGLESIA')).ingresos?.mesActual).toBe('150.50');
+    }));
 
-  it('caduca a los 60 s aunque los datos no cambien', async () => {
-    const obtener = crearCacheDashboard(-1);
-    const primera = await obtener('ADMIN_IGLESIA');
-    expect(await obtener('ADMIN_IGLESIA')).not.toBe(primera);
+  it('caduca a los 60 s aunque los datos no cambien', () =>
+    enIglesiaDePrueba(async () => {
+      const obtener = crearCacheDashboard(-1);
+      const primera = await obtener('ADMIN_IGLESIA');
+      expect(await obtener('ADMIN_IGLESIA')).not.toBe(primera);
+    }));
+});
+
+describe('alcance por iglesia (E1-06)', () => {
+  it('cada iglesia ve su panel: la cache no lo comparte entre iglesias', async () => {
+    const propio = await loginComo('ADMIN_IGLESIA');
+    const otra = await deOtraIglesia();
+    const deLaOtra = await loginComo('PASTOR', { iglesiaId: otra.iglesiaId });
+    const mio = await get(propio.auth);
+    expect(mio.status).toBe(200);
+    expect(mio.body.data.miembrosActivos).toBe(0);
+    // Misma vista (con ingresos), otra iglesia: sin la iglesia en la clave saldría el panel de arriba
+    const suyo = await get(deLaOtra.auth);
+    expect(suyo.body.data.miembrosActivos).toBe(1);
   });
 });

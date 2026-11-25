@@ -2,7 +2,7 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { crearApp } from '../../app';
 import { correosEnviados } from '../../lib/mailer';
-import { prisma } from '../../lib/prisma';
+import { prisma } from '../../test/bd';
 import { crearUsuario, loginComo } from '../../test/helpers';
 
 let app: ReturnType<typeof crearApp>;

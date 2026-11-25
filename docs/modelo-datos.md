@@ -1,7 +1,7 @@
 # Modelo de datos — Ecclesia + AppIglesia
 
 > **E1-07** (Santiago). Integra el modelo de todos en un solo lugar (`specs.md` §12.4). La fuente de verdad es `backend/prisma/schema.prisma` y sus migraciones; este documento lo explica.
-> Estado al **2026-11-20**: lo «implementado» ya está en `main` (PR #6, #8, #9, #11 y #12). Lo «propuesto» todavía no tiene migración y se ajusta con las respuestas del cliente.
+> Estado al **2026-11-23**: lo «implementado» ya está en `main` (PR #6, #8, #9, #11, #12, #20, #23 y #25). Lo «propuesto» todavía no tiene migración y se ajusta con las respuestas del cliente.
 
 ## Convenciones
 
@@ -29,6 +29,8 @@ erDiagram
   Diezmo ||--o{ DiezmoCorreccion : "historial"
   Usuario ||--o{ Diezmo : "captura"
   Usuario ||--o{ DiezmoCorreccion : "corrige"
+  Iglesia ||--o{ ObjetoPatrimonial : "resguarda"
+  Usuario |o--o{ CriteriosIndice : "versiona"
 
   Estado {
     char2 clave PK
@@ -131,7 +133,7 @@ erDiagram
 
 ## Diagrama: gestión interna heredada de AppIglesia (implementado)
 
-Solo relaciones; los campos están en `specs.md` §6. Con E1-06 cada entidad recibirá `iglesiaId` (ver «Pendiente» abajo).
+Solo relaciones; los campos están en `specs.md` §6. Desde E1-06, `Miembro`, `Ministerio`, `Evento`, `Anuncio`, `Donacion` y `HorarioReunion` llevan `iglesiaId` (RESTRICT); `Asistencia` y las tablas puente la obtienen de sus extremos, que deben ser de la misma iglesia ([ADR-0007](ecclesia/adr/0007-alcance-de-la-gestion-interna.md)).
 
 ```mermaid
 erDiagram
@@ -153,7 +155,7 @@ erDiagram
   Usuario ||--o{ Donacion : "registra"
 ```
 
-`ConfiguracionIglesia` (fila única, `id = 1`) y `HorarioReunion` siguen como en AppIglesia hasta E1-06.
+`ConfiguracionIglesia` (fila única, `id = 1`) sigue como en AppIglesia hasta E1-06b. El nombre de un ministerio es único dentro de su iglesia (`ministerios_iglesiaId_nombre_key`).
 
 ## Entidades implementadas
 
@@ -166,6 +168,13 @@ erDiagram
 | `Usuario` | Santiago | `iglesiaId` es null **solo** en la Coordinación; una iglesia con personal no se borra (`RESTRICT`) | RNF-10, RF-81, RF-82 |
 
 **Roles** (`enum Rol`): `COORDINACION` (nacional, sin iglesia), `ADMIN_IGLESIA`, `PASTOR`, `SECRETARIO`, `TESORERO`, `COORDINADOR` (de ministerio; no confundir con la Coordinación).
+
+### Patrimonio
+
+| Entidad | Dueño | Puntos clave | Requerimientos |
+|---|---|---|---|
+| `ObjetoPatrimonial` | Nataly (PR #20) | `tipo` (enum `TipoObjeto`), `anio` o `siglo` (al menos uno), material, conservación, ubicación en el templo, `catalogadoInah`; `estado` (`VIGENTE`, `PERDIDO`, `PRESTADO`, `BAJA`) con fecha y motivo. **Nunca se borra**: cambia de estado. No es gestión interna, así que queda fuera de la extensión de alcance de ADR-0007 y pasa por `alcanceIglesia` | RF-13–17, RN-10, RN-11 |
+| `CriteriosIndice` | Nataly (PR #20) | Versionado: cada cambio es una fila nueva y la más reciente es la vigente (sin filas, valen los criterios del caso). Rangos, multiplicadores y distinciones en JSON validado con Zod; `puntosInah` `Decimal(5,1)`. **El índice no se guarda**: se calcula al consultar (ADR-0005). Solo la Coordinación los cambia | RF-22, RN-14, RNF-13 |
 
 ### Misas y diezmo
 
@@ -209,6 +218,12 @@ erDiagram
 | `iglesias_ubicacion_consistente` | `CHECK` | `iglesias` | Municipio sin estado o de otro estado; localidad sin municipio o de otro municipio | `e2_05_06_catalogos_e_iglesias` |
 | `iglesias_datos_validos` | `CHECK` | `iglesias` | Capacidad no positiva, año fuera de 1500–2100, coordenadas a medias o fuera de rango | `e2_05_06_catalogos_e_iglesias` |
 | `iglesias_cierre_consistente` | `CHECK` | `iglesias` | Una iglesia con fecha de cierre que siga activa | `e2_05_06_catalogos_e_iglesias` |
+| `iglesias_nombre_por_municipio` | Único | `iglesias` | Dos iglesias con el mismo nombre (sin distinguir mayúsculas) en el mismo municipio (A2-E2-06) | `e2_nombre_unico_por_municipio` |
+| `objetos_anio_o_siglo` | `CHECK` | `objetos_patrimoniales` | Un objeto sin año ni siglo (RN-10) | `e2_08_10_patrimonio_y_criterios` |
+| `objetos_datos_validos` | `CHECK` | `objetos_patrimoniales` | Año fuera de 1–2100 o siglo fuera de 1–21 | `e2_08_10_patrimonio_y_criterios` |
+| `objetos_estado_consistente` | `CHECK` | `objetos_patrimoniales` | Un objeto no vigente sin fecha ni motivo del cambio (RN-11) | `e2_08_10_patrimonio_y_criterios` |
+| `objetos_patrimoniales_iglesiaId_fkey` | FK `RESTRICT` | `objetos_patrimoniales` | Borrar una iglesia que tiene objetos | `e2_08_10_patrimonio_y_criterios` |
+| `criterios_inah_valido` | `CHECK` | `criterios_indice` | Puntos INAH negativos | `e2_08_10_patrimonio_y_criterios` |
 
 Además, en la API: una iglesia cerrada solo acepta lecturas (`alcanceIglesia`, 422), y el alcance por iglesia nunca confía en una `iglesiaId` enviada por el cliente (RNF-10).
 
@@ -216,13 +231,11 @@ Además, en la API: una iglesia cerrada solo acepta lecturas (`alcanceIglesia`, 
 
 | Módulo | Entidades | Dueño | Lo que ya está definido | Fuente |
 |---|---|---|---|---|
-| `patrimonio` | `ObjetoPatrimonial` | Nataly | `iglesiaId`, `descripcion`, `tipo` (enum de 10 tipos), `anio?` o `siglo?` (al menos uno, `CHECK`), `material`, `estadoConservacion`, `ubicacionEnTemplo`, `catalogadoInah`, `estado` (`VIGENTE`, `PERDIDO`, `PRESTADO`, `BAJA`) con fecha y motivo; nunca se borra | `docs/ecclesia/plan-nataly.md` (E2-03) |
-| `patrimonio` | `CriteriosIndice` | Nataly | Versionado: cada cambio crea una versión con `vigenteDesde`; rangos, multiplicadores y distinciones en JSON validado con Zod. **El índice no se guarda**: se calcula al consultar (ADR-0005) | `plan-nataly.md`, RNF-13 |
 | `servicios` | `Servicio`, `Platica` y sus horarios | Genaro | Costo (gratuito, donativo o monto `Decimal(12,2)`), requisitos, duración, cita; sesiones, cupo, lugar y quién imparte | `specs.md` §12.4 · campos por definir en el plan de Genaro |
 | `misas` | `PadreIglesia`, `HorarioMisa`; ampliar `Padre` y `MisaCelebrada` | Genaro | Tipo e idioma; un padre sin choques de horario; hora por defecto; sustitución con quién ofició, quién cambió y por qué (RNF-12) | `specs.md` §12.4 · por definir |
 
-## Pendiente de integración (E1-06)
+## Pendiente de integración (E1-06b)
 
 - `Iglesia` reemplaza a `ConfiguracionIglesia`: hoy la marca lateral del frontend todavía muestra el nombre de la configuración, no el de la iglesia del usuario.
-- `iglesiaId` en `Miembro`, `Ministerio`, `Evento`, `Anuncio`, `Donacion` y `HorarioReunion`; `Asistencia` la obtiene de su evento. Toca módulos de Nataly, Genaro y Oscar: requiere la revisión de cada dueño y la respuesta a P-20.
-- Índice único del nombre de iglesia según la regla que se decida (A2-E4-05, A2-E2-06).
+- Hecho en E1-06: `iglesiaId` en la gestión interna, con el alcance de ADR-0007.
+- Hecho en `main` (PR #25): nombre de iglesia único por municipio (A2-E2-06).

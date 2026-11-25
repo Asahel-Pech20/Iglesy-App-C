@@ -12,12 +12,13 @@ import { type RolUsuario, tienePermiso } from '../../config/permisos';
 import { Prisma } from '../../generated/prisma/client';
 import { AppError, type DetalleError } from '../../lib/appError';
 import { crearMeta, ordenar, paginar } from '../../lib/paginacion';
-import { prisma } from '../../lib/prisma';
+import { iglesiaDelContexto } from '../../lib/contextoIglesia';
+import { type ClientePrisma, consultarDeIglesia, prisma } from '../../lib/prisma';
 import * as asistenciaService from '../asistencia/asistencia.service';
 import * as configuracionService from '../configuracion/configuracion.service';
 import type { CrearMiembro, EditarMiembro, EstadoMiembro, QueryMiembros } from './miembros.schemas';
 
-type Cliente = Prisma.TransactionClient | typeof prisma;
+type Cliente = ClientePrisma;
 type FiltroEstado = QueryMiembros['estado'];
 
 const NO_EXISTE = 'El miembro no existe.';
@@ -161,8 +162,10 @@ export async function idsQueCoinciden(
   const alcance = ministerioId
     ? Prisma.sql`AND id IN (SELECT "miembroId" FROM miembro_ministerios WHERE "ministerioId" = ${ministerioId})`
     : Prisma.empty;
-  const filas = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT id FROM miembros WHERE ${condicion} ${alcance}`;
+  const filas = await consultarDeIglesia<{ id: string }[]>(
+    (iglesiaId) => Prisma.sql`
+      SELECT id FROM miembros WHERE "iglesiaId" = ${iglesiaId} AND ${condicion} ${alcance}`,
+  );
   return filas.map((f) => f.id);
 }
 
@@ -201,8 +204,9 @@ export async function listar(query: QueryMiembros) {
         Prisma.sql`FALSE`,
     );
   }
-  const where = condiciones.length
-    ? Prisma.sql`WHERE ${Prisma.join(condiciones, ' AND ')}`
+  // E1-06: la iglesia la pone consultarDeIglesia; aquí solo los filtros de la petición
+  const filtros = condiciones.length
+    ? Prisma.sql`AND ${Prisma.join(condiciones, ' AND ')}`
     : Prisma.empty;
 
   const orden = ordenar(query.orden, Object.keys(COLUMNAS_ORDEN) as ColumnaOrden[], {
@@ -213,11 +217,16 @@ export async function listar(query: QueryMiembros) {
 
   const [pagina, conteo] = await Promise.all([
     // Desempate estable: columna elegida → nombre → id
-    prisma.$queryRaw<{ id: string }[]>`
-      SELECT m.id FROM miembros m ${where}
-      ORDER BY ${COLUMNAS_ORDEN[campo]} ${sentido}, m."nombre" ASC, m.id ASC
-      LIMIT ${take} OFFSET ${skip}`,
-    prisma.$queryRaw<{ total: bigint }[]>`SELECT count(*) AS total FROM miembros m ${where}`,
+    consultarDeIglesia<{ id: string }[]>(
+      (iglesiaId) => Prisma.sql`
+        SELECT m.id FROM miembros m WHERE m."iglesiaId" = ${iglesiaId} ${filtros}
+        ORDER BY ${COLUMNAS_ORDEN[campo]} ${sentido}, m."nombre" ASC, m.id ASC
+        LIMIT ${take} OFFSET ${skip}`,
+    ),
+    consultarDeIglesia<{ total: bigint }[]>(
+      (iglesiaId) => Prisma.sql`
+        SELECT count(*) AS total FROM miembros m WHERE m."iglesiaId" = ${iglesiaId} ${filtros}`,
+    ),
   ]);
 
   const ids = pagina.map((f) => f.id);
@@ -290,7 +299,10 @@ async function buscarDuplicado(nombre: string, apellidos: string, exceptoId?: st
 export async function crear(datos: CrearMiembro) {
   await validarFechasNoFuturas(datos);
   const duplicado = await buscarDuplicado(datos.nombre, datos.apellidos);
-  const miembro = await prisma.miembro.create({ data: aDatosBd(datos), select: SELECT_MIEMBRO });
+  const miembro = await prisma.miembro.create({
+    data: { ...aDatosBd(datos), iglesiaId: iglesiaDelContexto('Miembro') },
+    select: SELECT_MIEMBRO,
+  });
   return { miembro: formatear(miembro), duplicadoId: duplicado?.id ?? null };
 }
 

@@ -151,7 +151,7 @@ function sinAcentos(texto: string) {
 }
 
 /** ~60 miembros (10 % inactivos). Devuelve sus ids en orden. */
-export async function seedMiembros() {
+export async function seedMiembros(iglesiaId: string) {
   const azar = crearAzar(SEMILLA);
   const inactivos = Math.round(TOTAL_MIEMBROS * PORCENTAJE_INACTIVOS);
   const ids: string[] = [];
@@ -184,19 +184,23 @@ export async function seedMiembros() {
       fechaBaja: activo ? null : fecha(2026, 9, azar.entero(1, 28)),
       motivoBaja: activo ? null : motivoBaja,
     };
-    await prisma.miembro.upsert({ where: { id }, create: { id, ...datos }, update: datos });
+    await prisma.miembro.upsert({
+      where: { id },
+      create: { id, iglesiaId, ...datos },
+      update: datos,
+    });
     ids.push(id);
   }
   return ids;
 }
 
 /** Los 6 ministerios del seed. Devuelve un mapa nombre → id. */
-export async function seedMinisterios() {
+export async function seedMinisterios(iglesiaId: string) {
   const ids = new Map<string, string>();
   for (const { nombre, descripcion } of MINISTERIOS_SEED) {
     const ministerio = await prisma.ministerio.upsert({
-      where: { nombre },
-      create: { nombre, descripcion },
+      where: { iglesiaId_nombre: { iglesiaId, nombre } },
+      create: { iglesiaId, nombre, descripcion },
       update: { descripcion, activo: true },
       select: { id: true },
     });
@@ -247,10 +251,10 @@ export async function seedVinculos(miembroIds: string[], ministerios: Map<string
   }
 }
 
-/** Punto de entrada que llama seed.ts. */
-export async function seedB2() {
-  const miembroIds = await seedMiembros();
-  const ministerios = await seedMinisterios();
+/** Punto de entrada que llama seed.ts. E1-06: todo es de la iglesia indicada (la inicial). */
+export async function seedB2(iglesiaId: string) {
+  const miembroIds = await seedMiembros(iglesiaId);
+  const ministerios = await seedMinisterios(iglesiaId);
   await seedVinculos(miembroIds, ministerios);
   return { miembroIds, ministerios };
 }
