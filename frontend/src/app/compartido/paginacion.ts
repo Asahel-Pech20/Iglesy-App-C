@@ -45,7 +45,7 @@ import type { MetaPaginacion } from '@/app/tipos/comunes';
       justify-content: space-between;
       gap: 8px;
       padding: 12px 16px;
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     p {
       margin: 0;

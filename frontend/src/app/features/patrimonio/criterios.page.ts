@@ -81,7 +81,9 @@ type Fila = FormGroup<{ a: FormControl<string>; b: FormControl<string> }>;
       margin: 0 0 16px;
     }
     legend {
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
       margin-bottom: 8px;
     }
     .suave {
