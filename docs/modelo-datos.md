@@ -31,6 +31,11 @@ erDiagram
   HorarioMisa |o--o{ MisaCelebrada : "se celebra"
   MisaCelebrada ||--o| SustitucionMisa : "si cambió el padre"
   Usuario ||--o{ SustitucionMisa : "hace el cambio"
+  Iglesia ||--o{ Servicio : "ofrece"
+  Servicio ||--o{ HorarioServicio : "se celebra"
+  Iglesia ||--o{ Platica : "imparte"
+  Platica ||--o{ HorarioPlatica : "se imparte"
+  Padre |o--o{ Platica : "la da (opcional)"
   MisaCelebrada ||--o| Diezmo : "una captura"
   Iglesia ||--o{ Diezmo : "recibe"
   Diezmo ||--o{ DiezmoCorreccion : "historial"
@@ -112,6 +117,41 @@ erDiagram
     date fecha
     int duracionMin
     uuid registradoPorId FK
+  }
+  Servicio {
+    uuid id PK
+    uuid iglesiaId FK
+    string nombre
+    FormaCosto formaCosto
+    decimal monto
+    string requisitos
+    int duracionMin
+    bool requiereCita
+    bool activo
+  }
+  HorarioServicio {
+    uuid id PK
+    uuid servicioId FK
+    int diaSemana
+    string hora
+  }
+  Platica {
+    uuid id PK
+    uuid iglesiaId FK
+    TipoPlatica tipo
+    int sesiones
+    decimal costo
+    int cupo
+    string lugar
+    string imparte
+    uuid padreId FK
+    bool activo
+  }
+  HorarioPlatica {
+    uuid id PK
+    uuid platicaId FK
+    int diaSemana
+    string hora
   }
   SustitucionMisa {
     uuid id PK
@@ -225,6 +265,15 @@ erDiagram
 | `Diezmo` | Oscar | **Una** captura por misa (`misaId` único); monto `Decimal(12,2)` no negativo; misma iglesia que su misa | RF-60–63, RN-40–42 |
 | `DiezmoCorreccion` | Oscar | Historial de **solo inserción**: monto anterior, nuevo, quién y cuándo | RN-43, RNF-12 |
 
+### Servicios y pláticas
+
+| Entidad | Dueño | Puntos clave | Requerimientos |
+|---|---|---|---|
+| `Servicio` | Genaro (E3-11) | Lista abierta de nombres (supuesto P-10), único por iglesia sin distinguir mayúsculas entre los activos. `formaCosto` `MONTO` (monto `Decimal(12,2)` > 0), `GRATUITO` (sin monto) o `DONATIVO` (monto sugerido opcional; P-11). Requisitos, duración, requiere cita. Baja lógica con `activo` | RF-30–35, RN-22, RN-23 |
+| `HorarioServicio` | Genaro (E3-11) | Cero o más días y horas fijos por servicio (P-12); se reemplazan completos al editar | RF-33 |
+| `Platica` | Genaro (E3-13) | `tipo` (`PREBAUTISMAL`, `PRIMERA_COMUNION`, `CONFIRMACION`, `PREMATRIMONIAL`), sesiones, `costo` `Decimal(12,2)` ≥ 0, cupo informativo (P-13), lugar, quién la da en texto y, opcional, un padre de la iglesia (P-14). Baja lógica | RF-36–39, RN-24, RN-25 |
+| `HorarioPlatica` | Genaro (E3-13) | Al menos un día y hora por plática; se reemplazan completos al editar | RF-36 |
+
 ### Criptas y otros espacios
 
 | Entidad | Dueño | Puntos clave | Requerimientos |
@@ -253,6 +302,11 @@ erDiagram
 | `sustituciones_misa_padre_real` | Disparador | `sustituciones_misa` | Un padre real distinto del que ofició la misa | `e3_05_padres_horario_misas` |
 | `sustituciones_misa_inmutable` | Disparador | `sustituciones_misa` | Editar o borrar una sustitución | `e3_05_padres_horario_misas` |
 | `horarios_misa_*_fkey` · `misas_celebradas_horarioMisaId_fkey` | FK `RESTRICT` | `horarios_misa`, `misas_celebradas` | Borrar un horario con misas celebradas, o un padre o iglesia con horario | `e3_05_padres_horario_misas` |
+| `servicios_costo_consistente` | `CHECK` | `servicios` | Un monto que no concuerda con la forma de costo (RN-22) | `e3_11_13_servicios_y_platicas` |
+| `servicios_duracion_valida` · `_nombre_no_vacio` | `CHECK` | `servicios` | Duración fuera de 1–1440 min; nombre vacío | `e3_11_13_servicios_y_platicas` |
+| `servicios_nombre_por_iglesia` | Único parcial | `servicios` | Dos servicios activos con el mismo nombre (sin distinguir mayúsculas) en la misma iglesia | `e3_11_13_servicios_y_platicas` |
+| `platicas_datos_validos` · `_textos_no_vacios` | `CHECK` | `platicas` | Sesiones fuera de 1–100, cupo fuera de 1–10 000, costo negativo; lugar o quién la da vacíos | `e3_11_13_servicios_y_platicas` |
+| `horarios_servicio_validos` · `horarios_platica_validos` | `CHECK` | `horarios_servicio`, `horarios_platica` | Día fuera de 0–6 u hora que no es «HH:mm» | `e3_11_13_servicios_y_platicas` |
 | `cotizaciones_monto_positivo` | `CHECK` | `cotizaciones` | Cotizaciones de monto cero o negativo | `e4_07_espacios` |
 | `cotizaciones_vence_despues_de_emitirse` | `CHECK` | `cotizaciones` | Un vencimiento anterior a la emisión | `e4_07_espacios` |
 | `cotizaciones_una_vigente_por_solicitud` | Único parcial | `cotizaciones` | Dos cotizaciones sin respuesta en la misma solicitud (si P-26 permite volver a cotizar, se cierra la anterior) | `e4_07_espacios` |
@@ -277,9 +331,7 @@ Además, en la API: una iglesia cerrada solo acepta lecturas (`alcanceIglesia`, 
 
 ## Propuesto (sin migración todavía)
 
-| Módulo | Entidades | Dueño | Lo que ya está definido | Fuente |
-|---|---|---|---|---|
-| `servicios` | `Servicio`, `Platica` y sus horarios | Genaro | Costo (gratuito, donativo o monto `Decimal(12,2)`), requisitos, duración, cita; sesiones, cupo, lugar y quién imparte | `specs.md` §12.4 · campos por definir en el plan de Genaro |
+Nada: desde E3-11 y E3-13 (2026-11-25) todos los módulos de `specs.md` §12.4 tienen su migración.
 
 ## Integración con AppIglesia (E1-06 y E1-06b, hechas)
 

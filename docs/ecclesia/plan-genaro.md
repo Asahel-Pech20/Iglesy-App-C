@@ -40,7 +40,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
 | E3-01 | Llevar P-10–P-19 (con los supuestos de arriba) a la sesión con el docente y anotar las respuestas en la sección 8 | Sección 8 | Sesión con el docente | Pendiente |
-| E3-02 | Definir en `docs/modelo-datos.md`: `PadreIglesia`, `HorarioMisa`, `SustitucionMisa`, ampliar `Padre` y `MisaCelebrada`; `Servicio`, `HorarioServicio` y `Platica` | RN-20–33 | Santiago integra el modelo | En curso: misas hecho en E3-05; faltan servicios y pláticas |
+| E3-02 | Definir en `docs/modelo-datos.md`: `PadreIglesia`, `HorarioMisa`, `SustitucionMisa`, ampliar `Padre` y `MisaCelebrada`; `Servicio`, `HorarioServicio` y `Platica` | RN-20–33 | Santiago integra el modelo | Hecha (en revisión): misas en E3-05; servicios y pláticas en E3-11 y E3-13 |
 | E3-03 | Diseñar las rutas (`docs/ecclesia/api-misas-servicios.md`) y agregarlas a `openapi.yaml` y a Postman | RF-30–52 | E3-02 | Pendiente |
 
 ### Fase 2 · Misas y padres (prioridad)
@@ -59,10 +59,10 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E3-11 | Migración y CRUD de servicios con costo, gratuito o donativo, requisitos, duración, cita y horarios | RF-30–34, RN-22, RN-23, CA-10 | E3-02 | Pendiente |
-| E3-12 | Consulta pública de servicios de una iglesia, con función del `service` para la ficha | RF-35, RN-33 | E3-11 | Pendiente |
-| E3-13 | Migración y CRUD de pláticas: tipo, días y hora, sesiones, costo exacto, cupo, lugar y quién la da | RF-36, RF-37, RN-24, RN-25, CA-11 | E3-02 | Pendiente |
-| E3-14 | Consulta pública de pláticas y «¿cuándo son las pláticas de bautizo?» (filtro por tipo) | RF-38, RF-39, CA-11 | E3-13 | Pendiente |
+| E3-11 | Migración y CRUD de servicios con costo, gratuito o donativo, requisitos, duración, cita y horarios | RF-30–34, RN-22, RN-23, CA-10 | E3-02 | Hecha (en revisión) |
+| E3-12 | Consulta pública de servicios de una iglesia, con función del `service` para la ficha | RF-35, RN-33 | E3-11 | Hecha (en revisión) |
+| E3-13 | Migración y CRUD de pláticas: tipo, días y hora, sesiones, costo exacto, cupo, lugar y quién la da | RF-36, RF-37, RN-24, RN-25, CA-11 | E3-02 | Hecha (en revisión) |
+| E3-14 | Consulta pública de pláticas y «¿cuándo son las pláticas de bautizo?» (filtro por tipo) | RF-38, RF-39, CA-11 | E3-13 | Hecha (en revisión) |
 
 ### Interfaz (Angular)
 

@@ -43,6 +43,15 @@ export async function listarPadresDeIglesia(iglesiaId: string) {
   });
 }
 
+/** ¿El padre está activo y asociado a la iglesia? Lo usan las pláticas (servicios, P-14). */
+export async function esPadreDeIglesia(padreId: string, iglesiaId: string): Promise<boolean> {
+  const asociacion = await prisma.padreIglesia.findFirst({
+    where: { padreId, iglesiaId, activo: true, padre: { activo: true } },
+    select: { padreId: true },
+  });
+  return asociacion !== null;
+}
+
 /** ¿Hay ya un padre activo con ese nombre (sin distinguir mayúsculas)? */
 async function padreConNombre(nombre: string, excepto?: string) {
   return prisma.padre.findFirst({

@@ -29,6 +29,8 @@ const PUBLICAS = new Set([
   'GET /public/busqueda-patrimonio',
   // E4-08 a E4-11: espacios sin cuenta; se identifican con folio y clave, y revisan la iglesia en el service
   'GET /public/iglesias/:iglesiaId/espacios',
+  // E3-14 (Genaro): «¿cuándo son las pláticas de bautizo?» sin cuenta (RF-39, RN-33)
+  'GET /public/iglesias/:iglesiaId/platicas',
   'POST /public/iglesias/:iglesiaId/solicitudes-espacio',
   'POST /public/solicitudes-espacio/:folio/consulta',
   'POST /public/solicitudes-espacio/:folio/aceptar',
