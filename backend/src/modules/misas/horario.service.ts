@@ -4,16 +4,17 @@
 import { Prisma } from '../../generated/prisma/client';
 import { AppError } from '../../lib/appError';
 import { prisma, type TransaccionPrisma } from '../../lib/prisma';
-import { instanteLocal } from '../../lib/dominio/zona';
+import { fechaYHoraLocal, instanteLocal } from '../../lib/dominio/zona';
 import {
   buscarChoque,
   domingoDeLaSemana,
+  intervaloEnSemana,
   semanasDeReferencia,
   sumarDias,
   type DiaSemana,
   type MisaProgramada,
 } from './dominio/solapes';
-import type { ActualizarHorario, CrearHorario } from './misas.schemas';
+import type { ActualizarHorario, CrearHorario, QueryAgenda } from './misas.schemas';
 import { SELECT_PADRE } from './padres.service';
 
 export const NOMBRES_DIA = [
@@ -199,4 +200,117 @@ export async function actualizarMisaHorario(
 export async function quitarMisaHorario(iglesiaId: string, horarioId: string) {
   await horarioDeIglesia(iglesiaId, horarioId);
   await prisma.horarioMisa.update({ where: { id: horarioId }, data: { activo: false } });
+}
+
+// ───────────── Agenda semanal de un padre (E3-08: RF-47, supuesto P-18) ─────────────
+
+/** Zona de referencia para «la semana en curso» cuando no se indica otra. */
+const ZONA_COORDINACION = 'America/Mexico_City';
+
+/**
+ * Todas las misas del horario de un padre en una semana, de todas las iglesias donde celebra, con la
+ * fecha y la hora locales de cada iglesia (RN-31) y ordenadas por el momento real.
+ * Supuesto P-18: la ve la Coordinación y el personal de las iglesias del padre (no el público); se
+ * arma con el horario normal y las iglesias cerradas no aparecen.
+ */
+export async function agendaDelPadre(
+  padreId: string,
+  iglesiaDelUsuario: string | null,
+  query: QueryAgenda,
+) {
+  const padre = await prisma.padre.findUnique({
+    where: { id: padreId },
+    select: { ...SELECT_PADRE, activo: true },
+  });
+  if (!padre) throw AppError.noEncontrado('El padre no existe.');
+  if (iglesiaDelUsuario !== null) {
+    const celebraAqui = await prisma.padreIglesia.findFirst({
+      where: { padreId, iglesiaId: iglesiaDelUsuario, activo: true },
+      select: { padreId: true },
+    });
+    if (!celebraAqui) {
+      throw AppError.prohibido('Solo ves la agenda de los padres que celebran en tu iglesia.');
+    }
+  }
+
+  const dia = query.semana ?? fechaYHoraLocal(new Date(), ZONA_COORDINACION).fecha;
+  const domingo = domingoDeLaSemana(dia);
+  const horarios = await prisma.horarioMisa.findMany({
+    where: { padreId, activo: true, iglesia: { activa: true } },
+    select: {
+      id: true,
+      diaSemana: true,
+      hora: true,
+      tipo: true,
+      idioma: true,
+      duracionMin: true,
+      iglesia: { select: { id: true, nombre: true, zonaHoraria: true } },
+    },
+  });
+
+  const misas = horarios
+    .map((h) => {
+      const intervalo = intervaloEnSemana(
+        {
+          iglesiaId: h.iglesia.id,
+          diaSemana: h.diaSemana as DiaSemana,
+          hora: h.hora,
+          duracionMin: h.duracionMin,
+          zonaHoraria: h.iglesia.zonaHoraria,
+        },
+        domingo,
+      );
+      if (!intervalo) return null;
+      return {
+        horarioId: h.id,
+        iglesia: { id: h.iglesia.id, nombre: h.iglesia.nombre },
+        diaSemana: h.diaSemana,
+        fecha: fechaYHoraLocal(intervalo.inicio, h.iglesia.zonaHoraria).fecha,
+        hora: h.hora,
+        zonaHoraria: h.iglesia.zonaHoraria,
+        duracionMin: h.duracionMin,
+        tipo: h.tipo,
+        idioma: h.idioma,
+        inicio: intervalo.inicio,
+        fin: intervalo.fin,
+      };
+    })
+    .filter((m) => m !== null)
+    .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
+
+  return {
+    padre: { id: padre.id, nombre: padre.nombre, titulo: padre.titulo, activo: padre.activo },
+    semana: { desde: domingo, hasta: sumarDias(domingo, 6) },
+    misas,
+  };
+}
+
+// ───────────── Consulta pública (E3-10: RF-44, RF-52, RN-31, RN-33) ─────────────
+
+/**
+ * Horario semanal para el público, en la hora local de la iglesia (sin convertirla a la de quien
+ * consulta, RF-52). Del padre solo se muestra el título y el nombre (supuesto P-19).
+ * La ficha pública de Nataly (E2-11) lo usa; la iglesia ya viene validada como pública.
+ */
+export async function horarioPublico(iglesiaId: string) {
+  const horario = await prisma.horarioMisa.findMany({
+    where: { iglesiaId, activo: true },
+    orderBy: [{ diaSemana: 'asc' }, { hora: 'asc' }],
+    select: {
+      diaSemana: true,
+      hora: true,
+      tipo: true,
+      idioma: true,
+      duracionMin: true,
+      padre: { select: { nombre: true, titulo: true } },
+    },
+  });
+  return horario.map((m) => ({
+    diaSemana: m.diaSemana,
+    hora: m.hora,
+    tipo: m.tipo,
+    idioma: m.idioma,
+    duracionMin: m.duracionMin,
+    padre: m.padre.titulo ? `${m.padre.titulo} ${m.padre.nombre}` : m.padre.nombre,
+  }));
 }

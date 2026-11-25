@@ -12,6 +12,7 @@ import { validar } from '../../middlewares/validar';
 import * as c from './misas.controller';
 import {
   esquemaActualizarHorario,
+  esquemaAgenda,
   esquemaActualizarPadre,
   esquemaBuscarPadres,
   esquemaCrearHorario,
@@ -141,6 +142,14 @@ padresRouter.post(
   autorizar('padres:gestionar'),
   validar({ body: esquemaCrearPadre }),
   c.crearPadreNacional,
+);
+// E3-08 (RF-47, supuesto P-18): la Coordinación y el personal de las iglesias del padre
+padresRouter.get(
+  '/:padreId/agenda',
+  autenticar,
+  autorizarAlguno('padres:gestionar', 'misas:leer'),
+  validar({ params: esquemaIdPadre, query: esquemaAgenda }),
+  c.agendaDelPadre,
 );
 padresRouter.patch(
   '/:padreId',

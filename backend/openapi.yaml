@@ -2642,6 +2642,27 @@ paths:
         '403': { $ref: '#/components/responses/Prohibido' }
         '409': { $ref: '#/components/responses/Conflicto' }
 
+  /padres/{padreId}/agenda:
+    parameters:
+      - { name: padreId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Misas]
+      summary: Agenda semanal del padre en todas sus iglesias (padres:gestionar o misas:leer; E3-08, RF-47)
+      description: >
+        Supuesto P-18: la ven la Coordinación y el personal de las iglesias donde celebra (otra iglesia, 403);
+        se arma con el horario normal y no incluye iglesias cerradas. Cada misa trae la fecha y la hora locales
+        de su iglesia y su instante real; van ordenadas por el instante.
+      parameters:
+        - name: semana
+          in: query
+          description: Cualquier día de la semana a consultar (aaaa-mm-dd); por omisión, la semana en curso
+          schema: { type: string, format: date }
+      responses:
+        '200': { description: 'padre, semana (desde y hasta) y misas' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
   /padres/{padreId}:
     parameters:
       - { name: padreId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2685,18 +2706,39 @@ paths:
         '403': { $ref: '#/components/responses/Prohibido' }
     post:
       tags: [Misas]
-      summary: Registrar una misa ya celebrada (misas:registrar)
+      summary: Registrar una misa ya celebrada (misas:registrar; E3-09, RF-48–RF-50)
+      description: >
+        Dos formas. Desde el horario (`horarioMisaId` + `fecha` local): la hora sale del horario; si la dio otro
+        padre (`padreId`), es una sustitución y lleva `motivo`, que se guarda con quién hizo el cambio y no se
+        edita. 422 si la fecha no es el día del horario, si aún no empieza o si el sustituto no es de la iglesia;
+        409 si ya está registrada esa fecha o si el sustituto tiene su propia misa a esa hora (supuesto P-17).
+        Suelta (`inicio` + `padreId`): la usa el diezmo y una misa especial de una sola fecha (P-16).
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [inicio, padreId]
-              properties:
-                inicio:
-                  { type: string, format: date-time, description: Instante de inicio (ISO 8601) }
-                padreId: { type: string, format: uuid }
+              oneOf:
+                - type: object
+                  required: [horarioMisaId, fecha]
+                  additionalProperties: false
+                  properties:
+                    horarioMisaId: { type: string, format: uuid }
+                    fecha: { type: string, format: date, description: Fecha local de la iglesia }
+                    padreId: { type: string, format: uuid, description: Solo si la dio otro padre }
+                    motivo:
+                      { type: string, maxLength: 300, description: Obligatorio con sustitución }
+                - type: object
+                  required: [inicio, padreId]
+                  additionalProperties: false
+                  properties:
+                    inicio:
+                      {
+                        type: string,
+                        format: date-time,
+                        description: Instante de inicio (ISO 8601),
+                      }
+                    padreId: { type: string, format: uuid }
       responses:
         '201': { description: Creado }
         '400': { $ref: '#/components/responses/Validacion' }

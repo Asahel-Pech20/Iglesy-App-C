@@ -1,4 +1,5 @@
 import type { RequestHandler } from 'express';
+import { usuarioDe } from '../../middlewares/auth';
 import { ok, okLista } from '../../lib/respuesta';
 import * as horario from './horario.service';
 import type {
@@ -7,6 +8,7 @@ import type {
   CrearHorario,
   CrearMisa,
   CrearPadre,
+  QueryAgenda,
   QueryBuscarPadres,
   QueryListarMisas,
 } from './misas.schemas';
@@ -53,6 +55,19 @@ export const actualizarPadre: RequestHandler<{ padreId: string }> = async (req, 
   res.json(ok(await padres.actualizarPadre(req.params.padreId, req.body as ActualizarPadre)));
 };
 
+// Agenda semanal de un padre (E3-08): el personal de una iglesia solo ve la de sus padres (P-18)
+export const agendaDelPadre: RequestHandler<{ padreId: string }> = async (req, res) => {
+  res.json(
+    ok(
+      await horario.agendaDelPadre(
+        req.params.padreId,
+        usuarioDe(req).iglesiaId,
+        req.query as unknown as QueryAgenda,
+      ),
+    ),
+  );
+};
+
 // ───────────── Horario semanal (E3-07) ─────────────
 
 export const listarHorario: RequestHandler<Iglesia> = async (req, res) => {
@@ -95,5 +110,9 @@ export const listarMisas: RequestHandler<Iglesia> = async (req, res) => {
 export const registrarMisa: RequestHandler<Iglesia> = async (req, res) => {
   res
     .status(201)
-    .json(ok(await service.registrarMisa(req.params.iglesiaId, req.body as CrearMisa)));
+    .json(
+      ok(
+        await service.registrarMisa(req.params.iglesiaId, req.body as CrearMisa, usuarioDe(req).id),
+      ),
+    );
 };

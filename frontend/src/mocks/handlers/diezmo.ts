@@ -83,6 +83,9 @@ function aMisa(m: MisaMock): MisaCelebrada {
     fechaLocal: local.fecha,
     horaLocal: local.hora,
     padre,
+    // E3-09: las misas del mock se registran con instante y padre, sin horario ni sustitución
+    horarioMisaId: null,
+    sustitucion: null,
     diezmo: d ? { monto: d.monto, actualizadoEn: d.updatedAt } : null,
   };
 }

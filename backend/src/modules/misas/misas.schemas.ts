@@ -97,11 +97,37 @@ export const esquemaActualizarHorario = z
   })
   .refine((d) => Object.keys(d).length > 0, 'Indica al menos un dato que cambiar.');
 
-// ───────────── Misas celebradas (versión mínima del diezmo) ─────────────
+// ───────────── Agenda semanal de un padre (E3-08: RF-47) ─────────────
 
-export const esquemaCrearMisa = z.strictObject({
+export const esquemaAgenda = z.object({
+  // Cualquier día de la semana que se quiere ver; por omisión, la semana en curso
+  semana: fechaDia.optional(),
+});
+
+// ───────────── Misas celebradas (E3-09: RF-48–RF-51) ─────────────
+
+// Forma del diezmo (E4) y de una misa especial de una sola fecha (P-16): instante y padre
+const esquemaMisaSuelta = z.strictObject({
   inicio: z.iso.datetime({ offset: true, message: 'Usa fecha y hora ISO 8601.' }),
   padreId: id,
+});
+
+// A partir de una misa del horario: la hora sale del horario. Si el padre que la dio no es el
+// programado, es una sustitución y lleva motivo (RF-49)
+const esquemaMisaDeHorario = z.strictObject({
+  horarioMisaId: id,
+  fecha: fechaDia,
+  padreId: id.optional(),
+  motivo: z
+    .string()
+    .trim()
+    .min(1, 'Escribe el motivo.')
+    .max(300, 'Máximo 300 caracteres.')
+    .optional(),
+});
+
+export const esquemaCrearMisa = z.union([esquemaMisaDeHorario, esquemaMisaSuelta], {
+  error: 'Indica la misa del horario y la fecha, o el inicio y el padre.',
 });
 
 export const esquemaListarMisas = esquemaPaginacion.extend({
@@ -115,4 +141,6 @@ export type QueryBuscarPadres = z.infer<typeof esquemaBuscarPadres>;
 export type CrearHorario = z.infer<typeof esquemaCrearHorario>;
 export type ActualizarHorario = z.infer<typeof esquemaActualizarHorario>;
 export type CrearMisa = z.infer<typeof esquemaCrearMisa>;
+export type CrearMisaDeHorario = z.infer<typeof esquemaMisaDeHorario>;
+export type QueryAgenda = z.infer<typeof esquemaAgenda>;
 export type QueryListarMisas = z.infer<typeof esquemaListarMisas>;

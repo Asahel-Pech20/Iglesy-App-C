@@ -4,6 +4,7 @@
 import { crearMeta, paginar } from '../../lib/paginacion';
 import * as espaciosService from '../espacios/espacios.service';
 import * as iglesiasService from '../iglesias/iglesias.service';
+import * as horarioMisasService from '../misas/horario.service';
 import * as patrimonioService from '../patrimonio/patrimonio.service';
 import type {
   QueryBusquedaPatrimonio,
@@ -32,15 +33,16 @@ export async function listaPorEstado(query: QueryListaPublica) {
 
 /**
  * E2-11 (RF-06, RF-16, RF-18, CA-04): todo lo de una iglesia en una sola respuesta.
- * `tiposEspacio` viene del service de Oscar (E4-08, sin precios). `servicios`, `platicas` y `misas`
- * (Genaro) se llenan cuando existan sus funciones (plan-nataly.md, «Dependencias»); mientras, vacíos.
+ * `tiposEspacio` viene del service de Oscar (E4-08, sin precios). `misas` es el horario semanal con su
+ * padre (Genaro, E3-10). `servicios` y `platicas` (Genaro, E3-12 y E3-14) siguen vacíos hasta que existan.
  */
 export async function ficha(iglesiaId: string) {
   const iglesia = await iglesiasService.obtenerPublica(iglesiaId);
-  const [indices, objetos, espacios] = await Promise.all([
+  const [indices, objetos, espacios, misas] = await Promise.all([
     patrimonioService.indicesDe([iglesia]),
     patrimonioService.objetosPublicos(iglesia.id),
     espaciosService.tiposPublicos(iglesia.id),
+    horarioMisasService.horarioPublico(iglesia.id),
   ]);
   const { indice, distincion, anioCalculo } = indices.get(iglesia.id) as {
     indice: number;
@@ -55,7 +57,7 @@ export async function ficha(iglesiaId: string) {
     objetos,
     servicios: [],
     platicas: [],
-    misas: [],
+    misas,
     tiposEspacio: espacios.tipos,
   };
 }
