@@ -118,7 +118,7 @@ AppIglesia-Angular/
 | `catalogos` | Nataly | RF-09, RF-10, RNF-05 | — |
 | `iglesias` | Nataly | RF-07, RF-08, RF-11, RF-12, RNF-11 | `catalogos` |
 | `patrimonio` (`dominio/indice-patrimonial.ts`) | Nataly | RF-13–RF-18, RF-22, RNF-13 | `iglesias` |
-| `consultas` (`dominio/ranking.ts`) | Nataly | RF-01–RF-06, RF-19–RF-21, RF-23–RF-29, RNF-01, RNF-04 | `catalogos`, `iglesias`, `patrimonio`, `misas`, `servicios`, `espacios` |
+| `consultas` (`dominio/ranking.ts`) | Nataly | RF-01–RF-06, RF-19–RF-21, RF-23, RNF-01, RNF-04 | `catalogos`, `iglesias`, `patrimonio`, `misas`, `servicios`, `espacios` |
 | `misas` (`dominio/solapes.ts`) | Genaro | RF-40–RF-52, RNF-07 | — |
 | `servicios` | Genaro | RF-30–RF-39 | `iglesias`, `misas` |
 | `diezmo` (`dominio/dinero.ts`, `captura.ts`, `reportes.ts`) | Oscar | RF-60–RF-69, RNF-06, RNF-09, RNF-12 | — |
