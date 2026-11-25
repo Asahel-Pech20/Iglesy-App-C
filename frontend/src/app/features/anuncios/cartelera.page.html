@@ -28,6 +28,7 @@
     } @else if (datos(); as d) {
       <section aria-labelledby="titulo-anuncios" class="anuncios">
         <h2 id="titulo-anuncios">Anuncios</h2>
+        <app-adorno-colonial class="adorno-seccion" />
         @if (d.anuncios.length === 0) {
           <section class="tarjeta"><app-estado-vacio titulo="No hay anuncios por ahora" /></section>
         } @else {

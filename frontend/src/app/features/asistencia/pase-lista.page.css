@@ -5,6 +5,7 @@
   margin: 0 0 12px;
   font-size: 14px;
   font-weight: 500;
+  color: var(--primario);
 }
 .herramientas {
   display: flex;
@@ -40,7 +41,7 @@
   padding: 8px 12px;
 }
 .fila-miembro + .fila-miembro {
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--marco);
 }
 .nombre {
   min-width: 0;
@@ -64,7 +65,7 @@
   gap: 4px;
   padding: 0 8px;
   border: 1px solid var(--borde);
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--superficie);
   color: var(--texto);
   font: inherit;
@@ -106,7 +107,7 @@
   left: 0;
   z-index: 20;
   padding: 12px;
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--marco);
   background: var(--superficie);
 }
 @media (min-width: 768px) {

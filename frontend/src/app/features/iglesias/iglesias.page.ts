@@ -123,7 +123,7 @@ const ANCHO = { width: '40rem', maxWidth: 'calc(100vw - 32px)' };
               @for (i of datos(); track i.id) {
                 <tr>
                   <td>
-                    {{ i.nombre }}
+                    <span class="nombre-colonial">{{ i.nombre }}</span>
                     <div class="suave">{{ i.zonaHoraria }}</div>
                   </td>
                   <td>{{ tipos[i.tipo] }}</td>

@@ -24,6 +24,7 @@ import { valorDe } from '@/app/core/recurso';
 import { ICONO_CATEGORIA } from '@/app/features/eventos/estilos';
 import { AnunciosService } from './anuncios.service';
 import { TarjetaAnuncio } from './tarjeta-anuncio';
+import { AdornoColonial } from '@/app/compartido/adorno-colonial';
 
 const CINCO_MINUTOS = 5 * 60_000;
 
@@ -33,7 +34,15 @@ const CINCO_MINUTOS = 5 * 60_000;
  */
 @Component({
   selector: 'app-cartelera',
-  imports: [RouterLink, LucideAngularModule, EstadoError, EstadoVacio, Esqueleto, TarjetaAnuncio],
+  imports: [
+    RouterLink,
+    LucideAngularModule,
+    EstadoError,
+    EstadoVacio,
+    Esqueleto,
+    TarjetaAnuncio,
+    AdornoColonial,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cartelera.page.html',
   styleUrl: './cartelera.page.css',

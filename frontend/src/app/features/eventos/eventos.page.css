@@ -24,7 +24,9 @@
 .titulo-periodo {
   margin: 0;
   font-size: 20px;
-  font-weight: 600;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  color: var(--primario);
 }
 .cargando {
   opacity: 0.6;

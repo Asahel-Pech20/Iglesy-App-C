@@ -155,7 +155,10 @@ const validarMonto: ValidatorFn = (c) => {
   styles: `
     h3 {
       margin: 16px 0 4px;
-      font-size: 14px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--primario);
     }
     .cabecera {
       display: flex;
@@ -173,7 +176,10 @@ const validarMonto: ValidatorFn = (c) => {
     .monto {
       margin: 0;
       font-size: 24px;
-      font-weight: 600;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--primario);
     }
     .columna {
       display: flex;

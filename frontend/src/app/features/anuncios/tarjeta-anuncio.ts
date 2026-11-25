@@ -85,7 +85,9 @@ type DatosAnuncio = Pick<Anuncio, 'titulo' | 'contenido' | 'prioridad' | 'fechaP
     .titulo {
       margin: 0;
       font-size: 16px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .compacta .titulo {
       font-size: 14px;

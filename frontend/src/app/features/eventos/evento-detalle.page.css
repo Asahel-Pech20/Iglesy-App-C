@@ -69,7 +69,9 @@
 .cifras dd {
   margin: 0;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
 .ver-historial {
   display: inline-block;
