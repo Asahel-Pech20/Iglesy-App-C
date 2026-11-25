@@ -23,13 +23,14 @@ import { ETIQUETAS_CLASE } from '@/app/features/espacios/formato-espacios';
 import { valorDe } from '@/app/core/recurso';
 import type { FichaIglesia } from '@/app/tipos/patrimonio';
 import { TituloColonial } from './explorar-layout';
+import { MisasServiciosFicha } from './misas-servicios-ficha';
 import { ExplorarService } from './explorar.service';
 import { PildoraDistincion } from './tarjeta-iglesia';
 
 /**
  * /templos/:id — ficha de una iglesia en una sola pantalla: datos, objetos vigentes, índice y
  * distinción (E2-14: RF-06, RF-16–RF-18, CA-04), en estilo colonial. Los tipos de espacio vienen
- * de Oscar; servicios, pláticas y misas los agrega Genaro cuando existan.
+ * de Oscar; el horario de misas, los servicios y las pláticas, de Genaro (E3-18).
  */
 @Component({
   selector: 'app-ficha-iglesia',
@@ -39,6 +40,7 @@ import { PildoraDistincion } from './tarjeta-iglesia';
     EstadoError,
     Esqueleto,
     PildoraDistincion,
+    MisasServiciosFicha,
     TituloColonial,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -349,6 +351,13 @@ import { PildoraDistincion } from './tarjeta-iglesia';
             </section>
           }
         </div>
+
+        <!-- E3-18 (Genaro): horario de misas, servicios y pláticas -->
+        <app-misas-servicios-ficha
+          [misas]="f.misas"
+          [servicios]="f.servicios"
+          [platicas]="f.platicas"
+        />
 
         <section aria-labelledby="titulo-patrimonio">
           <app-titulo-colonial texto="Patrimonio" [nivel]="2" idTitulo="titulo-patrimonio" />

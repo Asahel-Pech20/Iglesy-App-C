@@ -36,6 +36,24 @@ export interface PlaticaPublica {
   horarios: HorarioSemanal[];
 }
 
+/** GET /iglesias/:id/servicios (panel de la iglesia, E3-11) */
+export interface Servicio extends ServicioPublico {
+  id: string;
+}
+
+/** Lo que se envía al crear o editar un servicio */
+export type ServicioEntrada = ServicioPublico;
+
+/** GET /iglesias/:id/platicas (panel de la iglesia, E3-13) */
+export interface Platica extends PlaticaPublica {
+  id: string;
+  padre: { id: string; nombre: string; titulo: string | null } | null;
+}
+
+export interface PlaticaEntrada extends PlaticaPublica {
+  padreId: string | null;
+}
+
 export type TipoMisa = 'DIARIA' | 'DOMINICAL' | 'ESPECIAL';
 
 /** Misa del horario semanal en la ficha pública (RF-44) */

@@ -68,10 +68,10 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E3-15 | Panel de la iglesia: padres, horario semanal (con el aviso del choque), misas celebradas y sustituciones | RF-40–51 | E3-06 a E3-09 | Pendiente |
-| E3-16 | Agenda semanal del padre (Coordinación y personal) | RF-47 | E3-08 | Pendiente |
-| E3-17 | Panel de la iglesia: servicios y pláticas | RF-30–37 | E3-11, E3-13 | Pendiente |
-| E3-18 | Ficha pública: servicios, pláticas (con filtro por tipo) y horario de misas con su padre, junto con Nataly | RF-35, RF-38, RF-39, RF-44 | E3-10, E3-12, E3-14, E2-11 | Pendiente |
+| E3-15 | Panel de la iglesia: padres, horario semanal (con el aviso del choque), misas celebradas y sustituciones | RF-40–51 | E3-06 a E3-09 | Hecha (en revisión) |
+| E3-16 | Agenda semanal del padre (Coordinación y personal) | RF-47 | E3-08 | Hecha (en revisión) |
+| E3-17 | Panel de la iglesia: servicios y pláticas | RF-30–37 | E3-11, E3-13 | Hecha (en revisión) |
+| E3-18 | Ficha pública: servicios, pláticas (con filtro por tipo) y horario de misas con su padre, junto con Nataly | RF-35, RF-38, RF-39, RF-44 | E3-10, E3-12, E3-14, E2-11 | Hecha (en revisión) |
 
 ### Datos de prueba y cierre
 
