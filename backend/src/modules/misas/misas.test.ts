@@ -50,13 +50,14 @@ describe('padres', () => {
     expect((await api(tesorero.auth).post(url, { nombre: 'Luis' })).status).toBe(403);
   });
 
-  it('otra iglesia y la Coordinación reciben 403; sin sesión, 401', async () => {
+  it('otra iglesia recibe 403; la Coordinación consulta pero no registra (E3-06); sin sesión, 401', async () => {
     const { iglesia } = await escenario();
     const url = `/iglesias/${iglesia.id}/padres`;
     const ajeno = await loginComo('ADMIN_IGLESIA', { iglesiaId: (await crearIglesia()).id });
     const coordinacion = await loginComo('COORDINACION');
     expect((await api(ajeno.auth).get(url)).status).toBe(403);
-    expect((await api(coordinacion.auth).get(url)).status).toBe(403);
+    expect((await api(coordinacion.auth).get(url)).status).toBe(200);
+    expect((await api(coordinacion.auth).post(url, { nombre: 'Luis' })).status).toBe(403);
     expect((await request(app).get(`/api/v1${url}`)).status).toBe(401);
   });
 });

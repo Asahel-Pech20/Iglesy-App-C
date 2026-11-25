@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { misasPublicas, platicasPublicas, serviciosPublicos } from './misas';
 import type { Cartelera } from '@/app/tipos/anuncios';
 import type { Iglesia } from '@/app/tipos/iglesias';
 import { anioCalculo, anioEfectivo, epoca } from '../datos/indice';
@@ -162,9 +163,10 @@ export const explorarHandlers = [
             material: o.material,
             catalogadoInah: o.catalogadoInah,
           })),
-        servicios: [],
-        platicas: [],
-        misas: [],
+        // E3-18 (Genaro)
+        servicios: serviciosPublicos(i.id),
+        platicas: platicasPublicas(i.id),
+        misas: misasPublicas(i.id),
         tiposEspacio: db.tiposEspacio
           .filter((t) => t.iglesiaId === i.id && t.activo && t.disponible)
           .map((t) => ({ id: t.id, clase: t.clase })),

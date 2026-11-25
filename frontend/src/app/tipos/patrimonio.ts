@@ -1,6 +1,7 @@
 import type { QueryLista } from './comunes';
 import type { ClaseEspacio } from './espacios';
 import type { LugarInegi, TipoIglesia } from './iglesias';
+import type { MisaPublica, PlaticaPublica, ServicioPublico } from './servicios';
 
 // Espejo de backend/src/modules/patrimonio y consultas (E2-08, E2-10–E2-13, Nataly).
 
@@ -141,9 +142,10 @@ export interface FichaIglesia {
   distincion: string | null;
   anioCalculo: number;
   objetos: ObjetoPublico[];
-  servicios: unknown[];
-  platicas: unknown[];
-  misas: unknown[];
+  /** E3-12, E3-14 y E3-10 (Genaro) */
+  servicios: ServicioPublico[];
+  platicas: PlaticaPublica[];
+  misas: MisaPublica[];
   /** Lo que la iglesia ofrece, sin precios (E4-08 de Oscar). */
   tiposEspacio: { id: string; clase: ClaseEspacio }[];
 }
