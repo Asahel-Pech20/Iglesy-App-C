@@ -1,7 +1,7 @@
 import type { Type } from '@angular/core';
 import type { Route, Routes } from '@angular/router';
 import { cambiosSinGuardar } from './core/cambios-sin-guardar';
-import { rutaProtegida, soloAnonimo } from './core/guards';
+import { rutaProtegida, sinSesion, soloAnonimo } from './core/guards';
 import { LoginPage } from './features/auth/login.page';
 import { MiCuentaPage } from './features/auth/mi-cuenta.page';
 import { RecuperarPage } from './features/auth/recuperar.page';
@@ -61,6 +61,18 @@ function explorar(path: string, children: Routes): Route {
 }
 
 export const routes: Routes = [
+  // Página de entrada de Ecclesia para visitantes sin sesión; con sesión, «/» es el inicio del panel
+  {
+    ...explorar('', [
+      {
+        path: '',
+        loadComponent: () => import('./features/explorar/landing.page').then((m) => m.LandingPage),
+        title: 'Ecclesia · Patrimonio de México',
+      },
+    ]),
+    pathMatch: 'full',
+    canMatch: [sinSesion],
+  },
   // F3-13: cartelera pública, sin sesión ni layout administrativo
   // Se carga al abrirla, como las demás pantallas públicas, para no sumar al paquete inicial
   {
