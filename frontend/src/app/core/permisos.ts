@@ -64,6 +64,8 @@ export const PERMISOS = [
   // E3-06 y E3-07 (Genaro): horario semanal y padres de la iglesia; padres a nivel nacional (P-19)
   'misas:programar',
   'padres:gestionar',
+  // E3-11 y E3-13 (Genaro): servicios y pláticas de la iglesia
+  'servicios:gestionar',
   // Iglesias del sistema nacional (solo la Coordinación)
   'iglesias:leer',
   'iglesias:crear',
@@ -129,6 +131,7 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'misas:leer',
     'misas:registrar',
     'misas:programar',
+    'servicios:gestionar',
   ],
   PASTOR: [
     'usuarios:opciones',
