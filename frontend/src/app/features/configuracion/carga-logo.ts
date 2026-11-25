@@ -95,8 +95,8 @@ import { ConfiguracionService, validarLogo } from './configuracion.service';
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      border: 1px solid var(--borde);
-      border-radius: 8px;
+      border: 1px solid var(--marco);
+      border-radius: 4px;
       background: var(--superficie-suave);
     }
     .marco img {
@@ -114,7 +114,7 @@ import { ConfiguracionService, validarLogo } from './configuracion.service';
       align-items: center;
       gap: 8px;
       border: 2px dashed var(--borde);
-      border-radius: 8px;
+      border-radius: 4px;
       padding: 24px;
       text-align: center;
     }

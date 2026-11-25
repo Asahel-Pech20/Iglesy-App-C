@@ -15,7 +15,9 @@ const ESTILOS = `
   h1 {
     margin: 0;
     font-size: 20px;
-    font-weight: 600;
+    font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
   }
   p {
     margin: 0;

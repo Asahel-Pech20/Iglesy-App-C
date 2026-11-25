@@ -173,7 +173,10 @@ const TEXTO_ACCION: Record<RespuestaSolicitud, { titulo: string; exito: string; 
     }
     h3 {
       margin-top: 16px;
-      font-size: 16px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--primario);
     }
     .pequeno {
       font-size: 12px;
@@ -192,7 +195,10 @@ const TEXTO_ACCION: Record<RespuestaSolicitud, { titulo: string; exito: string; 
     }
     .monto {
       font-size: 24px;
-      font-weight: 600;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      font-variant-numeric: tabular-nums;
+      color: var(--primario);
     }
     .acciones {
       display: flex;

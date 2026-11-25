@@ -80,16 +80,30 @@ html {
   --mat-sys-on-surface-variant: var(--texto-suave);
   --mat-sys-outline: var(--borde);
   --mat-sys-outline-variant: var(--borde);
-  --mat-sys-corner-small: 8px;
-  --mat-sys-corner-medium: 8px;
-  --mat-sys-corner-large: 8px;
-  --mat-sys-corner-extra-small: 8px;
+  /* Estilo colonial: esquinas sobrias de 4 px en todos los componentes de Material */
+  --mat-sys-corner-small: 4px;
+  --mat-sys-corner-medium: 4px;
+  --mat-sys-corner-large: 4px;
+  --mat-sys-corner-extra-small: 4px;
+  --mat-dialog-container-shape: 4px;
+  --mat-tab-active-indicator-color: var(--acento);
+  --mat-tab-active-focus-indicator-color: var(--acento);
+  --mat-tab-active-hover-indicator-color: var(--acento);
+  /* Botones rectos de 4 px (Material los hace redondos por defecto) */
+  --mat-button-filled-container-shape: 4px;
+  --mat-button-outlined-container-shape: 4px;
+  --mat-button-protected-container-shape: 4px;
+  --mat-button-tonal-container-shape: 4px;
+  --mat-button-text-container-shape: 4px;
   --mat-dialog-container-color: var(--superficie);
   --mat-menu-container-color: var(--superficie);
   --mat-select-panel-background-color: var(--superficie);
   --mat-autocomplete-background-color: var(--superficie);
   --mat-snack-bar-container-color: var(--texto);
   --mat-snack-bar-supporting-text-color: var(--fondo);
+  /* Estilo colonial: el título de los diálogos también va en serifa */
+  --mat-dialog-subhead-font: Georgia, 'Times New Roman', serif;
+  --mat-dialog-subhead-weight: 400;
 }
 
 * {
@@ -103,7 +117,8 @@ body {
 }
 
 body {
-  background: var(--fondo);
+  /* Estilo colonial en toda la app: fondo pergamino (antes --fondo) */
+  background: var(--pergamino);
   color: var(--texto);
   font-family: 'Inter Variable', system-ui, sans-serif;
   font-size: 14px;
@@ -112,6 +127,18 @@ body {
 
 a {
   color: var(--primario);
+}
+
+/* Estilo colonial: títulos en serifa. Los números van en Inter ligera (.numero-colonial). */
+h1,
+h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+}
+.numero-colonial {
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
 
 :focus-visible {
@@ -148,17 +175,32 @@ a {
 
 .tarjeta {
   background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  border: 1px solid var(--marco);
+  outline: 1px solid var(--marco);
+  outline-offset: 3px;
+  border-radius: 4px;
+  margin: 4px;
 }
 .tarjeta-cuerpo {
   padding: 16px;
 }
 .tarjeta-titulo {
   margin: 0 0 12px;
-  font-size: 16px;
-  font-weight: 600;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--primario);
+}
+/* Detalle colonial: un rombo dorado antes del título de cada tarjeta (decorativo, sin texto) */
+.tarjeta-titulo::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 10px 0 2px;
+  vertical-align: middle;
+  background: var(--acento);
+  transform: rotate(45deg);
 }
 
 .fila {
@@ -187,7 +229,7 @@ a {
 }
 
 .alerta {
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 8px 12px;
   border: 1px solid var(--borde);
 }
@@ -243,8 +285,13 @@ a {
   width: 100%;
   background: transparent;
 }
-.contenedor-tabla .fuerte {
-  font-weight: 500;
+/* Estilo colonial: el nombre principal de cada fila en serifa azul (como en patrimonio) */
+.contenedor-tabla .fuerte,
+.nombre-colonial {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--primario);
 }
 .contenedor-tabla td.acciones {
   width: 48px;
@@ -259,6 +306,9 @@ a {
 .mat-mdc-header-cell {
   color: var(--texto-suave);
   font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 .mat-mdc-menu-item .lucide {
   margin-right: 8px;
@@ -313,19 +363,47 @@ a .lucide {
 }
 .tabla-simple th {
   color: var(--texto-suave);
+  font-size: 11px;
   font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   white-space: nowrap;
+  border-bottom-color: var(--marco);
 }
 .tabla-simple .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+/* Cifras de las tablas en Inter ligera de 18 px (nunca menos: el trazo es delgado) */
+.tabla-simple td.num,
+.mat-mdc-cell.num {
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--primario);
+  white-space: nowrap;
+}
 .tabla-simple tfoot td {
   font-weight: 600;
+}
+.tabla-simple tfoot td.num {
+  font-weight: 400;
 }
 
 /* Campos de formulario: espacio mínimo bajo cada campo; crece si hay ayuda o error de varias líneas */
 form .mat-mdc-form-field-subscript-wrapper,
 .mat-mdc-dialog-content .mat-mdc-form-field-subscript-wrapper {
   min-height: 16px;
+}
+
+/* Estilo colonial: diálogos y menús con el mismo marco dorado fino que las tarjetas */
+.mat-mdc-dialog-surface,
+.mat-mdc-menu-panel,
+.mat-mdc-select-panel {
+  border: 1px solid var(--marco);
+}
+/* Pestañas: etiqueta un poco espaciada; la pestaña activa se marca en dorado (--acento) */
+.mat-mdc-tab .mdc-tab__text-label {
+  letter-spacing: 0.5px;
 }

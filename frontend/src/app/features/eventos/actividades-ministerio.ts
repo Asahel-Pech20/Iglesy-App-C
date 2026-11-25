@@ -62,7 +62,9 @@ import { PermisosMinisterioService } from './permisos-ministerio.service';
     h3 {
       margin: 16px 0 0;
       font-size: 14px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
       color: var(--texto-suave);
     }
   `,

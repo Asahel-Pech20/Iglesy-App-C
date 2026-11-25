@@ -276,7 +276,9 @@ export class HorarioFormDialogo {
     .dia {
       margin: 0 0 8px;
       font-size: 14px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .lista {
       margin: 0;
@@ -291,7 +293,7 @@ export class HorarioFormDialogo {
       padding: 12px;
     }
     .lista li + li {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     .datos {
       min-width: 0;
@@ -301,7 +303,9 @@ export class HorarioFormDialogo {
       margin: 0;
     }
     .nombre {
-      font-weight: 500;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
   `,
 })

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { Cross, LogIn, LucideAngularModule } from 'lucide-angular';
+import { LogIn, LucideAngularModule } from 'lucide-angular';
+import { AdornoColonial } from '@/app/compartido/adorno-colonial';
 
 /**
  * Título de página del estilo colonial (E2-14): centrado, en serifa y con un adorno debajo
@@ -8,7 +9,7 @@ import { Cross, LogIn, LucideAngularModule } from 'lucide-angular';
  */
 @Component({
   selector: 'app-titulo-colonial',
-  imports: [LucideAngularModule],
+  imports: [AdornoColonial],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     :host {
@@ -30,20 +31,6 @@ import { Cross, LogIn, LucideAngularModule } from 'lucide-angular';
     h2 {
       font-size: 20px;
     }
-    .adorno {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      max-width: 14rem;
-      margin: 8px auto 0;
-      color: var(--acento);
-    }
-    .adorno::before,
-    .adorno::after {
-      content: '';
-      flex: 1;
-      border-top: 1px solid var(--marco);
-    }
     .subtitulo {
       margin: 8px 0 0;
       color: var(--texto-suave);
@@ -55,9 +42,7 @@ import { Cross, LogIn, LucideAngularModule } from 'lucide-angular';
     } @else {
       <h2 [id]="idTitulo()">{{ texto() }}</h2>
     }
-    <div class="adorno" aria-hidden="true">
-      <lucide-icon [img]="iconos.Cross" [size]="14" />
-    </div>
+    <app-adorno-colonial />
     @if (subtitulo()) {
       <p class="subtitulo">{{ subtitulo() }}</p>
     }
@@ -68,7 +53,6 @@ export class TituloColonial {
   readonly subtitulo = input<string>();
   readonly nivel = input<1 | 2>(1);
   readonly idTitulo = input<string | undefined>(undefined);
-  protected readonly iconos = { Cross };
 }
 
 /**
@@ -151,7 +135,7 @@ export class TituloColonial {
   template: `
     <header>
       <div class="barra">
-        <a class="marca" routerLink="/templos">
+        <a class="marca" routerLink="/">
           <span class="nombre">Ecclesia</span>
           <span class="lema">PATRIMONIO DE MÉXICO</span>
         </a>

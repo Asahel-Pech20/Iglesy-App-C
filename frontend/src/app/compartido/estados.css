@@ -8,8 +8,13 @@
 }
 .titulo {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--primario);
+}
+.estado lucide-icon {
+  color: var(--acento);
 }
 .descripcion {
   margin: 0;
@@ -28,7 +33,7 @@
 .bloque {
   flex: 1;
   height: 20px;
-  border-radius: 8px;
+  border-radius: 4px;
   background: var(--superficie-suave);
   animation: pulso 1.5s ease-in-out infinite;
 }

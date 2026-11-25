@@ -65,7 +65,9 @@ import { MinisteriosService } from './ministerios.service';
     h1 {
       margin: 0 0 4px;
       font-size: 20px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .acciones {
       display: flex;
