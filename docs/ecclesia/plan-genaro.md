@@ -77,7 +77,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E3-19 | `seed-misas-servicios.ts`: bautizo, primera comunión, confirmación y matrimonio en cada iglesia; ≥ 2 tipos de plática por iglesia; 15 padres (≥ 3 en más de una iglesia); al menos una misa cada día de la semana en cada iglesia, sin choques. Con Oscar: 4 semanas de misas celebradas con diezmo en ≥ 6 iglesias | Seeds mínimos de `specs.md §12.8` | E3-05, E3-11, E3-13 | Pendiente |
+| E3-19 | `seed-misas-servicios.ts`: bautizo, primera comunión, confirmación y matrimonio en cada iglesia; ≥ 2 tipos de plática por iglesia; 15 padres (≥ 3 en más de una iglesia); al menos una misa cada día de la semana en cada iglesia, sin choques. Con Oscar: 4 semanas de misas celebradas con diezmo en ≥ 6 iglesias | Seeds mínimos de `specs.md §12.8` | E3-05, E3-11, E3-13 | Hecha (en revisión): horario, servicios, pláticas y 15 padres. Las 4 semanas de misas con diezmo siguen siendo las del seed de Oscar, sin enlazar al horario |
 | E3-20 | Pruebas: al menos una por regla RN-20–33, integración de los endpoints principales y cobertura ≥ 70 % en dominio y servicios de mis módulos | `specs.md §12.8` | Todas | Pendiente |
 | E3-21 | Bitácora (`docs/bitacora-ia.md`) con mis entradas y errores de la IA; matriz de trazabilidad de RF-30–52 | Sección 9 | Todas | Pendiente |
 
