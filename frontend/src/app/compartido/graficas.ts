@@ -212,8 +212,8 @@ export class TarjetaGrafica {
       height: 14rem;
       align-items: stretch;
       gap: 4px;
-      border-bottom: 1px solid var(--borde);
-      border-top: 1px dashed var(--borde);
+      border-bottom: 1px solid var(--marco);
+      border-top: 1px dashed var(--marco);
     }
     .columnas li {
       position: relative;

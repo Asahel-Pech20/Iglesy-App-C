@@ -19,7 +19,8 @@ import type { MetaPaginacion } from '@/app/tipos/comunes';
             [disabled]="meta().page <= 1"
             (click)="cambio.emit(meta().page - 1)"
           >
-            <lucide-icon [img]="izquierda" [size]="16" aria-hidden="true" /> Anterior
+            <lucide-icon [img]="izquierda" [size]="16" aria-hidden="true" />
+            <span class="etiqueta">Anterior</span>
           </button>
           <span aria-current="page" class="actual">
             <span class="corto" aria-hidden="true">{{ meta().page }} / {{ totalPaginas() }}</span>
@@ -31,7 +32,8 @@ import type { MetaPaginacion } from '@/app/tipos/comunes';
             [disabled]="meta().page >= meta().totalPages"
             (click)="cambio.emit(meta().page + 1)"
           >
-            Siguiente <lucide-icon [img]="derecha" [size]="16" aria-hidden="true" />
+            <span class="etiqueta">Siguiente</span>
+            <lucide-icon [img]="derecha" [size]="16" aria-hidden="true" />
           </button>
         </div>
       </nav>
@@ -45,7 +47,7 @@ import type { MetaPaginacion } from '@/app/tipos/comunes';
       justify-content: space-between;
       gap: 8px;
       padding: 12px 16px;
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     p {
       margin: 0;
@@ -54,6 +56,27 @@ import type { MetaPaginacion } from '@/app/tipos/comunes';
       display: flex;
       align-items: center;
       gap: 8px;
+      margin-left: auto;
+    }
+    button {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    /* Celular (< 480 px): solo las flechas, para que la paginación quepa en un renglón.
+       El texto sigue para lectores de pantalla. */
+    @media (max-width: 479.98px) {
+      button {
+        min-width: 40px;
+        padding-inline: 8px;
+      }
+      .etiqueta {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      }
     }
     .actual {
       white-space: nowrap;

@@ -22,6 +22,7 @@ import { type EntradaMenu, MENU } from '@/app/core/menu';
 import { SesionService } from '@/app/core/sesion.service';
 import { TemaService } from '@/app/core/tema.service';
 import { MarcaIglesia } from './marca-iglesia';
+import { AdornoColonial } from '@/app/compartido/adorno-colonial';
 
 /**
  * Layout principal: barra lateral fija (240 px) + barra superior + contenido.
@@ -45,6 +46,7 @@ import { MarcaIglesia } from './marca-iglesia';
     MatTooltip,
     LucideAngularModule,
     MarcaIglesia,
+    AdornoColonial,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app-layout.html',

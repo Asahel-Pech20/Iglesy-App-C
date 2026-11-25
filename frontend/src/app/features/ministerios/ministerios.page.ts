@@ -161,7 +161,9 @@ import { MinisteriosService } from './ministerios.service';
     }
     .nombre {
       font-size: 16px;
-      font-weight: 600;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     p {
       margin: 0;

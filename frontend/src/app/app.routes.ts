@@ -1,13 +1,12 @@
 import type { Type } from '@angular/core';
 import type { Route, Routes } from '@angular/router';
 import { cambiosSinGuardar } from './core/cambios-sin-guardar';
-import { rutaProtegida, soloAnonimo } from './core/guards';
+import { rutaProtegida, sinSesion, soloAnonimo } from './core/guards';
 import { LoginPage } from './features/auth/login.page';
 import { MiCuentaPage } from './features/auth/mi-cuenta.page';
 import { RecuperarPage } from './features/auth/recuperar.page';
 import { RestablecerPage } from './features/auth/restablecer.page';
 import { AnunciosPage } from './features/anuncios/anuncios.page';
-import { CarteleraPage } from './features/anuncios/cartelera.page';
 import { AsistenciaPage } from './features/asistencia/asistencia.page';
 import { PaseListaPage } from './features/asistencia/pase-lista.page';
 import { ConfiguracionPage } from './features/configuracion/configuracion.page';
@@ -62,8 +61,25 @@ function explorar(path: string, children: Routes): Route {
 }
 
 export const routes: Routes = [
+  // Página de entrada de Ecclesia para visitantes sin sesión; con sesión, «/» es el inicio del panel
+  {
+    ...explorar('', [
+      {
+        path: '',
+        loadComponent: () => import('./features/explorar/landing.page').then((m) => m.LandingPage),
+        title: 'Ecclesia · Patrimonio de México',
+      },
+    ]),
+    pathMatch: 'full',
+    canMatch: [sinSesion],
+  },
   // F3-13: cartelera pública, sin sesión ni layout administrativo
-  { path: 'cartelera', component: CarteleraPage, title: 'Cartelera' },
+  // Se carga al abrirla, como las demás pantallas públicas, para no sumar al paquete inicial
+  {
+    path: 'cartelera',
+    loadComponent: () => import('./features/anuncios/cartelera.page').then((m) => m.CarteleraPage),
+    title: 'Cartelera',
+  },
   // E2-14 (Nataly): consultas públicas de Ecclesia, sin sesión y para el celular
   explorar('templos', [
     {
