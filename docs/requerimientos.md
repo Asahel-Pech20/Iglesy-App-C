@@ -569,7 +569,7 @@ El diagrama se ajusta con las respuestas de P-26 y P-27.
 | Requerimiento | Párrafo del caso | Código | Prueba |
 |---|---|---|---|
 | RF-01 – RF-05, CA-02, CA-03 | Las iglesias, párrafo 2 | `GET /public/iglesias?estado=` (`consultas.service.ts` `listaPorEstado`, `iglesias.service.ts` `listarPublicas`); pantalla `/templos` | `iglesias.test.ts` (E2-07), `consultas.test.ts` (CA-02), `prueba/patrimonio.spec.ts` |
-| RF-06, RF-16, CA-04 | Las iglesias · El patrimonio | `GET /public/iglesias/:iglesiaId` (`consultas.service.ts` `ficha`); pantalla `/templos/:id`. Servicios, pláticas, misas y espacios: pendientes de los services de Genaro y Oscar | `consultas.test.ts` (CA-04), `prueba/patrimonio.spec.ts` |
+| RF-06, RF-16, CA-04 | Las iglesias · El patrimonio | `GET /public/iglesias/:iglesiaId` (`consultas.service.ts` `ficha`); pantalla `/templos/:id`. Servicios, pláticas y misas vienen de los services de Genaro (E3-10, E3-12, E3-14) y los tipos de espacio del de Oscar (E4-08) | `consultas.test.ts` (CA-04), `prueba/patrimonio.spec.ts` |
 | RF-07, RF-09, CA-09 | Las iglesias | `POST /iglesias` (`iglesias.service.ts` `crear`, `catalogos.service.ts` `validarUbicacion`); diálogo `iglesia-form.dialogo.ts` | `iglesias.test.ts` (E2-06, CA-09), `prueba/patrimonio.spec.ts` |
 | RF-08 | Quién usará el sistema | `PATCH /iglesias/:iglesiaId` con `alcanceIglesia` | `iglesias.test.ts` (E2-06, A2-E2-01/03) |
 | RF-10 | Las iglesias · Quién usará el sistema | `POST /catalogos/importacion`, `prisma/catalogos-inegi.ts` (`db:catalogos`) | `catalogos.test.ts` |
@@ -580,8 +580,19 @@ El diagrama se ajusta con las respuestas de P-26 y P-27.
 | RF-19 – RF-21, RN-12, RN-13, CA-06 | Las iglesias más reconocidas | `GET /public/reconocidas` (`consultas/dominio/ranking.ts`); pantalla `/reconocidas` | `ranking.test.ts`, `consultas.test.ts` (CA-06), `prueba/patrimonio.spec.ts` |
 | RF-22, CA-07 | Las iglesias más reconocidas | `/criterios-indice` (`patrimonio.service.ts` `guardarCriterios`); pantalla `/criterios-indice` | `patrimonio.test.ts` (CA-07), `consultas.test.ts` (CA-07 en el ranking), `prueba/patrimonio.spec.ts` |
 | RF-23, CA-08 | Las iglesias más reconocidas | `GET /public/busqueda-patrimonio` (`consultas.service.ts`, `patrimonio.service.ts` `iglesiasConObjeto`); pantalla `/busqueda-patrimonio` | `consultas.test.ts` (CA-08), `prueba/patrimonio.spec.ts` |
+| RF-30 – RF-34, RN-22, RN-23, CA-10 | Los servicios y las pláticas | `/iglesias/:iglesiaId/servicios` (`servicios.service.ts`, `errorDeCosto` en `servicios.schemas.ts`); pantalla `/servicios` | `servicios.test.ts` (E3-11), `prueba/servicios.spec.ts` |
+| RF-35, RN-33, CA-10 | Los servicios y las pláticas · Quién usará el sistema | `serviciosPublicos` en la ficha `GET /public/iglesias/:iglesiaId`; `misas-servicios-ficha.ts` | `servicios.test.ts` (ficha), `prueba/servicios.spec.ts` (E3-18) |
+| RF-36, RF-37, RN-24, RN-25, CA-11 | Los servicios y las pláticas | `/iglesias/:iglesiaId/platicas` (`servicios.service.ts`); pantalla `/servicios`, pestaña Pláticas | `servicios.test.ts` (E3-13), `prueba/servicios.spec.ts` |
+| RF-38, RF-39, CA-11 | Los servicios y las pláticas | `GET /public/iglesias/:iglesiaId/platicas?tipo=` (`platicasDeIglesiaPublica`); filtro «¿Cuándo son las pláticas de…?» en la ficha | `servicios.test.ts` (consulta pública), `prueba/servicios.spec.ts` (RF-39) |
+| RF-40, RF-41, RN-28 | Las misas y los padres | `/padres` y `/iglesias/:iglesiaId/padres` (`padres.service.ts`); pestaña Padres de `/misas`, `/padres` | `padres-horario.test.ts` (E3-06), `misas.migracion.test.ts`, `prueba/misas.spec.ts` |
+| RF-42, RF-43, RF-46, RN-20, RN-21, RN-27 | Las misas y los padres | `/iglesias/:iglesiaId/horario-misas` (`horario.service.ts`); `duracionEfectiva` en `misas/dominio/solapes.ts`; pestaña Horario de `/misas` | `padres-horario.test.ts` (E3-07), `solapes.test.ts` (RN-27), `misas.migracion.test.ts`, `prueba/misas.spec.ts` |
+| RF-44, RF-52, RN-31, CA-12, CA-16 | Las misas y los padres | `horarioPublico` en la ficha pública; hora local en `misas/dominio/solapes.ts` | `celebradas-agenda.test.ts` (E3-10), `solapes.test.ts` (RN-31), `prueba/servicios.spec.ts` |
+| RF-45, RN-26, CA-13, CA-14 | Las misas y los padres | `misas/dominio/solapes.ts` (choques en el momento real, P-15); 409 con la misa con la que choca y bloqueo `FOR UPDATE` en `horario.service.ts` | `solapes.test.ts`, `padres-horario.test.ts` (choques, zonas horarias, altas simultáneas), `prueba/misas.spec.ts` (RF-45) |
+| RF-47, CA-17 | Las misas y los padres | `GET /padres/:padreId/agenda?semana=`; pantalla `/padres/:id/agenda` | `celebradas-agenda.test.ts` (E3-08), `prueba/misas.spec.ts` (E3-16) |
+| RF-48 – RF-51, RN-29, RN-30, CA-15 | Las misas y los padres | `/iglesias/:iglesiaId/misas-celebradas` (`misas.service.ts`); `SustitucionMisa` de solo inserción (disparador en la migración `e3_05`); pestaña Celebradas de `/misas` | `celebradas-agenda.test.ts` (E3-09), `misas.migracion.test.ts` (RN-30: no se edita ni se borra), `prueba/misas.spec.ts` |
+| RN-32 | Quién usará el sistema | `alcanceIglesia` en `misas.routes.ts` y `servicios.routes.ts`; permisos `misas:programar`, `misas:registrar`, `servicios:gestionar`, `padres:gestionar` | `padres-horario.test.ts` (acceso), `servicios.test.ts` (acceso), `misas.test.ts`, `config/permisos.test.ts` |
 
-Rutas de código relativas a `backend/src/modules/` y `frontend/src/app/`. Datos de prueba: `backend/prisma/seed-patrimonio.ts` (E2-09, `seed.test.ts`).
+Rutas de código relativas a `backend/src/modules/` y `frontend/src/app/`. Datos de prueba: `backend/prisma/seed-patrimonio.ts` (E2-09, `seed.test.ts`). Misas, servicios y pláticas: `backend/prisma/seed-misas-servicios.ts` (E3-19, `misas/seed-misas-servicios.test.ts`).
 
 ### 9.1 Requerimientos no funcionales (Santiago)
 

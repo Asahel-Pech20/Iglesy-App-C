@@ -1,0 +1,960 @@
+{
+  "info": {
+    "name": "Ecclesia · Servicios, pláticas, misas y padres (Genaro)",
+    "description": "Rutas de E3 (RF-30–RF-52). Detalle en docs/ecclesia/api-misas-servicios.md y backend/openapi.yaml. Primero corre una carpeta «Sesión»: guarda el token y la iglesia. Las altas guardan su id en las variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "password",
+      "value": "Iglesia123",
+      "description": "SEED_PASSWORD de backend/.env.example"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "iglesiaId",
+      "value": ""
+    },
+    {
+      "key": "padreId",
+      "value": ""
+    },
+    {
+      "key": "horarioId",
+      "value": ""
+    },
+    {
+      "key": "servicioId",
+      "value": ""
+    },
+    {
+      "key": "platicaId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Sesión",
+      "item": [
+        {
+          "name": "Entrar como administrador de iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.data.accessToken);",
+                  "if (r.data.iglesia) pm.collectionVariables.set('iglesiaId', r.data.iglesia.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@iglesia.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Entrar como tesorero",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.data.accessToken);",
+                  "if (r.data.iglesia) pm.collectionVariables.set('iglesiaId', r.data.iglesia.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tesorero@iglesia.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Entrar como Coordinación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.data.accessToken);",
+                  "if (r.data.iglesia) pm.collectionVariables.set('iglesiaId', r.data.iglesia.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"coordinacion@iglesia.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Padres",
+      "item": [
+        {
+          "name": "Padres de la iglesia",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/padres",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "padres"]
+            }
+          }
+        },
+        {
+          "name": "Crear y asociar un padre",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/padres",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "padres"]
+            },
+            "description": "Si ya existe → 409; entonces usa «Asociar un padre existente».",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Pérez Canul\",\n  \"titulo\": \"Pbro.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('padreId', r.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Asociar un padre existente",
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/padres/{{padreId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "padres", "{{padreId}}"]
+            }
+          }
+        },
+        {
+          "name": "Desasociar un padre",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/padres/{{padreId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "padres", "{{padreId}}"]
+            },
+            "description": "Con misas en el horario → 422."
+          }
+        },
+        {
+          "name": "Buscar padres del país",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/padres?q=Pérez&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Pérez"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear padre (Coordinación)",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/padres",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ramón Caamal Dzib\",\n  \"titulo\": \"Fr.\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('padreId', r.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Corregir padre (Coordinación)",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/padres/{{padreId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres", "{{padreId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Mons.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Agenda semanal del padre",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/padres/{{padreId}}/agenda?semana=2026-11-22",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres", "{{padreId}}", "agenda"],
+              "query": [
+                {
+                  "key": "semana",
+                  "value": "2026-11-22"
+                }
+              ]
+            },
+            "description": "RF-47. Sin semana, la actual."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Horario de misas",
+      "item": [
+        {
+          "name": "Horario de la iglesia",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/horario-misas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "horario-misas"]
+            }
+          }
+        },
+        {
+          "name": "Programar una misa",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/horario-misas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "horario-misas"]
+            },
+            "description": "Si el padre ya tiene una misa que se empalma → 409 con el día, la hora y la iglesia (RN-26).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diaSemana\": 0,\n  \"hora\": \"10:00\",\n  \"tipo\": \"DOMINICAL\",\n  \"idioma\": \"ESPANOL\",\n  \"duracionMin\": 60,\n  \"padreId\": \"{{padreId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('horarioId', r.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Choque: misma hora con el mismo padre",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/horario-misas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "horario-misas"]
+            },
+            "description": "Correr después de «Programar una misa»: espera 409 (CA-13).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diaSemana\": 0,\n  \"hora\": \"10:30\",\n  \"tipo\": \"DOMINICAL\",\n  \"padreId\": \"{{padreId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Cambiar una misa",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/horario-misas/{{horarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "horario-misas", "{{horarioId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hora\": \"12:00\",\n  \"idioma\": \"MAYA\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Quitar una misa del horario",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/horario-misas/{{horarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "horario-misas", "{{horarioId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Misas celebradas",
+      "item": [
+        {
+          "name": "Misas celebradas",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/misas-celebradas?desde=2026-11-01&hasta=2026-11-30",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "misas-celebradas"],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "2026-11-01"
+                },
+                {
+                  "key": "hasta",
+                  "value": "2026-11-30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar desde el horario",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/misas-celebradas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "misas-celebradas"]
+            },
+            "description": "La fecha debe caer en el día del horario y no estar en el futuro.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horarioMisaId\": \"{{horarioId}}\",\n  \"fecha\": \"2026-11-22\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Registrar con sustitución",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/misas-celebradas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "misas-celebradas"]
+            },
+            "description": "RF-49: cambia padreId por el de otro padre de la iglesia (distinto del programado); el motivo es obligatorio.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horarioMisaId\": \"{{horarioId}}\",\n  \"fecha\": \"2026-11-15\",\n  \"padreId\": \"{{padreId}}\",\n  \"motivo\": \"El titular estaba enfermo.\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Servicios",
+      "item": [
+        {
+          "name": "Servicios de la iglesia",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/servicios",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "servicios"]
+            }
+          }
+        },
+        {
+          "name": "Registrar un servicio",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/servicios",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "servicios"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Bautizo\",\n  \"formaCosto\": \"MONTO\",\n  \"monto\": \"350.00\",\n  \"requisitos\": \"Acta de nacimiento y plática prebautismal.\",\n  \"duracionMin\": 60,\n  \"requiereCita\": true,\n  \"horarios\": [\n    {\n      \"diaSemana\": 6,\n      \"hora\": \"10:00\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('servicioId', r.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar un servicio",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/servicios/{{servicioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "servicios", "{{servicioId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"formaCosto\": \"DONATIVO\",\n  \"monto\": null\n}"
+            }
+          }
+        },
+        {
+          "name": "Quitar un servicio",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/servicios/{{servicioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "servicios", "{{servicioId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pláticas",
+      "item": [
+        {
+          "name": "Pláticas de la iglesia",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/platicas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "platicas"]
+            }
+          }
+        },
+        {
+          "name": "Registrar una plática",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/platicas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "platicas"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"PREBAUTISMAL\",\n  \"sesiones\": 2,\n  \"costo\": \"0.00\",\n  \"cupo\": 30,\n  \"lugar\": \"Salón parroquial\",\n  \"imparte\": \"Equipo de pastoral\",\n  \"horarios\": [\n    {\n      \"diaSemana\": 3,\n      \"hora\": \"19:00\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('platicaId', r.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Modificar una plática",
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/platicas/{{platicaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "platicas", "{{platicaId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cupo\": 40\n}"
+            }
+          }
+        },
+        {
+          "name": "Quitar una plática",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/platicas/{{platicaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "platicas", "{{platicaId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Público (sin sesión)",
+      "item": [
+        {
+          "name": "Ficha con misas, servicios y pláticas",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias/{{iglesiaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias", "{{iglesiaId}}"]
+            }
+          }
+        },
+        {
+          "name": "¿Cuándo son las pláticas de bautizo?",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias/{{iglesiaId}}/platicas?tipo=PREBAUTISMAL",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias", "{{iglesiaId}}", "platicas"],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "PREBAUTISMAL"
+                }
+              ]
+            },
+            "description": "RF-39."
+          }
+        }
+      ]
+    }
+  ]
+}

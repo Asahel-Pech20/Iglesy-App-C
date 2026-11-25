@@ -40,46 +40,46 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
 | E3-01 | Llevar P-10–P-19 (con los supuestos de arriba) a la sesión con el docente y anotar las respuestas en la sección 8 | Sección 8 | Sesión con el docente | Pendiente |
-| E3-02 | Definir en `docs/modelo-datos.md`: `PadreIglesia`, `HorarioMisa`, `SustitucionMisa`, ampliar `Padre` y `MisaCelebrada`; `Servicio`, `HorarioServicio` y `Platica` | RN-20–33 | Santiago integra el modelo | Hecha (en revisión): misas en E3-05; servicios y pláticas en E3-11 y E3-13 |
-| E3-03 | Diseñar las rutas (`docs/ecclesia/api-misas-servicios.md`) y agregarlas a `openapi.yaml` y a Postman | RF-30–52 | E3-02 | Pendiente |
+| E3-02 | Definir en `docs/modelo-datos.md`: `PadreIglesia`, `HorarioMisa`, `SustitucionMisa`, ampliar `Padre` y `MisaCelebrada`; `Servicio`, `HorarioServicio` y `Platica` | RN-20–33 | Santiago integra el modelo | Hecha (PR #34, en `main`): misas en E3-05; servicios y pláticas en E3-11 y E3-13 |
+| E3-03 | Diseñar las rutas (`docs/ecclesia/api-misas-servicios.md`) y agregarlas a `openapi.yaml` y a Postman | RF-30–52 | E3-02 | Hecha: [`api-misas-servicios.md`](api-misas-servicios.md), rutas en `openapi.yaml` (PR #34) y colección [`postman/misas-servicios.postman_collection.json`](postman/misas-servicios.postman_collection.json) (29 peticiones). Hecha por Nataly con permiso de Genaro |
 
 ### Fase 2 · Misas y padres (prioridad)
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E3-04 | Dominio puro `misas/dominio/solapes.ts`: intervalo de una misa (hora local → UTC con `instanteLocal` de E1-04), duración por defecto de 60 min y detección de choques; el «ahora» llega como parámetro | RN-26, RN-27, RN-31, P-15 | E1-04 (hecha) | Hecha (en revisión) |
+| E3-04 | Dominio puro `misas/dominio/solapes.ts`: intervalo de una misa (hora local → UTC con `instanteLocal` de E1-04), duración por defecto de 60 min y detección de choques; el «ahora» llega como parámetro | RN-26, RN-27, RN-31, P-15 | E1-04 (hecha) | Hecha (PR #34, en `main`) |
 | E3-05 | Migración: `Padre` + título; `PadreIglesia` (padre ↔ iglesia); `HorarioMisa` (día, hora local, tipo, idioma, duración, padre); `MisaCelebrada` + `horarioMisaId` y `padreProgramadoId`; `SustitucionMisa` inmutable. Sin romper el diezmo de Oscar | RF-40–43, RF-46, RN-20, RN-21, RN-28–30 | E3-02, revisión de Santiago y Oscar | Hecha (en revisión de Santiago y Oscar) |
-| E3-06 | Padres: la Coordinación crea y edita; la iglesia asocia y desasocia los suyos; listar padres de una iglesia | RF-40, RF-41, RN-28, RN-32 | E3-05 | Hecha (en revisión) |
-| E3-07 | Horario semanal: crear, cambiar y dar de baja misas con su padre; rechaza el choque (409) e indica la iglesia, el día y la hora de la misa con la que choca | RF-42, RF-43, RF-45, RF-46, RN-26, CA-12–14 | E3-04, E3-06 | Hecha (en revisión) |
-| E3-08 | Agenda semanal de un padre: sus misas de todas las iglesias, en la hora local de cada una | RF-47, CA-17, P-18 | E3-07 | Hecha (en revisión) |
-| E3-09 | Misa celebrada a partir del horario y sustitución con motivo; la sustitución guarda quién cambió, programado, real, motivo y fecha, y no se edita | RF-48–51, RN-29, RN-30, CA-15, P-17 | E3-07 | Hecha (en revisión) |
-| E3-10 | Consulta pública del horario de misas con su padre, en la hora local de la iglesia; función del `service` para la ficha de Nataly (E2-11) | RF-44, RF-52, RN-31, RN-33, CA-12, CA-16 | E3-07 | Hecha (en revisión) |
+| E3-06 | Padres: la Coordinación crea y edita; la iglesia asocia y desasocia los suyos; listar padres de una iglesia | RF-40, RF-41, RN-28, RN-32 | E3-05 | Hecha (PR #34, en `main`) |
+| E3-07 | Horario semanal: crear, cambiar y dar de baja misas con su padre; rechaza el choque (409) e indica la iglesia, el día y la hora de la misa con la que choca | RF-42, RF-43, RF-45, RF-46, RN-26, CA-12–14 | E3-04, E3-06 | Hecha (PR #34, en `main`) |
+| E3-08 | Agenda semanal de un padre: sus misas de todas las iglesias, en la hora local de cada una | RF-47, CA-17, P-18 | E3-07 | Hecha (PR #34, en `main`) |
+| E3-09 | Misa celebrada a partir del horario y sustitución con motivo; la sustitución guarda quién cambió, programado, real, motivo y fecha, y no se edita | RF-48–51, RN-29, RN-30, CA-15, P-17 | E3-07 | Hecha (PR #34, en `main`) |
+| E3-10 | Consulta pública del horario de misas con su padre, en la hora local de la iglesia; función del `service` para la ficha de Nataly (E2-11) | RF-44, RF-52, RN-31, RN-33, CA-12, CA-16 | E3-07 | Hecha (PR #34, en `main`) |
 
 ### Fase 1 · Servicios y pláticas
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E3-11 | Migración y CRUD de servicios con costo, gratuito o donativo, requisitos, duración, cita y horarios | RF-30–34, RN-22, RN-23, CA-10 | E3-02 | Hecha (en revisión) |
-| E3-12 | Consulta pública de servicios de una iglesia, con función del `service` para la ficha | RF-35, RN-33 | E3-11 | Hecha (en revisión) |
-| E3-13 | Migración y CRUD de pláticas: tipo, días y hora, sesiones, costo exacto, cupo, lugar y quién la da | RF-36, RF-37, RN-24, RN-25, CA-11 | E3-02 | Hecha (en revisión) |
-| E3-14 | Consulta pública de pláticas y «¿cuándo son las pláticas de bautizo?» (filtro por tipo) | RF-38, RF-39, CA-11 | E3-13 | Hecha (en revisión) |
+| E3-11 | Migración y CRUD de servicios con costo, gratuito o donativo, requisitos, duración, cita y horarios | RF-30–34, RN-22, RN-23, CA-10 | E3-02 | Hecha (PR #34, en `main`) |
+| E3-12 | Consulta pública de servicios de una iglesia, con función del `service` para la ficha | RF-35, RN-33 | E3-11 | Hecha (PR #34, en `main`) |
+| E3-13 | Migración y CRUD de pláticas: tipo, días y hora, sesiones, costo exacto, cupo, lugar y quién la da | RF-36, RF-37, RN-24, RN-25, CA-11 | E3-02 | Hecha (PR #34, en `main`) |
+| E3-14 | Consulta pública de pláticas y «¿cuándo son las pláticas de bautizo?» (filtro por tipo) | RF-38, RF-39, CA-11 | E3-13 | Hecha (PR #34, en `main`) |
 
 ### Interfaz (Angular)
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E3-15 | Panel de la iglesia: padres, horario semanal (con el aviso del choque), misas celebradas y sustituciones | RF-40–51 | E3-06 a E3-09 | Hecha (en revisión) |
-| E3-16 | Agenda semanal del padre (Coordinación y personal) | RF-47 | E3-08 | Hecha (en revisión) |
-| E3-17 | Panel de la iglesia: servicios y pláticas | RF-30–37 | E3-11, E3-13 | Hecha (en revisión) |
-| E3-18 | Ficha pública: servicios, pláticas (con filtro por tipo) y horario de misas con su padre, junto con Nataly | RF-35, RF-38, RF-39, RF-44 | E3-10, E3-12, E3-14, E2-11 | Hecha (en revisión) |
+| E3-15 | Panel de la iglesia: padres, horario semanal (con el aviso del choque), misas celebradas y sustituciones | RF-40–51 | E3-06 a E3-09 | Hecha (PR #34, en `main`) |
+| E3-16 | Agenda semanal del padre (Coordinación y personal) | RF-47 | E3-08 | Hecha (PR #34, en `main`) |
+| E3-17 | Panel de la iglesia: servicios y pláticas | RF-30–37 | E3-11, E3-13 | Hecha (PR #34, en `main`) |
+| E3-18 | Ficha pública: servicios, pláticas (con filtro por tipo) y horario de misas con su padre, junto con Nataly | RF-35, RF-38, RF-39, RF-44 | E3-10, E3-12, E3-14, E2-11 | Hecha (PR #34, en `main`) |
 
 ### Datos de prueba y cierre
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E3-19 | `seed-misas-servicios.ts`: bautizo, primera comunión, confirmación y matrimonio en cada iglesia; ≥ 2 tipos de plática por iglesia; 15 padres (≥ 3 en más de una iglesia); al menos una misa cada día de la semana en cada iglesia, sin choques. Con Oscar: 4 semanas de misas celebradas con diezmo en ≥ 6 iglesias | Seeds mínimos de `specs.md §12.8` | E3-05, E3-11, E3-13 | Hecha (en revisión): horario, servicios, pláticas y 15 padres. Las 4 semanas de misas con diezmo siguen siendo las del seed de Oscar, sin enlazar al horario |
-| E3-20 | Pruebas: al menos una por regla RN-20–33, integración de los endpoints principales y cobertura ≥ 70 % en dominio y servicios de mis módulos | `specs.md §12.8` | Todas | Pendiente |
-| E3-21 | Bitácora (`docs/bitacora-ia.md`) con mis entradas y errores de la IA; matriz de trazabilidad de RF-30–52 | Sección 9 | Todas | Pendiente |
+| E3-19 | `seed-misas-servicios.ts`: bautizo, primera comunión, confirmación y matrimonio en cada iglesia; ≥ 2 tipos de plática por iglesia; 15 padres (≥ 3 en más de una iglesia); al menos una misa cada día de la semana en cada iglesia, sin choques. Con Oscar: 4 semanas de misas celebradas con diezmo en ≥ 6 iglesias | Seeds mínimos de `specs.md §12.8` | E3-05, E3-11, E3-13 | Hecha (PR #34, en `main`): horario, servicios, pláticas y 15 padres. Las 4 semanas de misas con diezmo siguen siendo las del seed de Oscar, sin enlazar al horario |
+| E3-20 | Pruebas: al menos una por regla RN-20–33, integración de los endpoints principales y cobertura ≥ 70 % en dominio y servicios de mis módulos | `specs.md §12.8` | Todas | Hecha: cada regla RN-20 a RN-33 tiene al menos una prueba (ver la columna «Prueba» de la matriz, §9 de `requerimientos.md`); integración en `padres-horario.test.ts`, `celebradas-agenda.test.ts`, `misas.test.ts` y `servicios.test.ts`; cobertura de `misas` y `servicios` de 98 % de líneas medida en el PR #34 |
+| E3-21 | Bitácora (`docs/bitacora-ia.md`) con mis entradas y errores de la IA; matriz de trazabilidad de RF-30–52 | Sección 9 | Todas | Hecha: bitácora entradas 68 a 74 (PR #34) y filas RF-30 a RF-52 en la matriz de trazabilidad (§9 de `requerimientos.md`), hechas por Nataly con permiso de Genaro |
 
 ## Lo que necesito de otros
 
@@ -87,7 +87,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 |---|---|---|
 | Santiago | Revisar la migración (E3-05, E3-11, E3-13) y que use `alcanceIglesia` e `iglesiaDe` como el resto | E3-05 |
 | Oscar | Confirmar que `MisaCelebrada` ampliada sigue sirviendo al diezmo (E4-12/E4-13) y repartir el seed de 4 semanas | E3-05, E3-19 |
-| Nataly | Las funciones del `service` que usa la ficha pública (E2-11) | E3-10, E3-12, E3-14 |
+| Nataly | Las funciones del `service` que usa la ficha pública (E2-11): hecho, la ficha ya las llama (PR #34) | E3-10, E3-12, E3-14 |
 
 ## Entregables de equipo que siguen pendientes (no son solo míos)
 
