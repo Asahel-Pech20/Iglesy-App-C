@@ -24,8 +24,8 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 |---|---|---|---|---|
 | E2-01 | Llevar P-01–P-09 a la sesión con el docente y anotar las respuestas | Sección 8 | Sesión con el docente | Pendiente |
 | E2-02 | Ajustar requerimientos con esas respuestas (en especial RN-15 con P-01) | Sección 2.1 | E2-01 | Pendiente |
-| E2-03 | Definir `Estado`, `Municipio`, `Localidad`, la ampliación de `Iglesia`, `ObjetoPatrimonial` y `CriteriosIndice` para `docs/modelo-datos.md` | RN-07–RN-16 | Santiago integra el modelo | Propuesta abajo |
-| E2-04 | Diseñar las rutas de catálogos, iglesias, patrimonio, índice, ranking y búsqueda | RF-01–RF-23 | E2-03 | Propuesta en [api-iglesias-patrimonio.md](api-iglesias-patrimonio.md) |
+| E2-03 | Definir `Estado`, `Municipio`, `Localidad`, la ampliación de `Iglesia`, `ObjetoPatrimonial` y `CriteriosIndice` para `docs/modelo-datos.md` | RN-07–RN-16 | Santiago integra el modelo | Hecha: integrada en [docs/modelo-datos.md](../modelo-datos.md) (E1-07 de Santiago), con `ObjetoPatrimonial` y `CriteriosIndice` del PR #20 |
+| E2-04 | Diseñar las rutas de catálogos, iglesias, patrimonio, índice, ranking y búsqueda | RF-01–RF-23 | E2-03 | Hecha: propuesta en [api-iglesias-patrimonio.md](api-iglesias-patrimonio.md), implementada en el PR #20 y documentada en `backend/openapi.yaml` |
 
 ### Fase 1 · Base y catálogos (Entrega 2)
 
@@ -33,27 +33,27 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 |---|---|---|---|---|
 | E2-05 | Migración y carga del catálogo del INEGI: 32 estados, sus municipios y las localidades donde haya iglesias | RF-09, RF-10, RN-09, RNF-05 | Revisión de Santiago | Hecha (PR #6, en `main`); Auditoría 2 atendida |
 | E2-06 | Ampliar `Iglesia` (ubicación, dirección, capacidad, año, contacto, coordenadas, cierre) sobre el módulo mínimo de Oscar | RF-07, RF-08, RF-11, RF-12, RN-07–RN-09, CA-09 | E2-05, `alcanceIglesia` | Hecha (PR #6, en `main`); Auditoría 2 atendida |
-| E2-07 | Lista pública por estado con filtros de municipio, localidad, tipo, nombre y capacidad | RF-01–RF-05, CA-02, CA-03 | E2-06, P-02, P-03 | Hecha en la PR #20 (en revisión); P-02 y P-03 como supuestos |
-| E2-08 | Objetos: migración, registro, edición y cambio de estado (perdido, prestado, baja) | RF-13–RF-15, RF-17, RN-10, RN-11, RN-16 | E2-06, P-06, P-08 | Hecha en la PR #20 (en revisión); P-06 y P-08 como supuestos |
-| E2-09 | Seeds: 40 iglesias en ≥ 3 estados y ≥ 8 municipios con todos los tipos; 120 objetos (≥ 15 de 200 años o más y ≥ 5 de 300 o más) | Datos de prueba | E2-05, E2-08 | Hecha en la PR #20 (en revisión): 40 iglesias en 5 estados y 12 municipios, 120 objetos |
+| E2-07 | Lista pública por estado con filtros de municipio, localidad, tipo, nombre y capacidad | RF-01–RF-05, CA-02, CA-03 | E2-06, P-02, P-03 | Hecha (PR #20, en `main`); P-02 y P-03 como supuestos |
+| E2-08 | Objetos: migración, registro, edición y cambio de estado (perdido, prestado, baja) | RF-13–RF-15, RF-17, RN-10, RN-11, RN-16 | E2-06, P-06, P-08 | Hecha (PR #20, en `main`); P-06 y P-08 como supuestos |
+| E2-09 | Seeds: 40 iglesias en ≥ 3 estados y ≥ 8 municipios con todos los tipos; 120 objetos (≥ 15 de 200 años o más y ≥ 5 de 300 o más) | Datos de prueba | E2-05, E2-08 | Hecha (PR #20, en `main`): 40 iglesias en 5 estados y 12 municipios, 120 objetos |
 
 ### Fase 3 · Índice, consultas e interfaz (Entrega 4)
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E2-10 | Llevar `indice-patrimonial.ts` del módulo de referencia a `modules/iglesias/dominio/`, con los tipos de RN-16 y los criterios leídos de la BD; rutas para consultarlos y cambiarlos | RF-18, RF-22, RN-01–RN-06, RN-14, RN-15, CA-01, CA-05, CA-07 | E2-08, P-01 | Hecha en la PR #20 (en revisión); el dominio quedó en `modules/patrimonio/dominio/` (el módulo dueño de los objetos); P-01 como supuesto |
-| E2-11 | Ficha pública: datos, objetos vigentes, índice y distinción, más servicios, pláticas, misas con su padre y tipos de espacio de los otros módulos | RF-06, RF-16, RF-18, CA-04 | E2-10, services de Genaro y Oscar, P-05 | Hecha en el PR #20 (en revisión): con los tipos de espacio de Oscar; servicios, pláticas y misas van vacíos hasta que Genaro publique sus funciones |
-| E2-12 | Ranking del país, estado, municipio o ciudad | RF-19–RF-21, RN-12, RN-13, CA-06 | E2-10, P-07 | Hecha en la PR #20 (en revisión); P-07 como supuesto |
-| E2-13 | Búsqueda del investigador por tipo de objeto y antigüedad en un lugar | RF-23, CA-08 | E2-10, P-09 | Hecha en la PR #20 (en revisión); P-09 como supuesto |
-| E2-14 | Pantallas públicas en Angular, a 360 px: lista por estado, ficha, reconocidas y búsqueda | RF-01–RF-06, RF-16, RF-19–RF-23, RNF-02 | E2-07, E2-11–E2-13 | Hecha en la PR #20 (en revisión); falta revisarla a ojo a 360 px |
-| E2-15 | Panel en Angular: ampliar la pantalla de iglesias de Oscar; objetos y criterios del índice | RF-07–RF-15, RF-17, RF-22 | Tareas de backend | Hecha en la PR #20 (en revisión) |
+| E2-10 | Llevar `indice-patrimonial.ts` del módulo de referencia a `modules/iglesias/dominio/`, con los tipos de RN-16 y los criterios leídos de la BD; rutas para consultarlos y cambiarlos | RF-18, RF-22, RN-01–RN-06, RN-14, RN-15, CA-01, CA-05, CA-07 | E2-08, P-01 | Hecha (PR #20, en `main`); el dominio quedó en `modules/patrimonio/dominio/` (el módulo dueño de los objetos); P-01 como supuesto |
+| E2-11 | Ficha pública: datos, objetos vigentes, índice y distinción, más servicios, pláticas, misas con su padre y tipos de espacio de los otros módulos | RF-06, RF-16, RF-18, CA-04 | E2-10, services de Genaro y Oscar, P-05 | Hecha (PR #20, en `main`): con los tipos de espacio de Oscar; servicios, pláticas y misas van vacíos hasta que Genaro publique sus funciones |
+| E2-12 | Ranking del país, estado, municipio o ciudad | RF-19–RF-21, RN-12, RN-13, CA-06 | E2-10, P-07 | Hecha (PR #20, en `main`); P-07 como supuesto |
+| E2-13 | Búsqueda del investigador por tipo de objeto y antigüedad en un lugar | RF-23, CA-08 | E2-10, P-09 | Hecha (PR #20, en `main`); P-09 como supuesto |
+| E2-14 | Pantallas públicas en Angular, a 360 px: lista por estado, ficha, reconocidas y búsqueda | RF-01–RF-06, RF-16, RF-19–RF-23, RNF-02 | E2-07, E2-11–E2-13 | Hecha (PR #20, en `main`); revisada a 360 y 1280 px, en claro y oscuro. Estilo colonial en el PR #28 y en toda la app en el PR #30; página de entrada en `/` (PR #31) y cartelera en la ficha (PR #29) |
+| E2-15 | Panel en Angular: ampliar la pantalla de iglesias de Oscar; objetos y criterios del índice | RF-07–RF-15, RF-17, RF-22 | Tareas de backend | Hecha (PR #20, en `main`) |
 
 ### Fase 3 y 4 · Cierre
 
 | ID | Tarea | Cubre | Depende de | Estado |
 |---|---|---|---|---|
-| E2-16 | Adaptar miembros y ministerios a varias iglesias (`iglesiaId`, `alcanceIglesia`) | `specs.md §12.2`, P-20 de Oscar | P-20, migración de Santiago | La hizo Santiago en el PR #26 (E1-06, supuesto S-05 de P-20); revisada por Nataly |
-| E2-17 | Completar en la matriz las filas de RF-01–23 con su código y prueba | Sección 9 | Tareas anteriores | Hecha en la PR #20 (en revisión) (RF-01–RF-23) |
+| E2-16 | Adaptar miembros y ministerios a varias iglesias (`iglesiaId`, `alcanceIglesia`) | `specs.md §12.2`, P-20 de Oscar | P-20, migración de Santiago | La hizo Santiago en el PR #26 (E1-06, supuesto S-05 de P-20); revisada y unida por Nataly (en `main`) |
+| E2-17 | Completar en la matriz las filas de RF-01–23 con su código y prueba | Sección 9 | Tareas anteriores | Hecha (PR #20, en `main`): RF-01–RF-23 |
 | E2-18 | Cobertura mínima de 70 % en dominio y servicios de estos módulos | RNF-18 | Tareas anteriores | Hecha: 97 % de sentencias y 89 % de ramas en catálogos, iglesias, patrimonio y consultas |
 
 ### Si alcanza el tiempo
@@ -104,6 +104,6 @@ Borrador para que Santiago lo integre en `docs/modelo-datos.md`; se ajusta con l
 ## Antes de programar
 
 - [ ] Respuestas a P-01–P-09
-- [ ] `docs/modelo-datos.md` y diseño de la API aprobados
+- [x] `docs/modelo-datos.md` y diseño de la API: integrados en `main` (E1-07 y PR #20)
 - [x] Módulo mínimo de `Iglesia` y `alcanceIglesia` en la rama base (`feat/E1-01-base-fusion` de Santiago)
 - [ ] Archivo del catálogo del INEGI descargado y fuera del repositorio si es muy grande
