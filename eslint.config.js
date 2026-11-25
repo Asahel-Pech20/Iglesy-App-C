@@ -43,6 +43,12 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // Configuración en CommonJS del arnés (.dependency-cruiser.cjs lee arnes.config.json)
+    files: ['**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs' },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: ['arnes-ia/**/hooks/*.mjs'],
     rules: { 'no-console': 'off' },
   },

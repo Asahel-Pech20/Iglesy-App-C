@@ -4,18 +4,11 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { leerAjustes } from './ajustes.mjs';
 import { esMergeAutomatico, revisarMensaje } from './reglas-mensaje.mjs';
 
-// ── Ajustes por proyecto ──────────────────────────────────────────────────────────────
-// Carpetas a las que se aplican las reglas de arquitectura (todo el backend y el módulo de referencia).
-const RUTAS_DEPENDENCIAS = ['backend/src', 'arnes-ia/stacks/express/modulo-referencia'];
-const CONFIG_DEPENDENCIAS = 'arnes-ia/stacks/express/.dependency-cruiser.cjs';
-// Violaciones heredadas que se toleran hasta que su dueño las corrija (mismo archivo que el CI);
-// cualquier violación nueva hace fallar el commit. Si el proyecto no tiene, deja null.
-const CONOCIDAS_DEPENDENCIAS = 'backend/arquitectura-conocidas.json';
-const CONFIG_PRUEBAS = '../arnes-ia/stacks/express/vitest.config.mjs'; // relativo a backend/
+// Los ajustes de cada proyecto (carpetas, lista de conocidas, pruebas) viven en arnes.config.json.
 const EXTENSIONES_LINT = /\.(ts|tsx|js|mjs|cjs)$/;
-// ──────────────────────────────────────────────────────────────────────────────────────
 
 const bin = (nombre) => join('node_modules', '.bin', nombre);
 
@@ -45,6 +38,7 @@ function archivosEnStage() {
 function preCommit() {
   const archivos = archivosEnStage();
   if (archivos.length === 0) return true;
+  const { dependencias, pruebas } = leerAjustes();
   const citar = (lista) => lista.map((a) => `"${a}"`);
   const lint = archivos.filter((a) => EXTENSIONES_LINT.test(a));
   const resultados = [
@@ -56,17 +50,12 @@ function preCommit() {
     lint.length === 0 ||
       correr('Lint (ESLint)', bin('eslint'), ['--max-warnings=0', ...citar(lint)]),
     correr('Reglas de dependencias (dependency-cruiser)', bin('depcruise'), [
-      ...RUTAS_DEPENDENCIAS,
+      ...dependencias.rutas,
       '--config',
-      CONFIG_DEPENDENCIAS,
-      ...(CONOCIDAS_DEPENDENCIAS ? ['--ignore-known', CONOCIDAS_DEPENDENCIAS] : []),
+      dependencias.config,
+      ...(dependencias.conocidas ? ['--ignore-known', dependencias.conocidas] : []),
     ]),
-    correr(
-      'Pruebas unitarias (Vitest)',
-      bin('vitest'),
-      ['run', '--config', CONFIG_PRUEBAS],
-      'backend',
-    ),
+    correr('Pruebas unitarias (Vitest)', bin('vitest'), pruebas.args, pruebas.cwd),
   ];
   return resultados.every(Boolean);
 }

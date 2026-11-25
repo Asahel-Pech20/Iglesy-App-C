@@ -1,0 +1,2 @@
+# Finales de línea LF en todos los sistemas (Prettier usa endOfLine: lf)
+* text=auto eol=lf
