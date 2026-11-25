@@ -82,7 +82,7 @@ import {
                   <td>{{ s.folio }}</td>
                   <td>{{ hora(s.creadaLocal) }}</td>
                   <td>{{ etiquetasClase[s.tipo.clase] }}</td>
-                  <td>{{ s.contacto.nombre }}</td>
+                  <td class="nombre-colonial">{{ s.contacto.nombre }}</td>
                   <td>
                     <app-badge-estado
                       [etiqueta]="etiquetasEstado[s.estado]"

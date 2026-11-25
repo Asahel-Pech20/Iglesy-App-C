@@ -39,6 +39,24 @@ async function elegir(etiqueta: string, opcion: string, dentro?: string) {
 
 const indiceParroquia = () => indiceDeIglesia('ig-comunidad');
 
+describe('página de entrada', () => {
+  it('sin sesión, «/» presenta Ecclesia y lleva a las iglesias y al acceso del personal', async () => {
+    const { router } = await abrirApp('/');
+    await esperarA(() => textoPagina().includes('Ecclesia'));
+    expect(router.url).toBe('/');
+    expect(textoPagina()).toContain('Las iglesias de México y su patrimonio');
+    expect(conTexto(/Explorar iglesias/)?.getAttribute('href')).toBe('/templos');
+    expect(conTexto(/Acceso del personal/)?.getAttribute('href')).toBe('/login');
+  });
+
+  it('con sesión, «/» sigue siendo el inicio del panel', async () => {
+    const { router } = await abrirApp('/', { como: 'admin@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Miembros activos'));
+    expect(router.url).toBe('/');
+    expect(textoPagina()).not.toContain('Las iglesias de México y su patrimonio');
+  });
+});
+
 describe('consultas públicas (E2-14)', () => {
   it('sin estado elegido pide elegir uno, sin sesión', async () => {
     await abrirApp('/templos');

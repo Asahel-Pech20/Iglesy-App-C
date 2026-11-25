@@ -102,7 +102,7 @@ export const usuariosIniciales = (): Usuario[] => [
 ];
 
 export const configuracionInicial = (): ConfiguracionIglesia => ({
-  nombre: 'Iglesia Comunidad de Fe',
+  nombre: 'Parroquia Comunidad de Fe',
   logoUrl: null,
   direccion: 'Calle 60 #123, Centro',
   ciudad: 'Mérida, Yucatán',

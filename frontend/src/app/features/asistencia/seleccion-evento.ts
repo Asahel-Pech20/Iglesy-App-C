@@ -118,7 +118,7 @@ import { PermisosMinisterioService } from '@/app/features/eventos/permisos-minis
       padding: 16px;
     }
     .evento + .evento {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     @media (min-width: 640px) {
       .evento {
@@ -140,14 +140,16 @@ import { PermisosMinisterioService } from '@/app/features/eventos/permisos-minis
       flex-shrink: 0;
       align-items: center;
       justify-content: center;
-      border-radius: 8px;
+      border-radius: 4px;
     }
     .titulo,
     .detalle {
       margin: 0;
     }
     .titulo {
-      font-weight: 500;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
     .detalle {
       font-size: 14px;

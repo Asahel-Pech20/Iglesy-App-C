@@ -48,9 +48,11 @@ import { LucideAngularModule, type LucideIconData } from 'lucide-angular';
       font-size: 14px;
     }
     .valor {
-      font-size: 24px;
-      font-weight: 600;
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
       font-variant-numeric: tabular-nums;
+      color: var(--primario);
     }
     .descripcion {
       font-size: 12px;

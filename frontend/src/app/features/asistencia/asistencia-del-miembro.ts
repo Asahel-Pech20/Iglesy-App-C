@@ -59,14 +59,16 @@ import { AsistenciaService } from './asistencia.service';
       padding: 12px 0;
     }
     li + li {
-      border-top: 1px solid var(--borde);
+      border-top: 1px solid var(--marco);
     }
     .datos p {
       margin: 0;
       font-size: 14px;
     }
     .titulo {
-      font-weight: 500;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 400;
+      color: var(--primario);
     }
   `,
 })
