@@ -28,7 +28,7 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 | E4-02 | Ajustar requerimientos y diagrama de estados con esas respuestas | Secciones 2.3 y 7 | E4-01 | Hecha |
 | E4-03 | Definir `Diezmo`, `DiezmoCorreccion`, `TipoEspacio`, `SolicitudEspacio` y `Cotizacion` para `docs/modelo-datos.md` | RN-40–54 | Santiago integra el modelo | Hecha |
 | E4-04 | Diseñar las rutas de diezmo y espacios | RF-60–82 | E4-03 | Hecha |
-| E4-05 | Reunir el diseño de la API de todos en OpenAPI y Postman | `specs.md §12.6` | Rutas de cada integrante | Hecha |
+| E4-05 | Reunir el diseño de la API de todos en OpenAPI y Postman | `specs.md §12.6` | Rutas de cada integrante | Hecha (OpenAPI completo; colección de Postman generada con `pnpm --filter backend postman`, OSC-08) |
 
 ### Fase 2 · Espacios (Entrega 3)
 
