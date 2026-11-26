@@ -1,0 +1,1391 @@
+{
+  "info": {
+    "name": "Ecclesia · Iglesias, patrimonio y consultas públicas (Nataly)",
+    "description": "Rutas de E2 (RF-01–RF-23). Detalle en backend/openapi.yaml y docs/ecclesia/api-iglesias-patrimonio.md. Córrela en orden con el seed cargado: «Sesión» guarda el token y la iglesia del administrador; las altas guardan su id. Para la Coordinación, vuelve a correr «Entrar como Coordinación».",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "password",
+      "value": "Iglesia123",
+      "description": "SEED_PASSWORD de backend/.env.example"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "iglesiaId",
+      "value": "",
+      "description": "La del administrador (se llena al entrar)"
+    },
+    {
+      "key": "iglesiaNuevaId",
+      "value": ""
+    },
+    {
+      "key": "objetoId",
+      "value": ""
+    },
+    {
+      "key": "criteriosOriginales",
+      "value": ""
+    },
+    {
+      "key": "criteriosNuevos",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Catálogos (INEGI)",
+      "item": [
+        {
+          "name": "Estados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/estados?q=Pue",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "estados"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Pue"
+                }
+              ]
+            },
+            "description": "RF-01, RF-09. Sin sesión."
+          }
+        },
+        {
+          "name": "Municipios de Puebla",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/estados/21/municipios",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "estados", "21", "municipios"]
+            }
+          }
+        },
+        {
+          "name": "Localidades de Puebla (municipio)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/municipios/21114/localidades",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "municipios", "21114", "localidades"]
+            }
+          }
+        },
+        {
+          "name": "Entrar como Coordinación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.data.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"coordinacion@iglesia.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Importar filas del catálogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalogos/importacion",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogos", "importacion"]
+            },
+            "description": "RF-10, solo la Coordinación. Las filas que ya existen se actualizan; no se duplican.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filas\": [\n    {\n      \"cveEnt\": \"21\",\n      \"nomEnt\": \"Puebla\",\n      \"cveMun\": \"114\",\n      \"nomMun\": \"Puebla\",\n      \"cveLoc\": \"0001\",\n      \"nomLoc\": \"Heroica Puebla de Zaragoza\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Importar sin sesión → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 401', () => pm.response.to.have.status(401));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/catalogos/importacion",
+              "host": ["{{baseUrl}}"],
+              "path": ["catalogos", "importacion"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filas\": []\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Iglesias (Coordinación)",
+      "item": [
+        {
+          "name": "Lista de iglesias",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias?estado=21&situacion=activas&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias"],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "21"
+                },
+                {
+                  "key": "situacion",
+                  "value": "activas"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar una iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('iglesiaNuevaId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias"]
+            },
+            "description": "RF-07. El nombre lleva la hora para poder correrla varias veces (mismo nombre en el municipio → 409).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Capilla de prueba {{$timestamp}}\",\n  \"tipo\": \"CAPILLA\",\n  \"direccion\": \"Calle 3 Sur 100\",\n  \"estado\": \"21\",\n  \"municipio\": \"21114\",\n  \"localidad\": \"211140001\",\n  \"capacidad\": 80,\n  \"anioConstruccion\": 1890,\n  \"telefono\": \"2221234567\",\n  \"correo\": \"capilla@ejemplo.local\",\n  \"latitud\": 19.0414,\n  \"longitud\": -98.2063\n}"
+            }
+          }
+        },
+        {
+          "name": "Registrar con municipio de otro estado → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias"]
+            },
+            "description": "RN-09: el municipio debe ser del estado (VALIDATION_ERROR en el campo municipio).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Capilla inválida\",\n  \"tipo\": \"CAPILLA\",\n  \"estado\": \"31\",\n  \"municipio\": \"21114\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Ver una iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaNuevaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaNuevaId}}"]
+            }
+          }
+        },
+        {
+          "name": "Editar una iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaNuevaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaNuevaId}}"]
+            },
+            "description": "RF-08.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacidad\": 120,\n  \"telefono\": \"222 765 4321\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Cerrar una iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaNuevaId}}/cierre",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaNuevaId}}", "cierre"]
+            },
+            "description": "RF-11: se cierra sin borrar su historia; ya no aparece en lo público.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fecha\": \"2026-11-01\",\n  \"motivo\": \"Cierre de prueba desde Postman\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar una iglesia cerrada → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 422', () => pm.response.to.have.status(422));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaNuevaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaNuevaId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacidad\": 90\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Criterios del índice (Coordinación)",
+      "item": [
+        {
+          "name": "Criterios vigentes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('criteriosOriginales', JSON.stringify((({ id, vigenteDesde, creadoPor, ...c }) => c)(r.data)));",
+                  "pm.collectionVariables.set('criteriosNuevos', JSON.stringify((({ id, vigenteDesde, creadoPor, ...c }) => ({ ...c, puntosInah: c.puntosInah + 1 }))(r.data)));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/criterios-indice",
+              "host": ["{{baseUrl}}"],
+              "path": ["criterios-indice"]
+            },
+            "description": "RF-22. Guarda los vigentes y una copia con un punto más por INAH."
+          }
+        },
+        {
+          "name": "Guardar criterios nuevos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/criterios-indice",
+              "host": ["{{baseUrl}}"],
+              "path": ["criterios-indice"]
+            },
+            "description": "RN-14: el índice de todas las iglesias cambia al momento (y el caché del ranking se invalida, E2-19).",
+            "body": {
+              "mode": "raw",
+              "raw": "{{criteriosNuevos}}"
+            }
+          }
+        },
+        {
+          "name": "Criterios con un rango negativo → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/criterios-indice",
+              "host": ["{{baseUrl}}"],
+              "path": ["criterios-indice"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rangosEdad\": [\n    {\n      \"desdeAnios\": 0,\n      \"puntos\": -1\n    }\n  ],\n  \"multiplicadores\": {},\n  \"puntosInah\": 5,\n  \"distinciones\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "Historial de criterios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/criterios-indice/historial?page=1&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["criterios-indice", "historial"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Volver a los criterios de antes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/criterios-indice",
+              "host": ["{{baseUrl}}"],
+              "path": ["criterios-indice"]
+            },
+            "description": "Deja el índice como estaba (queda una versión más en el historial).",
+            "body": {
+              "mode": "raw",
+              "raw": "{{criteriosOriginales}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Objetos del patrimonio (administrador)",
+      "item": [
+        {
+          "name": "Entrar como administrador de iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('token', r.data.accessToken);",
+                  "pm.collectionVariables.set('iglesiaId', r.data.iglesia.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@iglesia.local\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Objetos de mi iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/objetos?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "objetos"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Registrar un objeto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "const r = pm.response.json();",
+                  "pm.collectionVariables.set('objetoId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/objetos",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "objetos"]
+            },
+            "description": "RF-13. Año o siglo obligatorio (RN-10).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Cáliz de plata (dato de prueba)\",\n  \"tipo\": \"ORFEBRERIA\",\n  \"anio\": 1780,\n  \"material\": \"Plata\",\n  \"estadoConservacion\": \"Bueno\",\n  \"ubicacionEnTemplo\": \"Sacristía\",\n  \"catalogadoInah\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Registrar sin año ni siglo → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/objetos",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "objetos"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"descripcion\": \"Cáliz de plata (dato de prueba)\",\n  \"tipo\": \"ORFEBRERIA\",\n  \"material\": \"Plata\",\n  \"estadoConservacion\": \"Bueno\",\n  \"ubicacionEnTemplo\": \"Sacristía\",\n  \"catalogadoInah\": false\n}"
+            }
+          }
+        },
+        {
+          "name": "Editar un objeto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/objetos/{{objetoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "objetos", "{{objetoId}}"]
+            },
+            "description": "RF-14.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"catalogadoInah\": true,\n  \"estadoConservacion\": \"Regular\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Prestar un objeto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/objetos/{{objetoId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "objetos", "{{objetoId}}", "estado"]
+            },
+            "description": "RF-15: deja de sumar al índice mientras no esté vigente (RN-11).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"PRESTADO\",\n  \"fecha\": \"2026-11-20\",\n  \"motivo\": \"Exposición temporal\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Regresa el objeto prestado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/objetos/{{objetoId}}/estado",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "objetos", "{{objetoId}}", "estado"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"VIGENTE\",\n  \"fecha\": \"2026-11-25\",\n  \"motivo\": \"Regresó de la exposición\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Índice de mi iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/indice",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "indice"]
+            },
+            "description": "RF-18."
+          }
+        },
+        {
+          "name": "Objetos de otra iglesia → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 403', () => pm.response.to.have.status(403));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaNuevaId}}/objetos",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaNuevaId}}", "objetos"]
+            },
+            "description": "Alcance por iglesia: el administrador solo ve la suya."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultas públicas (sin sesión)",
+      "item": [
+        {
+          "name": "Iglesias de un estado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias?estado=21&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias"],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "21"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "RF-01–RF-05, CA-02: cada iglesia trae su índice y su distinción."
+          }
+        },
+        {
+          "name": "Iglesias de un municipio, por tipo y capacidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias?estado=21&municipio=21114&tipo=PARROQUIA&capacidadMin=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias"],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "21"
+                },
+                {
+                  "key": "municipio",
+                  "value": "21114"
+                },
+                {
+                  "key": "tipo",
+                  "value": "PARROQUIA"
+                },
+                {
+                  "key": "capacidadMin",
+                  "value": "100"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lista sin estado → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias"]
+            }
+          }
+        },
+        {
+          "name": "Ficha de la iglesia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias/{{iglesiaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias", "{{iglesiaId}}"]
+            },
+            "description": "RF-06, RF-16, RF-18, CA-04: datos, objetos vigentes, índice, misas, servicios, pláticas y tipos de espacio."
+          }
+        },
+        {
+          "name": "Ficha de una iglesia cerrada → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias/{{iglesiaNuevaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias", "{{iglesiaNuevaId}}"]
+            },
+            "description": "RN-07: lo público nunca muestra iglesias cerradas."
+          }
+        },
+        {
+          "name": "Las más reconocidas del país",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/reconocidas?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "reconocidas"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "RF-19–RF-21, CA-06."
+          }
+        },
+        {
+          "name": "Las más reconocidas de un municipio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/reconocidas?municipio=21114",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "reconocidas"],
+              "query": [
+                {
+                  "key": "municipio",
+                  "value": "21114"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reconocidas con dos lugares → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/reconocidas?estado=21&municipio=21114",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "reconocidas"],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "21"
+                },
+                {
+                  "key": "municipio",
+                  "value": "21114"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Búsqueda por patrimonio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/busqueda-patrimonio?estado=21&tipoObjeto=IMAGEN&antiguedadMin=300",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "busqueda-patrimonio"],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "21"
+                },
+                {
+                  "key": "tipoObjeto",
+                  "value": "IMAGEN"
+                },
+                {
+                  "key": "antiguedadMin",
+                  "value": "300"
+                }
+              ]
+            },
+            "description": "RF-23, CA-08: imágenes de 300 años o más en Puebla."
+          }
+        }
+      ]
+    }
+  ]
+}
