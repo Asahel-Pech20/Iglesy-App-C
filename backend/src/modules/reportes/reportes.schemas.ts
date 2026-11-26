@@ -34,6 +34,8 @@ export const esquemaReporteMiembros = z.object({
 export const esquemaReporteAsistencia = conRango(
   z.object({
     eventoId: z.uuid('Identificador de evento no válido.').optional(),
+    // Solo aplica al reporte por periodo: con `eventoId` el evento ya define el ministerio
+    ministerioId: z.uuid('Identificador de ministerio no válido.').optional(),
     ...rango,
     periodo: z.enum(['semanal', 'mensual']).default('semanal'),
     formato,

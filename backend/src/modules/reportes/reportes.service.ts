@@ -283,7 +283,15 @@ export async function asistencia(
   if (query.eventoId) return asistenciaDeEvento(query.eventoId, generador);
 
   const { desde, hasta } = await rangoPorDefecto(query, 2);
-  const ministerios = await alcance(generador);
+  const permitidos = await alcance(generador);
+  // Un ministerio concreto: el coordinador solo pide los suyos (403) y debe existir (404)
+  if (query.ministerioId && permitidos && !permitidos.includes(query.ministerioId)) {
+    throw AppError.prohibido(SOLO_PROPIOS);
+  }
+  const ministerio = query.ministerioId
+    ? await ministeriosService.obtener(query.ministerioId)
+    : null;
+  const ministerios = ministerio ? [ministerio.id] : permitidos;
   const { zonaHoraria } = await configuracionService.obtener();
   const [serie, eventos] = await Promise.all([
     asistenciaService.resumenPorPeriodo(query.periodo, desde, hasta, ministerios),
@@ -302,7 +310,10 @@ export async function asistencia(
     filtros: [
       ...rangoTexto(desde, hasta),
       { etiqueta: 'Periodo', valor: query.periodo === 'semanal' ? 'Semanal' : 'Mensual' },
-      ...(ministerios ? [{ etiqueta: 'Alcance', valor: 'Ministerios que coordinas' }] : []),
+      ...(ministerio ? [{ etiqueta: 'Ministerio', valor: ministerio.nombre }] : []),
+      ...(permitidos && !ministerio
+        ? [{ etiqueta: 'Alcance', valor: 'Ministerios que coordinas' }]
+        : []),
     ],
     resumen: [
       { etiqueta: 'Eventos con asistencia', valor: totalEventos, tipo: 'numero' },

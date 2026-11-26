@@ -2502,6 +2502,13 @@ paths:
       summary: Asistencia por evento (eventoId) o por periodo semanal/mensual (reportes:generales)
       parameters:
         - { name: eventoId, in: query, schema: { type: string, format: uuid } }
+        - name: ministerioId
+          in: query
+          description: >
+            Solo en el reporte por periodo (con `eventoId` se ignora: el evento ya define el
+            ministerio). Limita los eventos y los totales a ese ministerio. El COORDINADOR solo
+            puede pedir los suyos (403); si no existe, 404.
+          schema: { type: string, format: uuid }
         - { name: desde, in: query, schema: { type: string, format: date } }
         - { name: hasta, in: query, schema: { type: string, format: date } }
         - name: periodo

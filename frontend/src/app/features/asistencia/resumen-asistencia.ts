@@ -1,15 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { MatButton } from '@angular/material/button';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
-import { RouterLink } from '@angular/router';
-import { BarChart3, FileDown, LucideAngularModule } from 'lucide-angular';
+import { BarChart3, LucideAngularModule } from 'lucide-angular';
 import { EstadoError, EstadoVacio, Esqueleto } from '@/app/compartido/estados';
 import { valorDe } from '@/app/core/recurso';
 import { SesionService } from '@/app/core/sesion.service';
+import { BotonExportar } from '@/app/features/reportes/boton-exportar';
 import { PermisosMinisterioService } from '@/app/features/eventos/permisos-ministerio.service';
 import { MinisteriosService } from '@/app/features/ministerios/ministerios.service';
 import type { PeriodoResumen } from '@/app/tipos/asistencia';
@@ -36,8 +35,6 @@ function etiquetaPeriodo(periodo: string) {
 @Component({
   selector: 'app-resumen-asistencia',
   imports: [
-    RouterLink,
-    MatButton,
     MatButtonToggleGroup,
     MatButtonToggle,
     MatFormField,
@@ -49,6 +46,7 @@ function etiquetaPeriodo(periodo: string) {
     EstadoError,
     EstadoVacio,
     Esqueleto,
+    BotonExportar,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -84,16 +82,9 @@ function etiquetaPeriodo(periodo: string) {
           }
         </mat-select>
       </mat-form-field>
-      @if (puedeExportar()) {
-        <a
-          matButton="outlined"
-          class="exportar"
-          routerLink="/reportes"
-          [queryParams]="paramsExportar()"
-        >
-          <lucide-icon [img]="iconos.FileDown" [size]="16" aria-hidden="true" /> Exportar
-        </a>
-      }
+      <div class="exportar">
+        <app-boton-exportar tipo="asistencia" [filtros]="filtrosExportar()" />
+      </div>
     </div>
 
     <section class="tarjeta">
@@ -289,9 +280,6 @@ export class ResumenAsistencia {
     stream: () => this.ministeriosService.listar({ limit: 100 }),
   });
 
-  protected readonly puedeExportar = computed(() =>
-    this.sesion.puede('reportes:generales', 'reportes:generales-propio'),
-  );
   protected readonly verTodos = computed(() => this.sesion.puede('asistencia:leer'));
   protected readonly opcionesMinisterio = computed(() =>
     (valorDe(this.ministerios)?.data ?? []).filter(
@@ -305,15 +293,16 @@ export class ResumenAsistencia {
   private readonly maximo = computed(() =>
     Math.max(1, ...this.datos().flatMap((f) => [f.presentes, f.ausentes])),
   );
-  protected readonly paramsExportar = computed(() => {
+  protected readonly filtrosExportar = computed(() => {
     const f = this.filtros();
     return {
-      tipo: 'asistencia',
-      ...(f.desde && { desde: f.desde }),
-      ...(f.hasta && { hasta: f.hasta }),
+      periodo: this.periodo(),
+      desde: f.desde || undefined,
+      hasta: f.hasta || undefined,
+      ministerioId: f.ministerioId || undefined,
     };
   });
-  protected readonly iconos = { FileDown, BarChart3 };
+  protected readonly iconos = { BarChart3 };
 
   protected porcentaje(valor: number) {
     return (valor / this.maximo()) * 100;

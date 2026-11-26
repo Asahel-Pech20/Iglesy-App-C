@@ -29,6 +29,7 @@ import { PageHeader } from '@/app/compartido/page-header';
 import { Paginacion } from '@/app/compartido/paginacion';
 import type { QueryLista } from '@/app/tipos/comunes';
 import type { EstadoMiembroFiltro, MiembroLista } from '@/app/tipos/miembros';
+import { BotonExportar } from '@/app/features/reportes/boton-exportar';
 import { MinisteriosService } from '@/app/features/ministerios/ministerios.service';
 import { EstadoMiembroService } from './estado-miembro';
 import { MiembrosService } from './miembros.service';
@@ -59,6 +60,7 @@ import { MiembrosService } from './miembros.service';
     EstadoError,
     Esqueleto,
     Paginacion,
+    BotonExportar,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './miembros.page.html',
@@ -95,6 +97,9 @@ export class MiembrosPage {
   });
   protected readonly opcionesMinisterio = computed(() => valorDe(this.ministerios)?.data ?? []);
   protected readonly filas = computed(() => valorDe(this.consulta)?.data ?? []);
+  protected readonly filtrosExportar = computed(() => ({
+    estado: this.filtros.valores().estado as EstadoMiembroFiltro,
+  }));
   protected readonly hayFiltros = computed(() => {
     const f = this.filtros.valores();
     return Boolean(f.q || f.ministerioId || f.estado !== 'activo');

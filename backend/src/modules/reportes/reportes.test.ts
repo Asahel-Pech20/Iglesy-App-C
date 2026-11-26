@@ -393,6 +393,114 @@ describe('GET /reportes/asistencia (B4-12)', () => {
       400,
     );
   });
+
+  // PR #2: el resumen de asistencia manda ministerioId al exportar; antes se descartaba sin avisar
+  // y el archivo salía con todos los ministerios.
+  describe('filtro por ministerio (exportación del resumen)', () => {
+    const PERIODO = 'desde=2026-09-01&hasta=2026-09-30&periodo=mensual';
+    const eventosDe = (res: { body: { data: { secciones: { filas: unknown[] }[] } } }) =>
+      (res.body.data.secciones[1]!.filas as { evento: string }[]).map((e) => e.evento);
+
+    it('solo trae los eventos de ese ministerio y lo anota en los filtros del reporte', async () => {
+      const { musica, jovenes } = await escenario();
+      const sin = await pedir(`/reportes/asistencia?${PERIODO}`);
+      expect(eventosDe(sin)).toEqual(['Reunión de jóvenes', 'Ensayo']);
+
+      const res = await pedir(`/reportes/asistencia?${PERIODO}&ministerioId=${musica.id}`);
+      expect(res.status).toBe(200);
+      expect(eventosDe(res)).toEqual(['Ensayo']);
+      expect(res.body.data.filtros).toContainEqual({ etiqueta: 'Ministerio', valor: 'Música' });
+      // El resumen se calcula con los mismos eventos: no queda con los totales de todos
+      const septiembre = res.body.data.secciones[0].filas.find(
+        (f: { periodo: string }) => f.periodo === 'septiembre de 2026',
+      );
+      expect(septiembre).toMatchObject({ eventos: 1, presentes: 1, ausentes: 0 });
+      expect(res.body.data.resumen).toContainEqual({
+        etiqueta: 'Presentes',
+        valor: 1,
+        tipo: 'numero',
+      });
+
+      const otro = await pedir(`/reportes/asistencia?${PERIODO}&ministerioId=${jovenes.id}`);
+      expect(eventosDe(otro)).toEqual(['Reunión de jóvenes']);
+    });
+
+    it('el archivo Excel exportado también sale filtrado', async () => {
+      const { musica } = await escenario();
+      const res = await pedir(
+        `/reportes/asistencia?${PERIODO}&ministerioId=${musica.id}&formato=xlsx`,
+      );
+      expect(res.status).toBe(200);
+      const libro = await leerExcel(res.body as Buffer);
+      const texto: string[] = [];
+      libro.eachSheet((hoja) =>
+        hoja.eachRow((fila) => fila.eachCell((celda) => texto.push(String(celda.value)))),
+      );
+      expect(texto).toContain('Ensayo');
+      expect(texto).toContain('Música');
+      expect(texto).not.toContain('Reunión de jóvenes');
+    });
+
+    it('el PDF exportado se genera con el filtro', async () => {
+      const { musica } = await escenario();
+      const res = await pedir(
+        `/reportes/asistencia?${PERIODO}&ministerioId=${musica.id}&formato=pdf`,
+      );
+      expect(res.status).toBe(200);
+      expect((res.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+    });
+
+    it('COORDINADOR: su ministerio sí; el de otro → 403; sin filtro sigue viendo solo los suyos', async () => {
+      const { jovenes, musica } = await escenario();
+      const coordinador = await loginComo('COORDINADOR');
+      await prisma.ministerioCoordinador.create({
+        data: { ministerioId: jovenes.id, usuarioId: coordinador.usuario.id },
+      });
+      const propio = await pedir(
+        `/reportes/asistencia?${PERIODO}&ministerioId=${jovenes.id}`,
+        coordinador.auth,
+      );
+      expect(propio.status).toBe(200);
+      expect(eventosDe(propio)).toEqual(['Reunión de jóvenes']);
+      expect(propio.body.data.filtros).toContainEqual({ etiqueta: 'Ministerio', valor: 'Jóvenes' });
+
+      const ajeno = await pedir(
+        `/reportes/asistencia?${PERIODO}&ministerioId=${musica.id}`,
+        coordinador.auth,
+      );
+      expect(ajeno.status).toBe(403);
+
+      const sinFiltro = await pedir(`/reportes/asistencia?${PERIODO}`, coordinador.auth);
+      expect(eventosDe(sinFiltro)).toEqual(['Reunión de jóvenes']);
+      expect(sinFiltro.body.data.filtros).toContainEqual({
+        etiqueta: 'Alcance',
+        valor: 'Ministerios que coordinas',
+      });
+    });
+
+    it('ministerio inexistente → 404; identificador inválido → 400; sin permiso → 403', async () => {
+      await escenario();
+      const inexistente = '00000000-0000-4000-8000-000000000000';
+      expect(
+        (await pedir(`/reportes/asistencia?${PERIODO}&ministerioId=${inexistente}`)).status,
+      ).toBe(404);
+      expect((await pedir(`/reportes/asistencia?${PERIODO}&ministerioId=abc`)).status).toBe(400);
+      const tesorero = await loginComo('TESORERO');
+      expect(
+        (await pedir(`/reportes/asistencia?${PERIODO}&ministerioId=${inexistente}`, tesorero.auth))
+          .status,
+      ).toBe(403);
+    });
+
+    it('con eventoId el ministerio no cambia nada: el evento ya lo define', async () => {
+      const { reunionJovenes, musica } = await escenario();
+      const res = await pedir(
+        `/reportes/asistencia?eventoId=${reunionJovenes.id}&ministerioId=${musica.id}`,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.data.titulo).toBe('Asistencia: Reunión de jóvenes');
+    });
+  });
 });
 
 describe('GET /reportes/ministerios (B4-13)', () => {

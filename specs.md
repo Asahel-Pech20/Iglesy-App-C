@@ -416,7 +416,7 @@ Actividades del ministerio → `GET /eventos?ministerioId=` (B3).
 `ingresos` solo aparece (no es `null`, **se omite**) si el rol tiene `donaciones:leer`.
 
 **Reportes** (B4) — todos aceptan `formato=json|pdf|xlsx`
-`GET /reportes/miembros?estado` · `GET /reportes/asistencia?eventoId | desde&hasta` · `GET /reportes/ministerios?ministerioId` · `GET /reportes/ingresos?desde&hasta&agrupar`
+`GET /reportes/miembros?estado` · `GET /reportes/asistencia?eventoId | desde&hasta&ministerioId` · `GET /reportes/ministerios?ministerioId` · `GET /reportes/ingresos?desde&hasta&agrupar`
 
 ---
 

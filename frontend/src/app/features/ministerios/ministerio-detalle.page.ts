@@ -28,6 +28,7 @@ import { EstadoError, EstadoVacio, Esqueleto } from '@/app/compartido/estados';
 import { Paginacion } from '@/app/compartido/paginacion';
 import type { Integrante, Ministerio } from '@/app/tipos/ministerios';
 import { ActividadesMinisterio } from '@/app/features/eventos/actividades-ministerio';
+import { BotonExportar } from '@/app/features/reportes/boton-exportar';
 import { AgregarIntegrantesDialogo, CoordinadoresDialogo, MinisterioFormDialogo } from './dialogos';
 import { MinisteriosService } from './ministerios.service';
 
@@ -50,6 +51,7 @@ import { MinisteriosService } from './ministerios.service';
     Esqueleto,
     Paginacion,
     ActividadesMinisterio,
+    BotonExportar,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ministerio-detalle.page.html',

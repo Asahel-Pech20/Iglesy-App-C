@@ -1,4 +1,5 @@
 <app-page-header titulo="Miembros" descripcion="Personas de la congregación.">
+  <app-boton-exportar tipo="miembros" [filtros]="filtrosExportar()" />
   <a *appPuede="'miembros:crear'" matButton="filled" routerLink="/miembros/nuevo">
     <lucide-icon [img]="iconos.Plus" [size]="16" aria-hidden="true" /> Nuevo miembro
   </a>
