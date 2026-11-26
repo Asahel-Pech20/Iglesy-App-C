@@ -65,11 +65,16 @@ El plan gratis de Supabase pausa el proyecto tras una semana sin uso; se reactiv
 **Datos iniciales (una sola vez), desde tu laptop**, con la misma URL de Supabase:
 
 ```powershell
-$env:DATABASE_URL = "<URL del Session pooler de Supabase>"; $env:SEED_PASSWORD = "<la misma de Render>"
-pnpm --filter backend db:catalogos
-pnpm --filter backend db:seed
-Remove-Item Env:DATABASE_URL, Env:SEED_PASSWORD
+$env:DATABASE_URL = "<URL del Session pooler de Supabase>"; $env:SEED_PASSWORD = "<contraseña de las cuentas>"
+# Los scripts validan todas las variables del backend; estas tres no las usa el seed
+$env:JWT_ACCESS_SECRET = "solo-seed"; $env:JWT_REFRESH_SECRET = "solo-seed-2"; $env:FRONTEND_URL = "https://principal-iglesy.onrender.com"
+npx pnpm@12.16.1 --filter backend db:seed
+Remove-Item Env:DATABASE_URL, Env:SEED_PASSWORD, Env:JWT_ACCESS_SECRET, Env:JWT_REFRESH_SECRET, Env:FRONTEND_URL
 ```
+
+El seed ya trae los 32 estados y los municipios que usan las iglesias; `db:catalogos` solo hace falta
+para importar el catálogo completo del INEGI desde un CSV. La contraseña de las cuentas es la de
+`SEED_PASSWORD` **de este comando** (la variable `SEED_PASSWORD` de Render no la usa nadie).
 
 ## 3. Sistema real: Static Site `principal-iglesy`
 
