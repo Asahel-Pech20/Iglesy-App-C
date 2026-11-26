@@ -8,9 +8,14 @@
 // que se empalmen, aunque sean en iglesias o zonas horarias distintas (RN-26).
 import type { IdiomaMisa, TipoMisa, TipoPlatica } from '../src/generated/prisma/client';
 import { prisma } from '../src/lib/prisma';
+import { fechaYHoraLocal, instanteLocal } from '../src/lib/dominio/zona';
 import {
   buscarChoque,
+  buscarChoqueEnIntervalo,
+  domingoDeLaSemana,
+  intervaloCelebrada,
   semanasDeReferencia,
+  sumarDias,
   type DiaSemana,
   type MisaProgramada,
 } from '../src/modules/misas/dominio/solapes';
@@ -355,5 +360,90 @@ export async function seedMisasYServicios() {
     }
   }
 
-  return { iglesias: iglesias.length, padres: padres.length, ...cuenta };
+  const excepciones = await sembrarExcepciones(iglesias[0]);
+  return { iglesias: iglesias.length, padres: padres.length, ...cuenta, excepciones };
+}
+
+/**
+ * E3-25 (supuesto P-33): en la iglesia inicial, la semana siguiente, un domingo sin misa y una misa
+ * a otra hora (06:00, solo si el padre no choca). `upsert`: correrlo de nuevo no duplica.
+ */
+async function sembrarExcepciones(iglesia: Iglesia | undefined) {
+  if (!iglesia) return 0;
+  const admin = await prisma.usuario.findFirst({
+    where: { iglesiaId: iglesia.id, rol: 'ADMIN_IGLESIA', activo: true },
+    select: { id: true },
+  });
+  const horario = await prisma.horarioMisa.findMany({
+    where: { iglesiaId: iglesia.id, activo: true },
+    orderBy: [{ diaSemana: 'asc' }, { hora: 'asc' }],
+    select: { id: true, diaSemana: true, hora: true, duracionMin: true, padreId: true },
+  });
+  const domingo = horario.find((h) => h.diaSemana === 0);
+  const otra = horario.find((h) => h.diaSemana !== 0 && h.hora !== '06:00');
+  if (!admin || !domingo) return 0;
+  const proximoDomingo = sumarDias(
+    domingoDeLaSemana(fechaYHoraLocal(new Date(), iglesia.zonaHoraria).fecha),
+    7,
+  );
+  const guardar = (
+    h: { id: string; diaSemana: number },
+    datos: { tipo: 'SIN_MISA' | 'OTRA_HORA'; horaNueva?: string; motivo: string },
+  ) => {
+    const fecha = new Date(sumarDias(proximoDomingo, h.diaSemana));
+    return prisma.excepcionMisa.upsert({
+      where: { horarioMisaId_fecha: { horarioMisaId: h.id, fecha } },
+      update: {},
+      create: {
+        iglesiaId: iglesia.id,
+        horarioMisaId: h.id,
+        fecha,
+        registradoPorId: admin.id,
+        ...datos,
+      },
+    });
+  };
+  await guardar(domingo, {
+    tipo: 'SIN_MISA',
+    motivo: 'Templo cerrado por mantenimiento del techo (dato de prueba).',
+  });
+  let total = 1;
+  if (otra) {
+    const fecha = sumarDias(proximoDomingo, otra.diaSemana);
+    const inicio = instanteLocal(fecha, '06:00', iglesia.zonaHoraria);
+    const suyas = await prisma.horarioMisa.findMany({
+      where: { padreId: otra.padreId, activo: true },
+      select: {
+        id: true,
+        iglesiaId: true,
+        diaSemana: true,
+        hora: true,
+        duracionMin: true,
+        iglesia: { select: { zonaHoraria: true } },
+      },
+    });
+    const choca =
+      !inicio ||
+      buscarChoqueEnIntervalo(
+        intervaloCelebrada(inicio, otra.duracionMin),
+        suyas.map((m) => ({
+          id: m.id,
+          iglesiaId: m.iglesiaId,
+          diaSemana: m.diaSemana as DiaSemana,
+          hora: m.hora,
+          duracionMin: m.duracionMin,
+          zonaHoraria: m.iglesia.zonaHoraria,
+        })),
+        otra.id,
+      );
+    if (!choca) {
+      await guardar(otra, {
+        tipo: 'OTRA_HORA',
+        horaNueva: '06:00',
+        motivo: 'Fiesta patronal: la misa se adelanta (dato de prueba).',
+      });
+      total++;
+    }
+  }
+  return total;
 }

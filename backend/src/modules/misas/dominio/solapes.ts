@@ -13,6 +13,17 @@ export const DURACION_POR_DEFECTO_MIN = 60;
 /** Límite razonable de una misa (12 h); evita capturas absurdas como 6000 minutos. */
 export const DURACION_MAXIMA_MIN = 12 * 60;
 
+/** Nombre de cada día para los mensajes, de domingo (0) a sábado (6). */
+export const NOMBRES_DIA = [
+  'domingo',
+  'lunes',
+  'martes',
+  'miércoles',
+  'jueves',
+  'viernes',
+  'sábado',
+] as const;
+
 /** 0 = domingo … 6 = sábado, igual que `HorarioReunion.diaSemana`. */
 export type DiaSemana = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 

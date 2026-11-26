@@ -33,6 +33,8 @@ const PUBLICAS = new Set([
   'GET /public/iglesias/:iglesiaId/platicas',
   // RF-83 (Genaro): pláticas de un tipo en todas las iglesias de un municipio
   'GET /public/platicas',
+  // E3-25 (Genaro): días sin misa u otra hora, que el público necesita ver (supuesto P-33, RN-33)
+  'GET /public/iglesias/:iglesiaId/excepciones-misa',
   'POST /public/iglesias/:iglesiaId/solicitudes-espacio',
   'POST /public/solicitudes-espacio/:folio/consulta',
   'POST /public/solicitudes-espacio/:folio/aceptar',

@@ -8,24 +8,20 @@ import { fechaYHoraLocal, instanteLocal } from '../../lib/dominio/zona';
 import {
   buscarChoque,
   domingoDeLaSemana,
+  intervaloCelebrada,
+  NOMBRES_DIA,
   intervaloEnSemana,
   semanasDeReferencia,
   sumarDias,
   type DiaSemana,
   type MisaProgramada,
 } from './dominio/solapes';
+import { excepcionesPorMisa } from './excepciones.service';
 import type { ActualizarHorario, CrearHorario, QueryAgenda } from './misas.schemas';
 import { SELECT_PADRE } from './padres.service';
 
-export const NOMBRES_DIA = [
-  'domingo',
-  'lunes',
-  'martes',
-  'miércoles',
-  'jueves',
-  'viernes',
-  'sábado',
-] as const;
+// NOMBRES_DIA vive en el dominio (lo usa también excepciones.service.ts); se reexporta aquí
+export { NOMBRES_DIA } from './dominio/solapes';
 
 const SELECT_HORARIO = {
   id: true,
@@ -248,9 +244,16 @@ export async function agendaDelPadre(
     },
   });
 
+  // E3-25: días sin misa u otra hora (un día de margen por las zonas horarias)
+  const excepciones = await excepcionesPorMisa(
+    horarios.map((h) => h.id),
+    sumarDias(domingo, -1),
+    sumarDias(domingo, 7),
+  );
+
   const misas = horarios
     .map((h) => {
-      const intervalo = intervaloEnSemana(
+      const enSemana = intervaloEnSemana(
         {
           iglesiaId: h.iglesia.id,
           diaSemana: h.diaSemana as DiaSemana,
@@ -260,19 +263,28 @@ export async function agendaDelPadre(
         },
         domingo,
       );
-      if (!intervalo) return null;
+      if (!enSemana) return null;
+      const fecha = fechaYHoraLocal(enSemana.inicio, h.iglesia.zonaHoraria).fecha;
+      const excepcion = excepciones.get(`${h.id}|${fecha}`) ?? null;
+      const inicioNuevo =
+        excepcion?.tipo === 'OTRA_HORA'
+          ? instanteLocal(fecha, excepcion.horaNueva as string, h.iglesia.zonaHoraria)
+          : null;
+      const intervalo = inicioNuevo ? intervaloCelebrada(inicioNuevo, h.duracionMin) : enSemana;
       return {
         horarioId: h.id,
         iglesia: { id: h.iglesia.id, nombre: h.iglesia.nombre },
         diaSemana: h.diaSemana,
-        fecha: fechaYHoraLocal(intervalo.inicio, h.iglesia.zonaHoraria).fecha,
-        hora: h.hora,
+        fecha,
+        hora: inicioNuevo ? (excepcion?.horaNueva as string) : h.hora,
         zonaHoraria: h.iglesia.zonaHoraria,
         duracionMin: h.duracionMin,
         tipo: h.tipo,
         idioma: h.idioma,
         inicio: intervalo.inicio,
         fin: intervalo.fin,
+        // SIN_MISA u OTRA_HORA ese día, con la hora del horario y el motivo (E3-25)
+        excepcion: excepcion ? { ...excepcion, horaHorario: h.hora } : null,
       };
     })
     .filter((m) => m !== null)

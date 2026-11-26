@@ -15,6 +15,7 @@ import {
   puedeRegistrarCelebracion,
   type DiaSemana,
 } from './dominio/solapes';
+import { excepcionDe } from './excepciones.service';
 import { NOMBRES_DIA } from './horario.service';
 import type { CrearMisa, CrearMisaDeHorario, QueryListarMisas } from './misas.schemas';
 
@@ -136,7 +137,15 @@ async function registrarDesdeHorario(
       `El ${datos.fecha} es ${NOMBRES_DIA[dia]}, pero esa misa del horario es los ${NOMBRES_DIA[horario.diaSemana]}.`,
     );
   }
-  const inicio = instanteLocal(datos.fecha, horario.hora, zona);
+  // E3-25 (supuesto P-33): ese día pudo no haber misa, o haberse celebrado a otra hora
+  const excepcion = await excepcionDe(horario.id, datos.fecha);
+  if (excepcion?.tipo === 'SIN_MISA') {
+    throw AppError.reglaNegocio(
+      `El ${datos.fecha} está marcado sin misa (día inhábil): ${excepcion.motivo}`,
+    );
+  }
+  const hora = excepcion?.tipo === 'OTRA_HORA' ? (excepcion.horaNueva as string) : horario.hora;
+  const inicio = instanteLocal(datos.fecha, hora, zona);
   if (!inicio) throw AppError.reglaNegocio('Esa hora no existe ese día en la zona de la iglesia.');
   // Supuesto P-17: solo cuando la misa ya empezó
   if (!puedeRegistrarCelebracion(inicio, new Date())) {

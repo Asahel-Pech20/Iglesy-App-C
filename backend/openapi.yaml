@@ -2929,6 +2929,90 @@ paths:
         '200': { description: 'Lista de iglesia y sus pláticas del tipo, en orden alfabético' }
         '400': { $ref: '#/components/responses/Validacion' }
 
+  /iglesias/{iglesiaId}/excepciones-misa:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Misas]
+      summary: Días sin misa u otra hora de la iglesia (misas:leer; E3-25, supuesto P-33)
+      description: >
+        Excepciones de las misas del horario en un periodo; por omisión, de hoy a 60 días (fechas locales
+        de la iglesia). El horario semanal no cambia.
+      parameters:
+        - { name: desde, in: query, schema: { type: string, format: date } }
+        - { name: hasta, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          {
+            description: 'desde, hasta y excepciones (fecha, tipo, horaNueva, motivo, registradoPor y la misa)',
+          }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+    post:
+      tags: [Misas]
+      summary: Marcar una fecha sin misa u otra hora para una misa del horario (misas:programar; E3-25)
+      description: >
+        La fecha debe caer en el día de esa misa (422). No se marca si ya se registró como celebrada (409) ni
+        dos veces la misma misa y fecha (409). Con OTRA_HORA, el padre no puede tener otra misa que se empalme
+        a la hora nueva (409, RN-26). La semana armada (RF-84), el registro de la misa celebrada y la agenda
+        del padre usan la excepción.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [horarioMisaId, fecha, tipo, motivo]
+              properties:
+                horarioMisaId: { type: string, format: uuid }
+                fecha: { type: string, format: date }
+                tipo: { type: string, enum: [SIN_MISA, OTRA_HORA] }
+                horaNueva:
+                  {
+                    type: string,
+                    pattern: '^([01]\d|2[0-3]):[0-5]\d$',
+                    description: 'Solo con OTRA_HORA (obligatoria)',
+                  }
+                motivo: { type: string, minLength: 3, maxLength: 300 }
+      responses:
+        '201': { description: Excepción registrada }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /iglesias/{iglesiaId}/excepciones-misa/{excepcionId}:
+    parameters:
+      - { $ref: '#/components/parameters/IglesiaId' }
+      - { name: excepcionId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [Misas]
+      summary: Quitar la excepción; la misa vuelve a su horario ese día (misas:programar; E3-25)
+      responses:
+        '204': { description: Quitada }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '409': { $ref: '#/components/responses/Conflicto' }
+
+  /public/iglesias/{iglesiaId}/excepciones-misa:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Público]
+      summary: Cambios al horario de misas de una iglesia, sin sesión (E3-25, supuesto P-33)
+      security: []
+      description: De hoy a 60 días por omisión. Del padre, solo «título + nombre»; no dice quién la registró.
+      parameters:
+        - { name: desde, in: query, schema: { type: string, format: date } }
+        - { name: hasta, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          {
+            description: 'desde, hasta y excepciones (fecha, diaSemana, hora, tipoMisa, tipo, horaNueva, motivo, padre)',
+          }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
   /iglesias/{iglesiaId}/misas-celebradas:
     parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
     get:

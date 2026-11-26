@@ -138,6 +138,49 @@ export const esquemaListarMisas = esquemaPaginacion.extend({
   hasta: fechaDia.optional(),
 });
 
+// ───────────── Días inhábiles (E3-25, supuesto P-33) ─────────────
+
+export const TIPOS_EXCEPCION = ['SIN_MISA', 'OTRA_HORA'] as const;
+
+export const esquemaExcepcionDeIglesia = z.object({ iglesiaId: id, excepcionId: id });
+
+// Una fecha en la que una misa del horario no se celebra (SIN_MISA) o se celebra a otra hora
+export const esquemaCrearExcepcion = z
+  .strictObject({
+    horarioMisaId: id,
+    fecha: fechaDia,
+    tipo: z.enum(TIPOS_EXCEPCION, 'El tipo es «sin misa» u «otra hora».'),
+    horaNueva: camposHorario.hora.optional(),
+    motivo: z
+      .string('Escribe el motivo.')
+      .trim()
+      .min(3, 'Escribe el motivo (al menos 3 caracteres).')
+      .max(300, 'Máximo 300 caracteres.'),
+  })
+  .superRefine((d, ctx) => {
+    if (d.tipo === 'OTRA_HORA' && !d.horaNueva) {
+      ctx.addIssue({ code: 'custom', path: ['horaNueva'], message: 'Indica la hora nueva.' });
+    }
+    if (d.tipo === 'SIN_MISA' && d.horaNueva) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['horaNueva'],
+        message: 'La hora nueva solo va con «otra hora».',
+      });
+    }
+  });
+
+// Periodo a consultar; por omisión, de hoy a 60 días (fechas locales de la iglesia)
+export const esquemaListarExcepciones = z
+  .object({ desde: fechaDia.optional(), hasta: fechaDia.optional() })
+  .refine((q) => !q.desde || !q.hasta || q.desde <= q.hasta, {
+    path: ['desde'],
+    message: 'La fecha inicial no puede ser posterior a la final.',
+  });
+
+export type CrearExcepcion = z.infer<typeof esquemaCrearExcepcion>;
+export type QueryListarExcepciones = z.infer<typeof esquemaListarExcepciones>;
+
 export type CrearPadre = z.infer<typeof esquemaCrearPadre>;
 export type ActualizarPadre = z.infer<typeof esquemaActualizarPadre>;
 export type QueryBuscarPadres = z.infer<typeof esquemaBuscarPadres>;
