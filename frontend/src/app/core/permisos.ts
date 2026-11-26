@@ -8,6 +8,9 @@ export const ROLES = [
   'SECRETARIO',
   'TESORERO',
   'COORDINADOR',
+  // PROPUESTA (2026-11-26, pedida para la demo): el solicitante de espacio con cuenta. Solo en el
+  // frontend y los mocks: el backend todavía no tiene este rol (specs.md §12.3).
+  'CLIENTE',
 ] as const;
 export type RolUsuario = (typeof ROLES)[number];
 
@@ -58,6 +61,8 @@ export const PERMISOS = [
   'diezmo:leer',
   'espacios:leer',
   'espacios:gestionar',
+  // CLIENTE: ve y responde SUS solicitudes de espacio (las que hizo con su correo)
+  'solicitudes:propias',
   // Misas celebradas y padres (versión mínima que necesita el diezmo)
   'misas:leer',
   'misas:registrar',
@@ -189,6 +194,8 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'dashboard:leer',
     'reportes:generales-propio',
   ],
+  // Sin iglesia ni datos de nadie más: solo sus solicitudes de espacio
+  CLIENTE: ['solicitudes:propias'],
 };
 
 export function tienePermiso(rol: RolUsuario, permiso: Permiso): boolean {

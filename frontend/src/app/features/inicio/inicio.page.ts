@@ -18,7 +18,7 @@ import { DashboardPage } from '@/app/features/dashboard/dashboard.page';
     } @else {
       <app-page-header
         [titulo]="'Bienvenido, ' + (sesion.usuario()?.nombre ?? '')"
-        descripcion="Desde aquí administras las iglesias del sistema y su personal."
+        [descripcion]="descripcion()"
       />
       <app-accesos-rapidos />
     }
@@ -27,4 +27,9 @@ import { DashboardPage } from '@/app/features/dashboard/dashboard.page';
 export class InicioPage {
   protected readonly sesion = inject(SesionService);
   protected readonly conPanel = computed(() => this.sesion.puede('dashboard:leer'));
+  protected readonly descripcion = computed(() =>
+    this.sesion.puede('solicitudes:propias')
+      ? 'Aquí sigues tus solicitudes de espacio y respondes sus cotizaciones.'
+      : 'Desde aquí administras las iglesias del sistema y su personal.',
+  );
 }

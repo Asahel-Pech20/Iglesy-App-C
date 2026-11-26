@@ -21,7 +21,10 @@ import {
 } from './formato-espacios';
 import { MarcoPublico } from './marco-publico';
 
-const TEXTO_ACCION: Record<RespuestaSolicitud, { titulo: string; exito: string; boton: string }> = {
+export const TEXTO_ACCION: Record<
+  RespuestaSolicitud,
+  { titulo: string; exito: string; boton: string }
+> = {
   aceptar: { titulo: 'Aceptar la cotización', exito: 'Cotización aceptada', boton: 'Aceptar' },
   rechazar: { titulo: 'Rechazar la cotización', exito: 'Cotización rechazada', boton: 'Rechazar' },
   cancelar: {

@@ -94,6 +94,13 @@ export const MENU: EntradaMenu[] = [
     icono: FileBarChart,
     permiso: ['reportes:generales', 'reportes:generales-propio', 'reportes:ingresos'],
   },
+  // PROPUESTA (cuenta de cliente): sus solicitudes de espacio
+  {
+    etiqueta: 'Mis solicitudes',
+    ruta: '/mis-solicitudes',
+    icono: Landmark,
+    permiso: 'solicitudes:propias',
+  },
   { etiqueta: 'Usuarios', ruta: '/usuarios', icono: UserCog, permiso: 'usuarios:leer' },
   {
     etiqueta: 'Configuración',

@@ -78,6 +78,8 @@ export class MarcaIglesia {
   protected readonly nombre = computed(() => {
     const config = this.config();
     if (config) return config.nombre;
+    // El cliente (propuesta) tampoco tiene iglesia, pero no es la Coordinación: ve la marca del sistema
+    if (this.sesion.usuario()?.rol === 'CLIENTE') return 'Ecclesia';
     const esNacional = this.sesion.estado() === 'autenticado' && !this.sesion.iglesia();
     return esNacional ? 'Coordinación Nacional' : 'AppIglesia';
   });

@@ -1,5 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it } from 'vitest';
+import { firstValueFrom } from 'rxjs';
+import { normalizarError } from '@/app/core/api';
+import { EspaciosService } from '@/app/features/espacios/espacios.service';
 import { db } from '@/mocks/db';
 import { abrirApp, escribir, esperar, esperarA, textoPagina } from './entorno';
 
@@ -368,5 +371,49 @@ describe('panel de espacios (RF-70, RF-75–RF-77, CA-27, CA-28)', () => {
       }),
     );
     expect(resultado).toBe(403);
+  });
+});
+
+// PROPUESTA (cuenta de cliente, solo mocks): sus solicitudes sin folio ni clave
+describe('cuenta de cliente', () => {
+  const tarjeta = (folio: string) =>
+    [...document.querySelectorAll<HTMLElement>('ul[aria-label="Mis solicitudes"] > li')].find(
+      (li) => li.textContent?.includes(folio),
+    );
+
+  it('ve solo las solicitudes hechas con su correo', async () => {
+    await abrirApp('/mis-solicitudes', { como: 'cliente@iglesia.local' });
+    await esperarA(() => tarjeta('ESP-2026-000002') !== undefined);
+    expect(tarjeta('ESP-2026-000001')).toBeDefined();
+    expect(tarjeta('ESP-2026-000005')).toBeDefined();
+    // De otras personas: no
+    expect(textoPagina()).not.toContain('ESP-2026-000003');
+    expect(textoPagina()).not.toContain('ESP-2026-000007');
+  });
+
+  it('acepta una cotización desde su cuenta', async () => {
+    await abrirApp('/mis-solicitudes', { como: 'cliente@iglesia.local' });
+    await esperarA(() => tarjeta('ESP-2026-000002') !== undefined);
+    [...tarjeta('ESP-2026-000002')!.querySelectorAll('button')]
+      .find((b) => b.textContent?.includes('Aceptar cotización'))!
+      .click();
+    await esperarA(() => enDialogo('Aceptar') !== undefined);
+    enDialogo('Aceptar')!.click();
+    await esperarA(() => db.solicitudesEspacio.find((s) => s.id === 'so-2')?.estado === 'ACEPTADA');
+  });
+
+  it('no responde una solicitud ajena y no entra al panel del personal', async () => {
+    await abrirApp('/', { como: 'cliente@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Mis solicitudes'));
+    // Un folio de otra persona: 404 y sin cambios
+    const error = await firstValueFrom(
+      TestBed.inject(EspaciosService).responderMia('ESP-2026-000003', 'cancelar'),
+    ).catch((e: unknown) => e);
+    expect(normalizarError(error).code).toBe('NOT_FOUND');
+    expect(db.solicitudesEspacio.find((s) => s.id === 'so-3')?.estado).toBe('COTIZADA');
+    TestBed.resetTestingModule();
+    document.body.innerHTML = '';
+    const { router } = await abrirApp('/diezmo', { como: 'cliente@iglesia.local' });
+    await esperarA(() => router.url === '/sin-acceso');
   });
 });

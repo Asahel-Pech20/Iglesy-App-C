@@ -46,6 +46,6 @@ describe('lib/formato', () => {
       valor: 'ADMIN_IGLESIA',
       etiqueta: 'Administrador de iglesia',
     });
-    expect(opcionesDe(ETIQUETAS_ROL)).toHaveLength(6);
+    expect(opcionesDe(ETIQUETAS_ROL)).toHaveLength(7);
   });
 });

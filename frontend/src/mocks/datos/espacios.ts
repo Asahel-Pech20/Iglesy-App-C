@@ -65,6 +65,10 @@ export const tiposEspacioIniciales = (): TipoEspacioMock[] => [
   { id: 'te-otra', iglesiaId: OTRA_IGLESIA_MOCK, clase: 'CRIPTA', activo: true, disponible: true },
 ];
 
+/** Correo del cliente de la demo (cliente@iglesia.local): estas solicitudes salen en «Mis solicitudes». */
+export const CORREO_CLIENTE_MOCK = 'cliente@iglesia.local';
+const DEL_CLIENTE = new Set([1, 2, 5]);
+
 const base = (n: number, tipo: string, estado: EstadoSolicitud, dias: number, nombre: string) => ({
   id: `so-${n}`,
   folio: `ESP-2026-${String(n).padStart(6, '0')}`,
@@ -73,7 +77,7 @@ const base = (n: number, tipo: string, estado: EstadoSolicitud, dias: number, no
   tipoEspacioId: tipo,
   contactoNombre: nombre,
   contactoTelefono: '9991234567',
-  contactoCorreo: null,
+  contactoCorreo: DEL_CLIENTE.has(n) ? CORREO_CLIENTE_MOCK : null,
   comentarios: null,
   estado,
   intentosFallidos: 0,

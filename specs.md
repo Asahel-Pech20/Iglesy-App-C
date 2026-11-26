@@ -546,6 +546,7 @@ Se conservan los de §3 y se agrega el nivel nacional. Unifica [ADR-0004](docs/e
 | `ADMIN_IGLESIA` (hoy `ADMIN`) | Su iglesia | El **encargado**: **uno solo activo por iglesia** (E1-09, pedido del docente). Datos, objetos, servicios, pláticas, padres, horarios, misas y solicitudes; además, lo de `ADMIN` en §3, salvo los usuarios, que pasan a la Coordinación | Caso + heredado + docente |
 | `TESORERO` | Su iglesia | Capturar y corregir el diezmo; lo de `TESORERO` en §3 | Caso + heredado |
 | `PASTOR`, `SECRETARIO`, `COORDINADOR` | Su iglesia | Lo que indica §3 | Heredado |
+| `CLIENTE` *(propuesta, 2026-11-26)* | Sus solicitudes | Ve las solicitudes de espacio que hizo con el correo de su cuenta y acepta, rechaza o cancela sin folio ni clave (permiso `solicitudes:propias`). **Solo en el frontend y los mocks** (`GET /mis-solicitudes`, `POST /mis-solicitudes/:folio/{aceptar\|rechazar\|cancelar}`); falta el backend: valor en el enum `Rol` (migración, B1) y las rutas en espacios (Oscar). El caso pide que el solicitante **no necesite** cuenta (RF-87): la cuenta es opcional y el folio con clave sigue funcionando | Pedido del equipo para la demo |
 
 **Encargado único (E1-09):** cada iglesia tiene un solo `ADMIN_IGLESIA` activo; un segundo responde 409. Lo reemplaza la Coordinación: desactiva o cambia de rol al actual y nombra al nuevo. El propio encargado no puede dejar su iglesia sin encargado (422).
 

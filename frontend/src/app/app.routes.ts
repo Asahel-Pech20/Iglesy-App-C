@@ -314,6 +314,14 @@ export const routes: Routes = [
         data: { permiso: ['reportes:generales', 'reportes:generales-propio', 'reportes:ingresos'] },
         title: 'Reportes',
       },
+      // PROPUESTA (cuenta de cliente, solo mocks): sus solicitudes de espacio
+      {
+        path: 'mis-solicitudes',
+        loadComponent: () =>
+          import('./features/espacios/mis-solicitudes.page').then((m) => m.MisSolicitudesPage),
+        data: { permiso: 'solicitudes:propias' },
+        title: 'Mis solicitudes',
+      },
       { path: 'mi-cuenta', component: MiCuentaPage, title: 'Mi cuenta' },
       { path: 'sin-acceso', component: SinAccesoPage, title: 'Sin acceso' },
       { path: '**', component: NoEncontradoPage, title: 'Página no encontrada' },

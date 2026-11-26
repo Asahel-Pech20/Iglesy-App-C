@@ -91,6 +91,19 @@ export class EspaciosService {
     );
   }
 
+  /** PROPUESTA (cuenta de cliente, solo mocks): las solicitudes hechas con el correo de la cuenta. */
+  misSolicitudes() {
+    return this.api.lista<SeguimientoSolicitud>('/mis-solicitudes', { limit: 50 });
+  }
+
+  /** PROPUESTA (cuenta de cliente): responde una solicitud propia sin folio ni clave. */
+  responderMia(folio: string, accion: RespuestaSolicitud) {
+    return this.api.post<SeguimientoSolicitud>(
+      `/mis-solicitudes/${encodeURIComponent(folio)}/${accion}`,
+      {},
+    );
+  }
+
   responder(folio: string, clave: string, accion: RespuestaSolicitud) {
     return this.api.post<SeguimientoSolicitud>(
       `/public/solicitudes-espacio/${encodeURIComponent(folio)}/${accion}`,
