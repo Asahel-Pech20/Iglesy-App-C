@@ -13,7 +13,7 @@ import { patrimonioHandlers } from './patrimonio';
 import { espaciosHandlers } from './espacios';
 import { eventosHandlers } from './eventos';
 import { miembrosHandlers } from './miembros';
-import { misasHandlers } from './misas';
+import { deseablesHandlers, misasHandlers } from './misas';
 import { ministeriosHandlers } from './ministerios';
 import { reportesHandlers } from './reportes';
 import { usuariosHandlers } from './usuarios';
@@ -34,6 +34,7 @@ export const handlers = [
   ...reportesHandlers,
   // E3 (Genaro): padres, horario, misas desde el horario, servicios y pláticas. Va antes que
   // el diezmo: sus rutas de padres y misas celebradas se atienden aquí primero
+  ...deseablesHandlers,
   ...misasHandlers,
   ...diezmoHandlers,
   ...iglesiasHandlers,

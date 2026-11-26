@@ -81,6 +81,14 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 | E3-20 | Pruebas: al menos una por regla RN-20–33, integración de los endpoints principales y cobertura ≥ 70 % en dominio y servicios de mis módulos | `specs.md §12.8` | Todas | Hecha: `misas` y `servicios` con 98 % de líneas y 96 % de sentencias (Vitest + v8, 2026-11-25) |
 | E3-21 | Bitácora (`docs/bitacora-ia.md`) con mis entradas y errores de la IA; matriz de trazabilidad de RF-30–52 | Sección 9 | Todas | Hecha (en revisión): filas RF-30–52 en la sección 9; bitácora 68 en adelante |
 
+### Deseables («si alcanza el tiempo»)
+
+| ID | Tarea | Cubre | Depende de | Estado |
+|---|---|---|---|---|
+| E3-22 | Pláticas de un tipo en todas las iglesias de un municipio: `GET /public/platicas` y página `/platicas` | RF-83, supuesto P-29 | E3-14 | Hecha (en revisión) |
+| E3-23 | Semana de misas armada desde el horario: consulta, registro de las pendientes y panel en Celebradas | RF-84, supuesto P-29 | E3-09 | Hecha (en revisión) |
+| E3-24 | Colección de Postman de las rutas de Genaro, probada contra la API | `specs.md §12.6` | E3-06 a E3-23 | En curso |
+
 ## Lo que necesito de otros
 
 | Quién | Qué | Para |

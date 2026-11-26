@@ -92,6 +92,15 @@ export const routes: Routes = [
       title: 'Ficha de la iglesia',
     },
   ]),
+  // RF-83 (Genaro): pláticas de un tipo en todas las iglesias de un municipio, sin sesión
+  explorar('platicas', [
+    {
+      path: '',
+      loadComponent: () =>
+        import('./features/explorar/platicas-municipio.page').then((m) => m.PlaticasMunicipioPage),
+      title: 'Pláticas en tu municipio',
+    },
+  ]),
   explorar('reconocidas', [
     {
       path: '',

@@ -12,6 +12,7 @@ import {
   type CrearPlatica,
   type CrearServicio,
   type Horario,
+  type QueryPlaticasDelMunicipio,
   type QueryPlaticasPublicas,
 } from './servicios.schemas';
 
@@ -255,4 +256,23 @@ export async function platicasPublicas(iglesiaId: string, query: QueryPlaticasPu
 export async function platicasDeIglesiaPublica(iglesiaId: string, query: QueryPlaticasPublicas) {
   await iglesiasService.obtenerPublica(iglesiaId);
   return platicasPublicas(iglesiaId, query);
+}
+
+/**
+ * RF-83 (deseable): las pláticas de un tipo en todas las iglesias abiertas de un municipio, con su
+ * iglesia, días y hora. Supuesto P-29: se muestran todas, agrupadas por iglesia en orden alfabético.
+ */
+export async function platicasDelMunicipio(query: QueryPlaticasDelMunicipio) {
+  const iglesias = await iglesiasService.activasDelLugar({ municipio: query.municipio });
+  const resultado = [];
+  for (const iglesia of iglesias) {
+    const platicas = await platicasPublicas(iglesia.id, { tipo: query.tipo });
+    if (platicas.length > 0) {
+      resultado.push({
+        iglesia: { id: iglesia.id, nombre: iglesia.nombre, tipo: iglesia.tipo },
+        platicas,
+      });
+    }
+  }
+  return resultado;
 }

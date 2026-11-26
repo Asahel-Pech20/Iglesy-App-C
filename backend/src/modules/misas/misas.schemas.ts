@@ -104,6 +104,9 @@ export const esquemaAgenda = z.object({
   semana: fechaDia.optional(),
 });
 
+// RF-84: semana a armar; cualquier día de esa semana (por omisión, la actual)
+export const esquemaArmarSemana = z.strictObject({ semana: fechaDia.optional() });
+
 // ───────────── Misas celebradas (E3-09: RF-48–RF-51) ─────────────
 
 // Forma del diezmo (E4) y de una misa especial de una sola fecha (P-16): instante y padre

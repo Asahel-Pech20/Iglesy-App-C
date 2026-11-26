@@ -71,6 +71,42 @@ export interface AgendaPadre {
   misas: MisaAgenda[];
 }
 
+/** RF-84: estado de cada misa de la semana armada desde el horario */
+export type EstadoMisaSemana = 'REGISTRADA' | 'PENDIENTE' | 'FUTURA';
+
+export interface MisaDeSemana {
+  horarioId: string;
+  diaSemana: number;
+  fecha: string;
+  hora: string;
+  inicio: string;
+  tipo: TipoMisa;
+  idioma: IdiomaMisa;
+  duracionMin: number | null;
+  padreProgramado: { id: string; nombre: string; titulo: string | null };
+  estado: EstadoMisaSemana;
+  misaCelebrada: {
+    id: string;
+    padre: { id: string; nombre: string };
+    conSustitucion: boolean;
+  } | null;
+}
+
+/** GET /iglesias/:id/semana-misas?semana= */
+export interface SemanaMisas {
+  semana: { desde: string; hasta: string };
+  misas: MisaDeSemana[];
+}
+
+/** POST /iglesias/:id/misas-celebradas/semana */
+export interface ResultadoArmarSemana {
+  semana: { desde: string; hasta: string };
+  creadas: number;
+  yaRegistradas: number;
+  futuras: number;
+  omitidas: { fecha: string; hora: string; motivo: string }[];
+}
+
 /** POST /iglesias/:id/misas-celebradas desde el horario (E3-09) */
 export interface MisaDeHorarioEntrada {
   horarioMisaId: string;
