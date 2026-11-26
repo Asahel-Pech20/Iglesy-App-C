@@ -69,10 +69,13 @@ Remove-Item Env:DATABASE_URL, Env:SEED_PASSWORD
 | Campo | Valor |
 |---|---|
 | Root Directory | *(vacío)* |
-| Build Command | `npx pnpm@12.16.1 install --frozen-lockfile --filter frontend... && npx pnpm@12.16.1 --filter frontend exec ng build` |
+| Build Command | `npx pnpm@12.16.1 install --frozen-lockfile --filter frontend... && cd frontend && node scripts/ng-terminar.mjs build` |
 | Publish Directory | `frontend/dist/frontend/browser` |
 | Variable | `NODE_VERSION` = `22.12.0` |
 | Redirects/Rewrites | Source `/*` → Destination `/index.html`, Action **Rewrite** |
+
+`ng-terminar.mjs` es necesario: con Angular 21.2 `ng build` termina el paquete pero el proceso no sale
+(esbuild queda abierto) y Render esperaría para siempre.
 
 El build de producción toma la API de `environment.prod.ts` (`https://iglesy-api.onrender.com/api/v1`).
 
@@ -82,7 +85,7 @@ Igual que el anterior, pero con `ng build --configuration development`, que incl
 
 | Campo | Valor |
 |---|---|
-| Build Command | `npx pnpm@12.16.1 install --frozen-lockfile --filter frontend... && npx pnpm@12.16.1 --filter frontend exec ng build --configuration development` |
+| Build Command | `npx pnpm@12.16.1 install --frozen-lockfile --filter frontend... && cd frontend && node scripts/ng-terminar.mjs build --configuration development` |
 | Publish Directory | `frontend/dist/frontend/browser` |
 | Redirects/Rewrites | `/*` → `/index.html`, **Rewrite** |
 
