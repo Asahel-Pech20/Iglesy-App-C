@@ -11,6 +11,7 @@ import { filtrosURL } from '@/app/core/filtros-url';
 import { ETIQUETAS_TIPO_OBJETO, opcionesDe } from '@/app/core/formato';
 import { valorDe } from '@/app/core/recurso';
 import type { Lugar, TipoObjeto } from '@/app/tipos/patrimonio';
+import { AvisoDemo, esIglesiaRealDeDemo } from './aviso-demo';
 import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
@@ -38,6 +39,7 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
     SelectorLugar,
     TarjetaIglesia,
     TituloColonial,
+    AvisoDemo,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
@@ -170,6 +172,9 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
             descripcion="Prueba con menos años o con otro lugar."
           />
         } @else {
+          @if (hayReales()) {
+            <app-aviso-demo />
+          }
           <section class="lista" aria-label="Iglesias encontradas">
             @for (r of resultados(); track r.id) {
               <app-tarjeta-iglesia
@@ -239,6 +244,10 @@ export class BusquedaPage {
         : of(null),
   });
   protected readonly resultados = computed(() => valorDe(this.consulta)?.data ?? []);
+  /** Si sale alguna iglesia real de la demo, se avisa que sus objetos son ilustrativos. */
+  protected readonly hayReales = computed(() =>
+    this.resultados().some((r) => esIglesiaRealDeDemo(r.id)),
+  );
 
   protected lugar(l: Lugar) {
     this.filtros.cambiar({

@@ -265,6 +265,34 @@ describe('consultas públicas (E2-14)', () => {
     expect(textoPagina()).not.toContain('Catedral de San Ildefonso');
     expect(textoPagina()).not.toContain('Templo de San Roque');
   });
+
+  it('los objetos de las iglesias reales de la demo llevan el aviso de que son ilustrativos', async () => {
+    const aviso = 'Datos de demostración: objetos ilustrativos, no es un inventario oficial.';
+    const abrir = async (url: string, espera: string) => {
+      TestBed.resetTestingModule();
+      document.body.innerHTML = '';
+      await abrirApp(url);
+      await esperarA(() => textoPagina().includes(espera));
+    };
+    // Ficha de una iglesia real: el aviso, junto a sus objetos
+    await abrir('/templos/ig-santa-prisca', 'Templo de Santa Prisca');
+    await esperarA(() => document.querySelector('ul.objetos') !== null);
+    expect(
+      document.querySelector('[aria-labelledby="titulo-patrimonio"] app-aviso-demo')?.textContent,
+    ).toContain(aviso);
+    // La parroquia de la demo es ficticia: sin aviso
+    await abrir('/templos/ig-comunidad', 'Imagen de San Miguel Arcángel');
+    expect(textoPagina()).not.toContain(aviso);
+    // Búsqueda con una iglesia real entre los resultados: el aviso
+    await abrir('/busqueda-patrimonio?estado=21', 'Templo de Santo Domingo');
+    expect(textoPagina()).toContain(aviso);
+    // Búsqueda que solo encuentra la parroquia ficticia (el único piano): sin aviso
+    await abrir(
+      '/busqueda-patrimonio?estado=21&tipoObjeto=PIANO&antiguedadMin=50',
+      'Piano vertical',
+    );
+    expect(textoPagina()).not.toContain(aviso);
+  });
 });
 
 describe('iglesias en el panel (E2-15)', () => {

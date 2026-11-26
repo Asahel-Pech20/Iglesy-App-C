@@ -22,6 +22,7 @@ import {
 import { ETIQUETAS_CLASE } from '@/app/features/espacios/formato-espacios';
 import { valorDe } from '@/app/core/recurso';
 import type { FichaIglesia } from '@/app/tipos/patrimonio';
+import { AvisoDemo, esIglesiaRealDeDemo } from './aviso-demo';
 import { TituloColonial } from './explorar-layout';
 import { MisasServiciosFicha } from './misas-servicios-ficha';
 import { ExplorarService } from './explorar.service';
@@ -43,6 +44,7 @@ import { PildoraDistincion } from './tarjeta-iglesia';
     PildoraDistincion,
     MisasServiciosFicha,
     TituloColonial,
+    AvisoDemo,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
@@ -411,6 +413,9 @@ import { PildoraDistincion } from './tarjeta-iglesia';
               Esta iglesia no tiene objetos vigentes registrados.
             </p>
           } @else {
+            @if (esReal()) {
+              <app-aviso-demo />
+            }
             <ul class="objetos" aria-label="Objetos vigentes">
               @for (o of f.objetos; track o.id) {
                 <li class="marco">
@@ -437,6 +442,8 @@ export class FichaPage {
   protected readonly iconos = { ArrowLeft, CalendarDays, Mail, MapPin, Phone, Users };
   /** Foto de la iglesia, si la tiene (solo las iglesias reales de la demo, ver fotos-iglesias.ts). */
   protected readonly foto = computed(() => fotoDeIglesia(this.id()));
+  /** Iglesia real de la demo: sus objetos llevan el aviso de que son ilustrativos. */
+  protected readonly esReal = computed(() => esIglesiaRealDeDemo(this.id()));
   protected readonly tipos = ETIQUETAS_TIPO_IGLESIA;
   protected readonly tiposObjeto = ETIQUETAS_TIPO_OBJETO;
   protected readonly formato = formatearIndice;
