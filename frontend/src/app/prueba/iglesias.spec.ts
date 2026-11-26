@@ -65,6 +65,22 @@ describe('inicio de la Coordinación', () => {
 });
 
 describe('iglesias', () => {
+  it('la Coordinación filtra por estado, municipio y tipo, como en la parte pública', async () => {
+    await abrirApp('/iglesias?estado=21&municipio=21114', { como: 'coordinacion@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Catedral de Puebla'));
+    expect(textoPagina()).toContain('Parroquia Comunidad de Fe');
+    // De otro municipio de Puebla y de otro estado: fuera
+    expect(textoPagina()).not.toContain('Capilla de la Tercera Orden');
+    expect(textoPagina()).not.toContain('Basílica de Santa María de Guadalupe');
+    TestBed.resetTestingModule();
+    document.body.innerHTML = '';
+    await abrirApp('/iglesias?estado=21&municipio=21114&tipo=CATEDRAL', {
+      como: 'coordinacion@iglesia.local',
+    });
+    await esperarA(() => textoPagina().includes('Catedral de Puebla'));
+    expect(textoPagina()).not.toContain('Parroquia Comunidad de Fe');
+  });
+
   it('la Coordinación ve la lista con el tipo de cada una', async () => {
     await abrirApp('/iglesias', { como: 'coordinacion@iglesia.local' });
     await esperarA(() => textoPagina().includes('Capilla del Valle'));
