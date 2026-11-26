@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ArrowRight, LogIn, LucideAngularModule, MapPin } from 'lucide-angular';
+import { ArrowRight, LogIn, LucideAngularModule, MapPin, Pause, Play } from 'lucide-angular';
 import { FOTOS_IGLESIAS } from './fotos-iglesias';
 
 /**
@@ -53,6 +53,17 @@ const MOSAICOS = [
     :host {
       display: block;
     }
+    /* Títulos con la letra con serifa de toda la parte pública */
+    /* Sin peso propio (:where), para que el margen del crédito en celular siga aplicando */
+    :where(.portada, .mosaico) p {
+      margin: 0;
+    }
+    .portada h1,
+    .lema-grande,
+    .bienvenida h2,
+    .mosaico h2 {
+      font-family: Georgia, 'Times New Roman', serif;
+    }
     /* ── Portada: foto grande con el título abajo a la izquierda ── */
     /* De orilla a orilla y debajo de la barra flotante (--alto-barra viene del marco público) */
     .portada {
@@ -76,9 +87,12 @@ const MOSAICOS = [
       }
     }
     /* Fotos apiladas: solo la actual es opaca; el cambio es un fundido */
-    .foto {
+    .foto,
+    .velo {
       position: absolute;
       inset: 0;
+    }
+    .foto {
       z-index: -2;
       background-position: center;
       background-size: cover;
@@ -90,8 +104,6 @@ const MOSAICOS = [
     }
     /* Velo del color primario: denso abajo, donde va el texto (contraste ≥ 4.5:1), ligero arriba */
     .velo {
-      position: absolute;
-      inset: 0;
       z-index: -1;
       background:
         linear-gradient(
@@ -117,31 +129,42 @@ const MOSAICOS = [
       position: absolute;
       right: 12px;
       bottom: 12px;
-      margin: 0;
       padding: 4px 10px;
       font-size: 11px;
       border-radius: 999px;
-      color: var(--foto-texto);
       background: color-mix(in srgb, var(--foto-sombra) 80%, transparent);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .credito a {
       color: inherit;
     }
-    /* En celular el texto llena la portada: el crédito baja, debajo de los botones */
     @media (max-width: 767px) {
       .credito {
         position: static;
         margin-top: 8px;
       }
     }
+    .pausa {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border: 1px solid;
+      border-radius: 50%;
+      color: inherit;
+      background: none;
+      cursor: pointer;
+    }
+    /* En celular el texto llena la portada: el crédito baja, debajo de los botones */
     .lema {
-      margin: 0;
       font-size: 12px;
       letter-spacing: 3px;
     }
     .portada h1 {
       margin: 0;
-      font-family: Georgia, 'Times New Roman', serif;
       font-size: 48px;
       font-weight: 400;
       line-height: 1.05;
@@ -153,8 +176,6 @@ const MOSAICOS = [
       }
     }
     .lema-grande {
-      margin: 0;
-      font-family: Georgia, 'Times New Roman', serif;
       font-size: 20px;
     }
     /* Filete dorado (decorativo) */
@@ -167,7 +188,6 @@ const MOSAICOS = [
     }
     .intro {
       max-width: 36rem;
-      margin: 0;
       font-size: 16px;
       line-height: 1.6;
     }
@@ -178,19 +198,23 @@ const MOSAICOS = [
       margin-top: 8px;
     }
     /* Botones en forma de píldora */
-    .boton {
+    .boton,
+    .enlace-boton {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 44px;
-      padding: 0 22px;
       border-radius: 999px;
-      font-size: 15px;
       font-weight: 500;
       text-decoration: none;
     }
+    .boton {
+      min-height: 44px;
+      padding: 0 22px;
+      font-size: 15px;
+    }
     .boton:focus-visible,
     .mosaico:focus-visible,
+    .pausa:focus-visible,
     .enlace-boton:focus-visible {
       outline: 2px solid var(--acento);
       outline-offset: 3px;
@@ -228,7 +252,6 @@ const MOSAICOS = [
     }
     .bienvenida h2 {
       margin: 0 0 12px;
-      font-family: Georgia, 'Times New Roman', serif;
       font-size: 32px;
       font-weight: 400;
       line-height: 1.15;
@@ -240,14 +263,8 @@ const MOSAICOS = [
       color: var(--texto);
     }
     .enlace-boton {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
       margin-top: 4px;
       padding: 10px 20px;
-      border-radius: 999px;
-      font-weight: 500;
-      text-decoration: none;
       color: var(--primario-texto);
       background: var(--primario);
     }
@@ -288,12 +305,10 @@ const MOSAICOS = [
     }
     .mosaico h2 {
       margin: 0 0 4px;
-      font-family: Georgia, 'Times New Roman', serif;
       font-size: 20px;
       font-weight: 400;
     }
     .mosaico p {
-      margin: 0;
       font-size: 14px;
       line-height: 1.4;
     }
@@ -345,6 +360,23 @@ const MOSAICOS = [
         </a>
       </div>
       <p class="credito">
+        <!-- WCAG 2.2.2: lo que cambia solo por más de 5 s se puede pausar -->
+        @if (rota()) {
+          <button
+            type="button"
+            class="pausa"
+            (click)="pausada.set(!pausada())"
+            [attr.aria-label]="
+              pausada() ? 'Reanudar el cambio de fotos' : 'Pausar el cambio de fotos'
+            "
+          >
+            <lucide-icon
+              [img]="pausada() ? iconos.Play : iconos.Pause"
+              [size]="14"
+              aria-hidden="true"
+            />
+          </button>
+        }
         Foto: {{ fotoActual().lugar }} ·
         <a [href]="fotoActual().enlace" target="_blank" rel="noopener noreferrer"
           >{{ fotoActual().autor }} en Unsplash</a
@@ -394,7 +426,7 @@ const MOSAICOS = [
   `,
 })
 export class LandingPage {
-  protected readonly iconos = { ArrowRight, LogIn, MapPin };
+  protected readonly iconos = { ArrowRight, LogIn, MapPin, Pause, Play };
   protected readonly mosaicos = MOSAICOS;
   /** Foto de la sección de bienvenida: la de Mamatla, que no abre la portada. */
   protected readonly fotoBienvenida = FOTOS_PORTADA[3];
@@ -404,6 +436,10 @@ export class LandingPage {
   /** Fotos cuyo archivo ya se pidió: al entrar, solo la primera. */
   protected readonly cargadas = signal<ReadonlySet<number>>(new Set([0]));
   protected readonly fotoActual = computed(() => this.fotos[this.actual()] ?? this.fotos[0]);
+  /** Si las fotos están rotando (no con «reducir movimiento»): solo entonces se ofrece la pausa. */
+  protected readonly rota = signal(false);
+  /** Pausa pedida por el visitante con el botón junto al crédito. */
+  protected readonly pausada = signal(false);
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -411,9 +447,11 @@ export class LandingPage {
       const reducirMovimiento =
         typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reducirMovimiento) return;
+      this.rota.set(true);
       // La siguiente foto se pide a la mitad del tiempo de la actual, para que ya esté al cambiar
       const precarga = setTimeout(() => this.cargar(1), MS_POR_FOTO / 2);
       const ciclo = setInterval(() => {
+        if (this.pausada()) return;
         const siguiente = (this.actual() + 1) % this.fotos.length;
         this.actual.set(siguiente);
         this.cargar(siguiente + 1);

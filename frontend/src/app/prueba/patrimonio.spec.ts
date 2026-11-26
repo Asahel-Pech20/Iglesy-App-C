@@ -170,6 +170,23 @@ describe('fotos de la portada', () => {
     const estado = crearLanding();
     vi.advanceTimersByTime(30000);
     expect(estado()).toMatchObject({ visible: 0, cargadas: 1 });
+    // Sin rotación no hay nada que pausar
+    expect(document.querySelector('.credito .pausa')).toBeNull();
+  });
+
+  it('el botón junto al crédito pausa y reanuda el cambio de fotos (WCAG 2.2.2)', () => {
+    vi.useFakeTimers();
+    const estado = crearLanding();
+    const boton = () => document.querySelector<HTMLButtonElement>('.credito .pausa')!;
+    estado();
+    expect(boton().getAttribute('aria-label')).toBe('Pausar el cambio de fotos');
+    boton().click();
+    vi.advanceTimersByTime(7000 * 3);
+    expect(estado().visible).toBe(0);
+    expect(boton().getAttribute('aria-label')).toBe('Reanudar el cambio de fotos');
+    boton().click();
+    vi.advanceTimersByTime(7000);
+    expect(estado().visible).toBe(1);
   });
 });
 
@@ -244,9 +261,9 @@ describe('consultas públicas (E2-14)', () => {
         t.textContent?.includes(nombre),
       )!;
     const catedral = tarjeta('Catedral Metropolitana de la Ciudad de México');
-    expect(catedral.querySelector('img')?.getAttribute('src')).toBe('iglesias/catedral-cdmx.jpg');
+    expect(catedral.querySelector('img')?.getAttribute('src')).toBe('iglesias/catedral-cdmx.webp');
     expect(catedral.querySelector('figcaption')?.textContent).toMatch(
-      /ProtoplasmaKid\s*·\s*CC BY-SA 4\.0/,
+      /ProtoplasmaKid\s*·\s*CC BY-SA 4\.0\s*\(recortada\)/,
     );
     // La parroquia de la demo es ficticia: no lleva foto
     expect(tarjeta('Parroquia Comunidad de Fe').querySelector('figure')).toBeNull();
@@ -267,7 +284,8 @@ describe('consultas públicas (E2-14)', () => {
   });
 
   it('los objetos de las iglesias reales de la demo llevan el aviso de que son ilustrativos', async () => {
-    const aviso = 'Datos de demostración: objetos ilustrativos, no es un inventario oficial.';
+    const aviso =
+      'Datos de demostración: los objetos y el índice son ilustrativos, no es un inventario oficial.';
     const abrir = async (url: string, espera: string) => {
       TestBed.resetTestingModule();
       document.body.innerHTML = '';
@@ -291,6 +309,13 @@ describe('consultas públicas (E2-14)', () => {
       '/busqueda-patrimonio?estado=21&tipoObjeto=PIANO&antiguedadMin=50',
       'Piano vertical',
     );
+    expect(textoPagina()).not.toContain(aviso);
+    // Listas: con iglesias reales, el aviso; con solo la parroquia ficticia, sin aviso
+    await abrir('/templos?estado=21', 'Templo de Santo Domingo');
+    expect(textoPagina()).toContain(aviso);
+    await abrir('/reconocidas?estado=21', 'Templo de Santo Domingo');
+    expect(textoPagina()).toContain(aviso);
+    await abrir('/templos?estado=21&tipo=PARROQUIA', 'Parroquia Comunidad de Fe');
     expect(textoPagina()).not.toContain(aviso);
   });
 });

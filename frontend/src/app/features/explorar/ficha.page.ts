@@ -26,7 +26,7 @@ import { AvisoDemo, esIglesiaRealDeDemo } from './aviso-demo';
 import { TituloColonial } from './explorar-layout';
 import { MisasServiciosFicha } from './misas-servicios-ficha';
 import { ExplorarService } from './explorar.service';
-import { fotoDeIglesia } from './fotos-iglesias';
+import { fotoDeIglesia, fueRecortada } from './fotos-iglesias';
 import { PildoraDistincion } from './tarjeta-iglesia';
 
 /**
@@ -285,6 +285,9 @@ import { PildoraDistincion } from './tarjeta-iglesia';
             <a [href]="foto.licenciaUrl" target="_blank" rel="noopener noreferrer">{{
               foto.licencia
             }}</a>
+            @if (recortada(foto)) {
+              (recortada)
+            }
           </p>
         }
       </header>
@@ -442,6 +445,7 @@ export class FichaPage {
   protected readonly iconos = { ArrowLeft, CalendarDays, Mail, MapPin, Phone, Users };
   /** Foto de la iglesia, si la tiene (solo las iglesias reales de la demo, ver fotos-iglesias.ts). */
   protected readonly foto = computed(() => fotoDeIglesia(this.id()));
+  protected readonly recortada = fueRecortada;
   /** Iglesia real de la demo: sus objetos llevan el aviso de que son ilustrativos. */
   protected readonly esReal = computed(() => esIglesiaRealDeDemo(this.id()));
   protected readonly tipos = ETIQUETAS_TIPO_IGLESIA;

@@ -4,11 +4,12 @@ import { FOTOS_POR_IGLESIA } from './fotos-iglesias';
 
 /**
  * SOLO PARA LA DEMO: las iglesias con nombre real de los datos simulados (las que tienen foto en
- * fotos-iglesias.ts). Sus objetos son ilustrativos y el caso pide marcarlos como ficticios.
+ * fotos-iglesias.ts). Sus objetos (y con ellos su índice) son ilustrativos y el caso pide marcarlos como
+ * ficticios.
  */
 export const esIglesiaRealDeDemo = (id: string): boolean => Object.hasOwn(FOTOS_POR_IGLESIA, id);
 
-/** Aviso visible de que los objetos de una iglesia real de la demo no son su inventario. */
+/** Aviso visible de que los objetos y el índice de una iglesia real de la demo no son reales. */
 @Component({
   selector: 'app-aviso-demo',
   imports: [LucideAngularModule],
@@ -36,7 +37,10 @@ export const esIglesiaRealDeDemo = (id: string): boolean => Object.hasOwn(FOTOS_
   host: { role: 'note' },
   template: `
     <lucide-icon [img]="Info" [size]="16" aria-hidden="true" />
-    <span>Datos de demostración: objetos ilustrativos, no es un inventario oficial.</span>
+    <span
+      >Datos de demostración: los objetos y el índice son ilustrativos, no es un inventario
+      oficial.</span
+    >
   `,
 })
 export class AvisoDemo {
