@@ -7,10 +7,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { MatButton } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
-import { Gem, Landmark, LogIn, LucideAngularModule, MapPin, Search } from 'lucide-angular';
-import { TituloColonial } from './explorar-layout';
+import { ArrowRight, LogIn, LucideAngularModule, MapPin } from 'lucide-angular';
+import { FOTOS_IGLESIAS } from './fotos-iglesias';
 
 /**
  * Página de entrada de Ecclesia para quien llega sin sesión (`/`). Presenta el sistema en el estilo
@@ -22,58 +21,59 @@ import { TituloColonial } from './explorar-layout';
  * Con «reducir movimiento» activado en el sistema, se queda la primera.
  */
 
-/** Fotos del fondo: licencia gratuita de Unsplash (se agradece el crédito, que va al pie de la portada). */
-export const FOTOS_PORTADA = [
+/** Fotos del fondo (se exporta con este nombre para las pruebas). */
+export const FOTOS_PORTADA = FOTOS_IGLESIAS;
+
+const MS_POR_FOTO = 7000;
+
+/** Accesos de la parte baja: las tres consultas públicas. */
+const MOSAICOS = [
   {
-    archivo: 'landing/cholula-remedios.webp',
-    lugar: 'Santuario de los Remedios, Cholula, Puebla',
-    autor: 'Pedro Lastra',
-    enlace: 'https://unsplash.com/photos/8gJqRaAaKx4',
+    ruta: '/templos',
+    titulo: 'Iglesias por estado',
+    detalle: 'Filtra por municipio, tipo de templo o capacidad.',
   },
   {
-    archivo: 'landing/iglesia-barroca.webp',
-    lugar: 'Iglesia barroca de dos torres',
-    autor: 'Francisco Fuentes',
-    enlace: 'https://unsplash.com/photos/K60B0GolW40',
+    ruta: '/reconocidas',
+    titulo: 'Las más reconocidas',
+    detalle: 'Ordenadas por su índice de valor patrimonial.',
   },
   {
-    archivo: 'landing/santiago-apoala.webp',
-    lugar: 'Templo de Santiago Apoala, Oaxaca',
-    autor: 'Akshay Pawar',
-    enlace: 'https://unsplash.com/photos/_YPrHFLKjyg',
-  },
-  {
-    archivo: 'landing/mamatla.webp',
-    lugar: 'Iglesia de Mamatla, Estado de México',
-    autor: 'Álvaro Jacobo Lagunas',
-    enlace: 'https://unsplash.com/photos/A7ePTjJ81Hk',
+    ruta: '/busqueda-patrimonio',
+    titulo: 'Búsqueda por patrimonio',
+    detalle: 'Retablos, pinturas, imágenes y más.',
   },
 ] as const;
 
-const MS_POR_FOTO = 7000;
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, MatButton, LucideAngularModule, TituloColonial],
+  imports: [RouterLink, LucideAngularModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     :host {
       display: block;
     }
+    /* ── Portada: foto grande con el título abajo a la izquierda ── */
+    /* De orilla a orilla y debajo de la barra flotante (--alto-barra viene del marco público) */
     .portada {
       position: relative;
       display: flex;
+      min-height: 520px;
       flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      margin: 4px;
-      padding: 40px 16px 48px;
-      text-align: center;
-      border: 1px solid var(--marco);
-      outline: 1px solid var(--marco);
-      outline-offset: 3px;
-      border-radius: 4px;
+      justify-content: flex-end;
+      align-items: flex-start;
+      gap: 12px;
+      margin: calc(-1 * (var(--alto-barra) + 12px)) calc((100% - 100cqi) / 2) 0;
+      padding: calc(var(--alto-barra) + 40px) max(24px, calc((100cqi - 64rem) / 2 + 16px)) 32px;
       overflow: hidden;
       isolation: isolate;
+      color: var(--foto-texto);
+    }
+    @media (min-width: 768px) {
+      .portada {
+        min-height: 640px;
+        padding-bottom: 64px;
+      }
     }
     /* Fotos apiladas: solo la actual es opaca; el cambio es un fundido */
     .foto {
@@ -88,118 +88,224 @@ const MS_POR_FOTO = 7000;
     .foto.visible {
       opacity: 1;
     }
-    /* Velo del color de la página: más denso al centro, donde va el texto (contraste ≥ 4.5:1) */
+    /* Velo del color primario: denso abajo, donde va el texto (contraste ≥ 4.5:1), ligero arriba */
     .velo {
       position: absolute;
       inset: 0;
       z-index: -1;
-      background: radial-gradient(
-        ellipse at center,
-        color-mix(in srgb, var(--pergamino) 93%, transparent) 0%,
-        color-mix(in srgb, var(--pergamino) 85%, transparent) 55%,
-        color-mix(in srgb, var(--pergamino) 60%, transparent) 100%
-      );
+      background:
+        linear-gradient(
+          to right,
+          color-mix(in srgb, var(--foto-sombra) 75%, transparent) 0%,
+          color-mix(in srgb, var(--foto-sombra) 55%, transparent) 50%,
+          transparent 85%
+        ),
+        linear-gradient(
+          to top,
+          color-mix(in srgb, var(--foto-sombra) 70%, transparent) 0%,
+          color-mix(in srgb, var(--foto-sombra) 30%, transparent) 55%,
+          transparent 100%
+        );
     }
-    /* En pantallas angostas el texto ocupa todo el panel: velo parejo */
+    /* En celular el texto ocupa todo el ancho: sombra pareja */
     @media (max-width: 767px) {
       .velo {
-        background: color-mix(in srgb, var(--pergamino) 90%, transparent);
+        background: color-mix(in srgb, var(--foto-sombra) 72%, transparent);
       }
     }
     .credito {
       position: absolute;
-      right: 8px;
-      bottom: 6px;
+      right: 12px;
+      bottom: 12px;
       margin: 0;
-      padding: 2px 8px;
+      padding: 4px 10px;
       font-size: 11px;
-      color: var(--texto-suave);
-      background: color-mix(in srgb, var(--pergamino) 85%, transparent);
-      border-radius: 4px;
+      border-radius: 999px;
+      color: var(--foto-texto);
+      background: color-mix(in srgb, var(--foto-sombra) 80%, transparent);
     }
     .credito a {
       color: inherit;
     }
-    @media (prefers-reduced-motion: reduce) {
-      .foto {
-        transition: none;
+    /* En celular el texto llena la portada: el crédito baja, debajo de los botones */
+    @media (max-width: 767px) {
+      .credito {
+        position: static;
+        margin-top: 8px;
       }
     }
     .lema {
       margin: 0;
-      padding: 2px 10px;
-      font-size: 11px;
-      letter-spacing: 2px;
-      color: var(--acento);
-      /* Sobre la foto, el dorado necesita fondo propio para llegar a 4.5:1 */
-      background: color-mix(in srgb, var(--pergamino) 96%, transparent);
-      border-radius: 4px;
+      font-size: 12px;
+      letter-spacing: 3px;
+    }
+    .portada h1 {
+      margin: 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 48px;
+      font-weight: 400;
+      line-height: 1.05;
+      color: inherit;
+    }
+    @media (min-width: 768px) {
+      .portada h1 {
+        font-size: 76px;
+      }
+    }
+    .lema-grande {
+      margin: 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 20px;
+    }
+    /* Filete dorado (decorativo) */
+    .filete {
+      display: block;
+      width: 64px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--acento);
     }
     .intro {
       max-width: 36rem;
       margin: 0;
       font-size: 16px;
       line-height: 1.6;
-      color: var(--texto);
     }
     .botones {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       gap: 12px;
-      margin-top: 16px;
+      margin-top: 8px;
     }
-    /* Sobre la foto, el botón con borde necesita fondo propio para leerse */
-    .botones a[matButton='outlined'] {
-      background: var(--superficie);
+    /* Botones en forma de píldora */
+    .boton {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 0 22px;
+      border-radius: 999px;
+      font-size: 15px;
+      font-weight: 500;
+      text-decoration: none;
     }
-    .tarjetas {
+    .boton:focus-visible,
+    .mosaico:focus-visible,
+    .enlace-boton:focus-visible {
+      outline: 2px solid var(--acento);
+      outline-offset: 3px;
+    }
+    .boton-principal {
+      color: var(--acento-texto);
+      background: var(--acento);
+    }
+    .boton-secundario {
+      color: var(--foto-texto);
+      border: 1px solid var(--foto-texto);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .foto {
+        transition: none;
+      }
+    }
+
+    /* ── Bienvenida: texto y foto en dos columnas ── */
+    .bienvenida {
       display: grid;
-      gap: 16px;
+      gap: 24px;
+      align-items: center;
+      margin: 40px 0 0;
+      padding: 32px 24px;
+      border-radius: 16px;
+      background: var(--superficie);
+      border: 1px solid var(--marco);
+    }
+    @media (min-width: 768px) {
+      .bienvenida {
+        grid-template-columns: 1fr 1fr;
+        padding: 48px;
+      }
+    }
+    .bienvenida h2 {
+      margin: 0 0 12px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 32px;
+      font-weight: 400;
+      line-height: 1.15;
+      color: var(--primario);
+    }
+    .bienvenida p {
+      margin: 0 0 12px;
+      line-height: 1.6;
+      color: var(--texto);
+    }
+    .enlace-boton {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-weight: 500;
+      text-decoration: none;
+      color: var(--primario-texto);
+      background: var(--primario);
+    }
+    .bienvenida img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    /* ── Mosaicos con flecha circular ── */
+    .mosaicos {
+      display: grid;
+      gap: 12px;
       margin: 32px 0 0;
       padding: 0;
       list-style: none;
     }
     @media (min-width: 768px) {
-      .tarjetas {
+      .mosaicos {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
-    .tarjeta-colonial {
+    .mosaico {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
       height: 100%;
-      margin: 4px;
-      padding: 20px 16px;
-      background: var(--superficie);
-      border: 1px solid var(--marco);
-      outline: 1px solid var(--marco);
-      outline-offset: 3px;
-      border-radius: 4px;
-      text-align: center;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px;
+      border-radius: 12px;
       box-sizing: border-box;
+      color: var(--primario-texto);
+      background: var(--primario);
+      text-decoration: none;
     }
-    .icono {
-      color: var(--acento);
-    }
-    h2 {
-      margin: 0;
+    .mosaico h2 {
+      margin: 0 0 4px;
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 19px;
+      font-size: 20px;
       font-weight: 400;
-      color: var(--primario);
     }
-    .tarjeta-colonial p {
+    .mosaico p {
       margin: 0;
-      color: var(--texto-suave);
-      line-height: 1.5;
-    }
-    .tarjeta-colonial a {
-      margin-top: auto;
-      padding-top: 4px;
       font-size: 14px;
+      line-height: 1.4;
+    }
+    .flecha {
+      display: grid;
+      flex: none;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      color: var(--acento-texto);
+      background: var(--acento);
     }
     .pie {
       margin: 40px 0 0;
@@ -223,21 +329,19 @@ const MS_POR_FOTO = 7000;
       }
       <div class="velo" aria-hidden="true"></div>
       <p class="lema">COORDINACIÓN NACIONAL DE TEMPLOS</p>
-      <app-titulo-colonial
-        texto="Ecclesia"
-        subtitulo="Las iglesias de México y su patrimonio, en un solo lugar."
-        idTitulo="titulo-landing"
-      />
+      <h1 id="titulo-landing">Ecclesia</h1>
+      <p class="lema-grande">Las iglesias de México y su patrimonio, en un solo lugar.</p>
+      <span class="filete" aria-hidden="true"></span>
       <p class="intro">
         Consulta las iglesias de cada estado, conoce los objetos que guardan y cuáles tienen mayor
         valor patrimonial. El personal de cada iglesia administra aquí su información.
       </p>
       <div class="botones">
-        <a matButton="filled" routerLink="/templos">
-          <lucide-icon [img]="iconos.MapPin" [size]="16" aria-hidden="true" /> Explorar iglesias
+        <a class="boton boton-principal" routerLink="/templos">
+          <lucide-icon [img]="iconos.MapPin" [size]="18" aria-hidden="true" /> Explorar iglesias
         </a>
-        <a matButton="outlined" routerLink="/login">
-          <lucide-icon [img]="iconos.LogIn" [size]="16" aria-hidden="true" /> Acceso del personal
+        <a class="boton boton-secundario" routerLink="/login">
+          <lucide-icon [img]="iconos.LogIn" [size]="18" aria-hidden="true" /> Acceso del personal
         </a>
       </div>
       <p class="credito">
@@ -248,38 +352,52 @@ const MS_POR_FOTO = 7000;
       </p>
     </section>
 
-    <ul class="tarjetas" aria-label="Qué puedes hacer">
-      <li>
-        <article class="tarjeta-colonial">
-          <lucide-icon class="icono" [img]="iconos.Landmark" [size]="24" aria-hidden="true" />
-          <h2>Iglesias por estado</h2>
-          <p>Elige un estado y filtra por municipio, tipo de templo o capacidad.</p>
-          <a routerLink="/templos">Ver iglesias</a>
-        </article>
-      </li>
-      <li>
-        <article class="tarjeta-colonial">
-          <lucide-icon class="icono" [img]="iconos.Gem" [size]="24" aria-hidden="true" />
-          <h2>Las más reconocidas</h2>
-          <p>Ordenadas por su índice de valor patrimonial, de mayor a menor.</p>
-          <a routerLink="/reconocidas">Ver el ranking</a>
-        </article>
-      </li>
-      <li>
-        <article class="tarjeta-colonial">
-          <lucide-icon class="icono" [img]="iconos.Search" [size]="24" aria-hidden="true" />
-          <h2>Búsqueda por patrimonio</h2>
-          <p>Encuentra las iglesias que guardan un tipo de objeto, como retablos o pinturas.</p>
-          <a routerLink="/busqueda-patrimonio">Buscar</a>
-        </article>
-      </li>
+    <section class="bienvenida" aria-labelledby="titulo-bienvenida">
+      <div>
+        <h2 id="titulo-bienvenida">Desde las catedrales hasta las capillas de pueblo</h2>
+        <p>
+          La Coordinación Nacional de Templos reúne aquí el registro de las iglesias del país: dónde
+          están, qué patrimonio resguardan, sus horarios de misa, sus servicios y sus pláticas.
+        </p>
+        <p>Elige tu estado para empezar, o mira cuáles son las iglesias más reconocidas.</p>
+        <a class="enlace-boton" routerLink="/reconocidas">
+          Ver las más reconocidas
+          <lucide-icon [img]="iconos.ArrowRight" [size]="16" aria-hidden="true" />
+        </a>
+      </div>
+      <img
+        [src]="fotoBienvenida.archivo"
+        [alt]="fotoBienvenida.lugar"
+        loading="lazy"
+        width="1600"
+        height="1200"
+      />
+    </section>
+
+    <ul class="mosaicos" aria-label="Qué puedes hacer">
+      @for (m of mosaicos; track m.ruta) {
+        <li>
+          <a class="mosaico" [routerLink]="m.ruta">
+            <div>
+              <h2>{{ m.titulo }}</h2>
+              <p>{{ m.detalle }}</p>
+            </div>
+            <span class="flecha" aria-hidden="true">
+              <lucide-icon [img]="iconos.ArrowRight" [size]="20" />
+            </span>
+          </a>
+        </li>
+      }
     </ul>
 
     <p class="pie">ECCLESIA · PATRIMONIO DE MÉXICO</p>
   `,
 })
 export class LandingPage {
-  protected readonly iconos = { Gem, Landmark, LogIn, MapPin, Search };
+  protected readonly iconos = { ArrowRight, LogIn, MapPin };
+  protected readonly mosaicos = MOSAICOS;
+  /** Foto de la sección de bienvenida: la de Mamatla, que no abre la portada. */
+  protected readonly fotoBienvenida = FOTOS_PORTADA[3];
   protected readonly fotos = FOTOS_PORTADA;
   /** Foto que se ve ahora. */
   protected readonly actual = signal(0);

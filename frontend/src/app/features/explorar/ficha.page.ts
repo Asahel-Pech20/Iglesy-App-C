@@ -25,6 +25,7 @@ import type { FichaIglesia } from '@/app/tipos/patrimonio';
 import { TituloColonial } from './explorar-layout';
 import { MisasServiciosFicha } from './misas-servicios-ficha';
 import { ExplorarService } from './explorar.service';
+import { fotoDeIglesia } from './fotos-iglesias';
 import { PildoraDistincion } from './tarjeta-iglesia';
 
 /**
@@ -74,6 +75,37 @@ import { PildoraDistincion } from './tarjeta-iglesia';
       font-size: 12px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
+    }
+    /* Con foto (solo las iglesias reales de la demo): la foto de fondo y una sombra pareja encima */
+    .cabecera.con-foto {
+      position: relative;
+      isolation: isolate;
+      padding: 72px 16px 48px;
+      color: var(--foto-texto);
+      background-position: center;
+      background-size: cover;
+    }
+    .cabecera.con-foto::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: color-mix(in srgb, var(--foto-sombra) 68%, transparent);
+    }
+    .cabecera .credito {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      margin: 0;
+      padding: 2px 10px;
+      font-size: 11px;
+      letter-spacing: 0;
+      text-transform: none;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--foto-sombra) 80%, transparent);
+    }
+    .cabecera .credito a {
+      color: inherit;
     }
     .cuerpo {
       display: grid;
@@ -237,9 +269,22 @@ import { PildoraDistincion } from './tarjeta-iglesia';
     } @else if (consulta.error()) {
       <app-estado-error [error]="consulta.error()" (reintentar)="consulta.reload()" />
     } @else if (ficha(); as f) {
-      <header class="cabecera">
+      <header
+        class="cabecera"
+        [class.con-foto]="foto()"
+        [style.background-image]="foto() ? 'url(' + foto()!.archivo + ')' : null"
+      >
         <h1>{{ f.nombre }}</h1>
         <p>{{ subtitulo() }}</p>
+        @if (foto(); as foto) {
+          <p class="credito">
+            Foto:
+            <a [href]="foto.enlace" target="_blank" rel="noopener noreferrer">{{ foto.autor }}</a> ·
+            <a [href]="foto.licenciaUrl" target="_blank" rel="noopener noreferrer">{{
+              foto.licencia
+            }}</a>
+          </p>
+        }
       </header>
 
       <div class="cuerpo">
@@ -390,6 +435,8 @@ export class FichaPage {
   private readonly servicio = inject(ExplorarService);
 
   protected readonly iconos = { ArrowLeft, CalendarDays, Mail, MapPin, Phone, Users };
+  /** Foto de la iglesia, si la tiene (solo las iglesias reales de la demo, ver fotos-iglesias.ts). */
+  protected readonly foto = computed(() => fotoDeIglesia(this.id()));
   protected readonly tipos = ETIQUETAS_TIPO_IGLESIA;
   protected readonly tiposObjeto = ETIQUETAS_TIPO_OBJETO;
   protected readonly formato = formatearIndice;

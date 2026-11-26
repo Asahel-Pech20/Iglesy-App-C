@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
-import { MatOption, MatSelect } from '@angular/material/select';
+import { MatOption, MatSelect, MatSelectTrigger } from '@angular/material/select';
 import { LucideAngularModule, Search } from 'lucide-angular';
 import { of } from 'rxjs';
 import { EstadoError, EstadoVacio, Esqueleto } from '@/app/compartido/estados';
@@ -15,6 +15,7 @@ import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
 import { TarjetaIglesia } from './tarjeta-iglesia';
+import { FOTOS_IGLESIAS } from './fotos-iglesias';
 
 /**
  * /busqueda-patrimonio — el investigador elige un tipo de objeto, una antigüedad mínima y un lugar
@@ -27,6 +28,7 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     MatLabel,
     MatInput,
     MatSelect,
+    MatSelectTrigger,
     MatOption,
     LucideAngularModule,
     EstadoError,
@@ -41,24 +43,39 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   styles: `
     .pagina {
       display: grid;
-      gap: 16px;
+      gap: 24px;
       align-items: start;
     }
+    /* Filtros en una barra horizontal sobre los resultados: cada campo tiene al menos 220 px, así
+       que las opciones largas («Imagen (santo, virgen o cristo)») ya no se cortan */
     .filtros {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+      gap: 0 16px;
+      align-items: start;
+      padding: 16px 20px 4px;
       background: var(--superficie);
       border: 1px solid var(--marco);
-      border-radius: 4px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
     }
     .filtros h2 {
-      margin: 0 0 8px;
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 400;
       color: var(--primario);
+    }
+    .filtros h2::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--acento);
+      transform: rotate(45deg);
     }
     .filtros mat-form-field,
     .filtros app-campo-busqueda {
@@ -78,9 +95,6 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
       list-style: none;
     }
     @media (min-width: 768px) {
-      .pagina {
-        grid-template-columns: 200px minmax(0, 1fr);
-      }
       .lista {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -98,6 +112,7 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   `,
   template: `
     <app-titulo-colonial
+      [foto]="foto"
       texto="Búsqueda por patrimonio"
       subtitulo="Por ejemplo: imágenes de 300 años o más en Puebla."
     />
@@ -110,6 +125,8 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
             [value]="f().tipoObjeto"
             (selectionChange)="filtros.cambiar({ tipoObjeto: $event.value })"
           >
+            <!-- En el campo, solo el nombre corto; la lista conserva la descripción completa -->
+            <mat-select-trigger>{{ tipoCorto(f().tipoObjeto) }}</mat-select-trigger>
             @for (t of tipos; track t.valor) {
               <mat-option [value]="t.valor">{{ t.etiqueta }}</mat-option>
             }
@@ -183,9 +200,16 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   `,
 })
 export class BusquedaPage {
+  /** Foto de la banda de portada del título. */
+  protected readonly foto = FOTOS_IGLESIAS[0];
   private readonly servicio = inject(ExplorarService);
   protected readonly iconos = { Search };
   protected readonly tipos = opcionesDe(ETIQUETAS_TIPO_OBJETO);
+  /** «Imagen (santo, virgen o cristo)» → «Imagen», para que quepa en el campo. */
+  protected tipoCorto(valor: string) {
+    const etiqueta = this.tipos.find((t) => t.valor === valor)?.etiqueta ?? '';
+    return etiqueta.replace(/\s*\(.*\)$/, '');
+  }
   protected readonly filtros = filtrosURL({
     tipoObjeto: 'IMAGEN',
     antiguedadMin: 300,
