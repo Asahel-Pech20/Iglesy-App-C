@@ -61,7 +61,6 @@
 
 ### Seguridad
 - JWT access en header; refresh en cookie `httpOnly; Secure (prod); SameSite=Strict; Path=/api/v1/auth`.
-  - Excepción de despliegue (2026-11-26, pendiente de acuerdo del equipo): en Render gratis el frontend y la API están en `*.onrender.com` distintos y la cookie va con `COOKIE_SAMESITE=none` (Secure) más revisión de `Origin` en refresh y logout. Ver [docs/despliegue-render.md](docs/despliegue-render.md).
 - Refresh tokens rotan en cada uso; se guardan hasheados; logout los revoca.
 - Reset de contraseña: token aleatorio de 32 bytes, guardado hasheado, expira en 1 h, un solo uso. `forgot-password` responde 204 exista o no el correo.
 - Contraseña mínima: 8 caracteres, al menos una letra y un número.

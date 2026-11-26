@@ -7,16 +7,12 @@ import * as authService from './auth.service';
 
 export const COOKIE_REFRESH = 'refreshToken';
 
-// AGENTS.md §3: httpOnly; Secure (prod); SameSite=Strict; Path=/api/v1/auth.
-// En Render gratis el frontend y la API son sitios distintos: COOKIE_SAMESITE=none (ver env.ts).
-export function opcionesCookie(
-  config: Pick<typeof env, 'NODE_ENV' | 'COOKIE_SAMESITE'> = env,
-): CookieOptions {
+// AGENTS.md §3: httpOnly; Secure (prod); SameSite=Strict; Path=/api/v1/auth
+function opcionesCookie(): CookieOptions {
   return {
     httpOnly: true,
-    // SameSite=None solo lo aceptan los navegadores con Secure
-    secure: config.NODE_ENV === 'production' || config.COOKIE_SAMESITE === 'none',
-    sameSite: config.COOKIE_SAMESITE,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'strict',
     path: '/api/v1/auth',
   };
 }

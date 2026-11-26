@@ -11,15 +11,15 @@ const esquemaEnv = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   FRONTEND_URL: z.url(),
-  // SameSite de la cookie de refresh. «strict» (AGENTS.md §3) cuando el frontend y la API comparten
-  // sitio; «none» solo si están en sitios distintos, como dos servicios *.onrender.com (Render gratis).
-  // Con «none» la cookie va Secure y las rutas de la cookie exigen Origin = FRONTEND_URL (contra CSRF).
-  COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).default('strict'),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_FROM: z.string().default('AppIglesia <no-reply@iglesia.local>'),
   UPLOAD_DIR: z.string().default('uploads'),
   API_PUBLIC_URL: z.url().optional(),
+  // Proxies delante de la API (Render: la reescritura del frontend y su balanceador). Con 0 no se
+  // confía en X-Forwarded-For; detrás de un proxy, sin esto, el límite de intentos del login sería
+  // uno solo para todos, porque todas las peticiones llegarían con la IP del proxy.
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
   // 12 según AGENTS.md §3; las pruebas usan un costo menor para ir rápido
   BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
 });

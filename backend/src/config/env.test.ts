@@ -12,6 +12,8 @@ describe('validarEnv', () => {
   it('aplica valores por defecto', () => {
     const env = validarEnv(BASE);
     expect(env.PORT).toBe(3000);
+    // Sin proxy delante, no se confía en X-Forwarded-For
+    expect(env.TRUST_PROXY).toBe(0);
     expect(env.JWT_ACCESS_TTL).toBe('15m');
   });
 

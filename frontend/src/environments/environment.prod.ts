@@ -1,6 +1,7 @@
-// Producción = el servicio «principal» de Render, que habla con la API en su propio servicio.
-// Si cambia el nombre del servicio de la API en Render, se cambia aquí.
+// Producción = el servicio «principal» de Render. La API va en la misma dirección: Render reescribe
+// /api/* y /uploads/* hacia el servicio de la API (docs/despliegue-render.md), así la cookie de
+// sesión sigue con SameSite=Strict y no hace falta CORS.
 export const environment = {
-  apiUrl: 'https://iglesy-api.onrender.com/api/v1',
+  apiUrl: '/api/v1',
   usarMocks: false,
 };

@@ -1,36 +1,36 @@
 # Despliegue en Render (plan gratis, tres servicios)
 
-Tres direcciones `*.onrender.com`, sin dominio propio:
+Render gratis da un solo nivel de subdominio (`<nombre>.onrender.com`), así que se usa guion:
 
 | Servicio | Dirección | Qué es |
 |---|---|---|
-| `iglesy-demo` | `https://iglesy-demo.onrender.com` | Demo con datos de prueba (mocks); no usa la API |
-| `iglesy` | `https://iglesy.onrender.com` | El sistema real (Angular, build de producción) |
-| `iglesy-api` | `https://iglesy-api.onrender.com` | La API (Express + Prisma) con Render Postgres |
+| `api-iglesy` | `https://api-iglesy.onrender.com` | La API (Express + Prisma) con Render Postgres |
+| `principal-iglesy` | `https://principal-iglesy.onrender.com` | El sistema real: landing, consultas públicas y panel |
+| `demo-iglesy` | `https://demo-iglesy.onrender.com` | La misma app con datos de prueba (mocks), sin backend |
 
-> La dirección sale del **nombre del servicio al crearlo**. Si Render dice que el nombre ya está
-> ocupado, usa otro y cambia las direcciones de esta guía y de `frontend/src/environments/environment.prod.ts`.
+> La dirección sale del **nombre del servicio al crearlo** y no se cambia después. Si un nombre está
+> ocupado, usa otro y cambia esta guía (las reglas de reescritura apuntan a la API por su dirección).
 
-## Por qué la cookie va con `SameSite=None`
+## Cómo se conectan principal y api
 
-Cada `*.onrender.com` es un sitio distinto para el navegador (está en la *Public Suffix List*), así que
-con `SameSite=Strict` (AGENTS.md §3) la cookie de refresh no viajaría de `iglesy` a `iglesy-api` y la
-sesión se perdería al recargar. Con `COOKIE_SAMESITE=none`:
+El navegador solo habla con `principal-iglesy`. Render **reescribe** `/api/*` y `/uploads/*` hacia
+`api-iglesy` (hace de proxy), así que para el navegador el frontend y la API están en el mismo sitio:
 
-- la cookie va `Secure` y `httpOnly`, con `Path=/api/v1/auth`;
-- `POST /auth/refresh` y `POST /auth/logout` solo se aceptan con `Origin` igual a `FRONTEND_URL` (contra CSRF);
-- CORS ya solo permite `FRONTEND_URL`.
+- la cookie de refresh sigue como pide AGENTS.md §3 (`httpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`);
+- no hace falta CORS (`environment.prod.ts` usa `apiUrl: '/api/v1'`, relativa);
+- los logos (`/uploads/…`) salen de la misma dirección.
 
-En local y en las pruebas sigue `strict` (valor por defecto).
+Como todas las peticiones llegan a la API desde el proxy, la API necesita `TRUST_PROXY` para ver la IP
+real del cliente; si no, el límite de intentos del login (5 por minuto) sería uno solo para todos.
 
 ## 1. Base de datos: Render Postgres
 
-**New → Postgres**, nombre `iglesy-db`, plan **Free** (caduca a los 30 días). Al terminar, copia la
-**Internal Database URL** (para la API) y la **External Database URL** (para el seed desde tu laptop).
+**New → Postgres**, nombre `iglesy-db`, plan **Free** (caduca a los 30 días). Copia la **Internal
+Database URL** (para la API) y la **External Database URL** (para cargar los datos desde tu laptop).
 
-## 2. API: Web Service `iglesy-api`
+## 2. API: Web Service `api-iglesy`
 
-**New → Web Service**, repo `Iglesy-App-C`, rama la que se vaya a publicar.
+**New → Web Service**, repo `Iglesy-App-C`, la rama que se vaya a publicar.
 
 | Campo | Valor |
 |---|---|
@@ -39,7 +39,7 @@ En local y en las pruebas sigue `strict` (valor por defecto).
 | Start Command | `npx pnpm@12.16.1 --filter backend start` |
 | Instance Type | Free |
 
-Variables de entorno:
+`--prod=false` instala también `tsx` y `prisma`, que el arranque y las migraciones necesitan.
 
 | Variable | Valor |
 |---|---|
@@ -48,12 +48,10 @@ Variables de entorno:
 | `DATABASE_URL` | la *Internal Database URL* de `iglesy-db` |
 | `JWT_ACCESS_SECRET` | botón **Generate** |
 | `JWT_REFRESH_SECRET` | botón **Generate** (distinto del anterior) |
-| `FRONTEND_URL` | `https://iglesy.onrender.com` |
-| `API_PUBLIC_URL` | `https://iglesy-api.onrender.com` |
-| `COOKIE_SAMESITE` | `none` |
+| `FRONTEND_URL` | `https://principal-iglesy.onrender.com` |
+| `API_PUBLIC_URL` | `https://principal-iglesy.onrender.com` (los logos se piden por la reescritura) |
+| `TRUST_PROXY` | `2` (la reescritura del frontend y el balanceador de Render; ver «Comprobar») |
 | `SEED_PASSWORD` | la contraseña inicial de los usuarios del seed (no la subas al repo) |
-
-`--prod=false` instala también `tsx` y `prisma`, que el arranque y las migraciones necesitan.
 
 **Datos iniciales (una sola vez), desde tu laptop**, con la *External Database URL*:
 
@@ -64,7 +62,7 @@ pnpm --filter backend db:seed
 Remove-Item Env:DATABASE_URL, Env:SEED_PASSWORD
 ```
 
-## 3. Sistema real: Static Site `iglesy`
+## 3. Sistema real: Static Site `principal-iglesy`
 
 | Campo | Valor |
 |---|---|
@@ -72,16 +70,19 @@ Remove-Item Env:DATABASE_URL, Env:SEED_PASSWORD
 | Build Command | `npx pnpm@12.16.1 install --frozen-lockfile --filter frontend... && cd frontend && node scripts/ng-terminar.mjs build` |
 | Publish Directory | `frontend/dist/frontend/browser` |
 | Variable | `NODE_VERSION` = `22.12.0` |
-| Redirects/Rewrites | Source `/*` → Destination `/index.html`, Action **Rewrite** |
+
+**Redirects/Rewrites**, en este orden (la primera que coincide gana):
+
+| Source | Destination | Action |
+|---|---|---|
+| `/api/*` | `https://api-iglesy.onrender.com/api/*` | Rewrite |
+| `/uploads/*` | `https://api-iglesy.onrender.com/uploads/*` | Rewrite |
+| `/*` | `/index.html` | Rewrite |
 
 `ng-terminar.mjs` es necesario: con Angular 21.2 `ng build` termina el paquete pero el proceso no sale
 (esbuild queda abierto) y Render esperaría para siempre.
 
-El build de producción toma la API de `environment.prod.ts` (`https://iglesy-api.onrender.com/api/v1`).
-
-## 4. Demo: Static Site `iglesy-demo`
-
-Igual que el anterior, pero con `ng build --configuration development`, que incluye los datos de prueba:
+## 4. Demo: Static Site `demo-iglesy`
 
 | Campo | Valor |
 |---|---|
@@ -89,12 +90,20 @@ Igual que el anterior, pero con `ng build --configuration development`, que incl
 | Publish Directory | `frontend/dist/frontend/browser` |
 | Redirects/Rewrites | `/*` → `/index.html`, **Rewrite** |
 
-Cuentas: `<rol>@iglesia.local` con la contraseña de `frontend/src/mocks/datos/b1.ts`. Los datos se
-reinician al recargar y no se comparten entre visitantes.
+La configuración `development` incluye los datos de prueba. Cuentas: `<rol>@iglesia.local` con la
+contraseña de `frontend/src/mocks/datos/b1.ts`. Los datos se reinician al recargar.
+
+## Comprobar después de desplegar
+
+1. `https://principal-iglesy.onrender.com/api/docs` abre Swagger: la reescritura llega a la API.
+2. Inicia sesión, recarga la página y sigue la sesión: la cookie pasa por la reescritura.
+3. Seis intentos de login fallidos seguidos dan «Demasiados intentos»; desde otro dispositivo
+   (otra red) se puede entrar: el límite es por persona. Si el límite se comparte, ajusta `TRUST_PROXY`.
+4. Sube un logo en Configuración y que se vea (hasta el siguiente despliegue).
 
 ## Limitaciones del plan gratis
 
-- La API se duerme tras ~15 min sin uso: la primera petición tarda ~1 min.
+- La API se duerme tras ~15 min sin uso: la primera petición tarda ~1 min. Ábrela antes de la demo.
 - La base de datos gratis caduca a los 30 días.
 - Los logos subidos (`uploads/`) se pierden en cada despliegue: el disco del Web Service no persiste.
 - Los correos (invitaciones, recuperar contraseña) no salen sin un SMTP real (`SMTP_HOST`, `SMTP_PORT`).
