@@ -276,10 +276,71 @@ function peticionDeOperacion(
   };
 }
 
-/** Un request por cada operación del YAML, en carpetas por etiqueta (en el orden de `tags`). */
+// ---------------------------------------------------------------- carpetas por integrante
+
+const GESTION_INTERNA = 'Gestión interna';
+const SIN_DUENIO = 'Sin dueño asignado';
+
+/** Carpetas de la colección, en orden (dueños: specs.md §9 y §12.6). */
+const CARPETAS: Record<string, string> = {
+  Santiago: 'Infraestructura, autenticación, usuarios y configuración (B1/F1).',
+  Nataly: 'Iglesias, catálogos, patrimonio, criterios del índice y sus consultas públicas.',
+  Genaro:
+    'Padres, horario de misas, misas celebradas, agenda, servicios, pláticas y sus consultas públicas.',
+  Oscar: 'Donaciones, dashboard, reportes, diezmo, espacios y sus consultas públicas.',
+  [GESTION_INTERNA]:
+    'Módulos heredados de AppIglesia. El dueño está en la descripción de cada grupo.',
+  [SIN_DUENIO]:
+    'Rutas con una etiqueta que el generador aún no conoce: asígnale dueño en backend/scripts/generar-postman.ts.',
+};
+
+/** Etiqueta de openapi.yaml → carpeta. */
+const CARPETA_DE_ETIQUETA: Record<string, string> = {
+  Sistema: 'Santiago',
+  Auth: 'Santiago',
+  Usuarios: 'Santiago',
+  Configuración: 'Santiago',
+  Iglesias: 'Nataly',
+  Catálogos: 'Nataly',
+  Patrimonio: 'Nataly',
+  Misas: 'Genaro',
+  Servicios: 'Genaro',
+  Donaciones: 'Oscar',
+  Dashboard: 'Oscar',
+  Reportes: 'Oscar',
+  Diezmo: 'Oscar',
+  Espacios: 'Oscar',
+  Miembros: GESTION_INTERNA,
+  Ministerios: GESTION_INTERNA,
+  Eventos: GESTION_INTERNA,
+  Asistencia: GESTION_INTERNA,
+  Anuncios: GESTION_INTERNA,
+};
+
+/** Dueño de cada grupo de «Gestión interna». */
+const DUENIO_DE_GRUPO: Record<string, string> = {
+  Miembros: 'Nataly',
+  Ministerios: 'Nataly',
+  Eventos: 'Genaro',
+  Asistencia: 'Genaro',
+  Anuncios: 'Genaro',
+  Cartelera: 'Genaro',
+};
+
+/** La etiqueta «Público» mezcla dueños, así que se reparte por la ruta. */
+export function ubicacion(etiqueta: string, ruta: string): { carpeta: string; grupo: string } {
+  if (etiqueta === 'Público') {
+    if (ruta.endsWith('/cartelera')) return { carpeta: GESTION_INTERNA, grupo: 'Cartelera' };
+    if (ruta.includes('platicas')) return { carpeta: 'Genaro', grupo: 'Pláticas (público)' };
+    return { carpeta: SIN_DUENIO, grupo: etiqueta };
+  }
+  return { carpeta: CARPETA_DE_ETIQUETA[etiqueta] ?? SIN_DUENIO, grupo: etiqueta };
+}
+
+/** Un request por cada operación del YAML: carpeta del integrante y, dentro, un grupo por etiqueta. */
 export function carpetasDelOpenApi(doc: DocOpenApi): Carpeta[] {
   const r = new Resolvedor(doc);
-  const porEtiqueta = new Map<string, ItemPeticion[]>();
+  const porEtiqueta = new Map<string, { ruta: string; item: ItemPeticion }[]>();
   for (const etiqueta of doc.tags ?? []) porEtiqueta.set(etiqueta.name, []);
 
   for (const [ruta, definicion] of Object.entries(doc.paths)) {
@@ -289,13 +350,33 @@ export function carpetasDelOpenApi(doc: DocOpenApi): Carpeta[] {
       if (!op) continue;
       const etiqueta = op.tags?.[0] ?? 'Sistema';
       const lista = porEtiqueta.get(etiqueta) ?? [];
-      lista.push(peticionDeOperacion(r, metodo, ruta, op, paramsDeRuta));
+      lista.push({ ruta, item: peticionDeOperacion(r, metodo, ruta, op, paramsDeRuta) });
       porEtiqueta.set(etiqueta, lista);
     }
   }
-  return [...porEtiqueta.entries()]
-    .filter(([, items]) => items.length > 0)
-    .map(([name, item]) => ({ name, item }));
+
+  const arbol = new Map<string, Map<string, ItemPeticion[]>>(
+    Object.keys(CARPETAS).map((nombre) => [nombre, new Map()]),
+  );
+  for (const [etiqueta, peticiones] of porEtiqueta) {
+    for (const { ruta, item } of peticiones) {
+      const { carpeta, grupo } = ubicacion(etiqueta, ruta);
+      const grupos = arbol.get(carpeta)!;
+      grupos.set(grupo, [...(grupos.get(grupo) ?? []), item]);
+    }
+  }
+
+  return [...arbol.entries()]
+    .filter(([, grupos]) => grupos.size > 0)
+    .map(([name, grupos]) => ({
+      name,
+      description: CARPETAS[name]!,
+      item: [...grupos.entries()].map(([grupo, item]) => ({
+        name: grupo,
+        ...(name === GESTION_INTERNA ? { description: `Dueño: ${DUENIO_DE_GRUPO[grupo]}.` } : {}),
+        item,
+      })),
+    }));
 }
 
 // ---------------------------------------------------------------- «0. Iniciar sesión»

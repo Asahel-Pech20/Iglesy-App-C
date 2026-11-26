@@ -13,6 +13,7 @@ import {
   construirColeccion,
   construirEntorno,
   serializar,
+  ubicacion,
 } from '../scripts/generar-postman';
 import { ROLES } from './config/permisos';
 
@@ -66,6 +67,49 @@ describe('colección de Postman (OSC-08)', () => {
       if (op.publica) expect(peticion.request.auth, op.clave).toEqual({ type: 'noauth' });
       else expect(peticion.request.auth, op.clave).toBeUndefined();
     }
+  });
+
+  it('reparte las carpetas por integrante y deja lo heredado en «Gestión interna»', () => {
+    const fijas = ['0. Iniciar sesión', 'Recorrido de la demo'];
+    const raiz = coleccion.item.map((i) => i.name);
+    expect(raiz.slice(0, 7)).toEqual([
+      ...fijas,
+      'Santiago',
+      'Nataly',
+      'Genaro',
+      'Oscar',
+      'Gestión interna',
+    ]);
+    const duenio = (clave: string) =>
+      raiz
+        .filter((nombre) => !fijas.includes(nombre))
+        .find((nombre) =>
+          peticiones(carpeta(nombre)!.item).some(
+            (p) => p.request.description?.split('\n')[0] === '`' + clave + '`',
+          ),
+        );
+    expect(duenio('GET /health')).toBe('Santiago');
+    expect(duenio('POST /catalogos/importacion')).toBe('Nataly');
+    expect(duenio('GET /public/iglesias/{iglesiaId}/platicas')).toBe('Genaro');
+    expect(duenio('GET /iglesias/{iglesiaId}/misas-celebradas')).toBe('Genaro');
+    expect(duenio('GET /iglesias/{iglesiaId}/misas-celebradas/{misaId}/diezmo')).toBe('Oscar');
+    expect(duenio('GET /public/cartelera')).toBe('Gestión interna');
+    const grupos = carpeta('Gestión interna')!.item as Carpeta[];
+    expect(Object.fromEntries(grupos.map((g) => [g.name, g.description]))).toEqual({
+      Miembros: 'Dueño: Nataly.',
+      Ministerios: 'Dueño: Nataly.',
+      Eventos: 'Dueño: Genaro.',
+      Asistencia: 'Dueño: Genaro.',
+      Anuncios: 'Dueño: Genaro.',
+      Cartelera: 'Dueño: Genaro.',
+    });
+  });
+
+  it('una etiqueta nueva no rompe el generador: va a «Sin dueño asignado»', () => {
+    expect(ubicacion('Etiqueta nueva', '/algo')).toEqual({
+      carpeta: 'Sin dueño asignado',
+      grupo: 'Etiqueta nueva',
+    });
   });
 
   it('hay un login por cada rol, incluido COORDINADOR, que guarda accessToken e iglesiaId', () => {
