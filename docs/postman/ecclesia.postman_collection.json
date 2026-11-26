@@ -2394,6 +2394,37 @@
             "description": "`GET /public/cartelera`\n\nCartelera de la iglesia inicial (alias heredado; sin sesión; cache 60 s; 60 solicitudes/min por IP)\n\nSolo datos públicos; no incluye miembros, usuarios ni responsables."
           },
           "response": []
+        },
+        {
+          "name": "GET Pláticas de una iglesia, filtrables por tipo, sin sesión (E3-14; RF-38, RF-39, RN-33)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias/:iglesiaId/platicas",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias", ":iglesiaId", "platicas"],
+              "query": [
+                {
+                  "key": "tipo",
+                  "value": "PREBAUTISMAL",
+                  "disabled": true
+                }
+              ],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                }
+              ]
+            },
+            "description": "`GET /public/iglesias/{iglesiaId}/platicas`\n\nPláticas de una iglesia, filtrables por tipo, sin sesión (E3-14; RF-38, RF-39, RN-33)\n\n«¿Cuándo son las pláticas de bautizo?» → `?tipo=PREBAUTISMAL`. 404 si la iglesia no existe o está cerrada."
+          },
+          "response": []
         }
       ]
     },
@@ -3324,7 +3355,7 @@
       "name": "Misas",
       "item": [
         {
-          "name": "GET Padres registrados (misas:leer)",
+          "name": "GET Padres activos asociados a la iglesia (misas:leer o padres:gestionar; E3-06, RF-40)",
           "request": {
             "method": "GET",
             "header": [],
@@ -3340,12 +3371,12 @@
                 }
               ]
             },
-            "description": "`GET /iglesias/{iglesiaId}/padres`\n\nPadres registrados (misas:leer)"
+            "description": "`GET /iglesias/{iglesiaId}/padres`\n\nPadres activos asociados a la iglesia (misas:leer o padres:gestionar; E3-06, RF-40)"
           },
           "response": []
         },
         {
-          "name": "POST Registrar un padre (misas:registrar)",
+          "name": "POST Registrar un padre nuevo y asociarlo a la iglesia (misas:programar o misas:registrar)",
           "request": {
             "method": "POST",
             "header": [
@@ -3368,14 +3399,305 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nombre\": \"texto\"\n}",
+              "raw": "{\n  \"nombre\": \"texto\",\n  \"titulo\": \"texto\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "`POST /iglesias/{iglesiaId}/padres`\n\nRegistrar un padre (misas:registrar)"
+            "description": "`POST /iglesias/{iglesiaId}/padres`\n\nRegistrar un padre nuevo y asociarlo a la iglesia (misas:programar o misas:registrar)\n\nSupuesto P-19: si ya hay un padre activo con el mismo nombre (sin distinguir mayúsculas), responde 409 con su id en `details` para asociarlo con PUT en lugar de duplicarlo.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Asociar a la iglesia un padre que ya existe (misas:programar; RF-41, RN-28). Idempotente",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/padres/:padreId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "padres", ":padreId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "padreId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "`PUT /iglesias/{iglesiaId}/padres/{padreId}`\n\nAsociar a la iglesia un padre que ya existe (misas:programar; RF-41, RN-28). Idempotente"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Quitar al padre de la iglesia sin perder su historial (misas:programar)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/padres/:padreId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "padres", ":padreId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "padreId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "`DELETE /iglesias/{iglesiaId}/padres/{padreId}`\n\nQuitar al padre de la iglesia sin perder su historial (misas:programar)\n\n422 si todavía tiene misas en el horario de esta iglesia; primero se reasignan."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Horario semanal vigente por día y hora local (misas:leer o padres:gestionar; RF-42)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/horario-misas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "horario-misas"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                }
+              ]
+            },
+            "description": "`GET /iglesias/{iglesiaId}/horario-misas`\n\nHorario semanal vigente por día y hora local (misas:leer o padres:gestionar; RF-42)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Programar una misa en el horario semanal (misas:programar; RF-42, RF-43, RF-46)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/horario-misas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "horario-misas"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diaSemana\": 0,\n  \"hora\": \"texto\",\n  \"tipo\": \"DIARIA\",\n  \"idioma\": \"ESPANOL\",\n  \"duracionMin\": \"texto\",\n  \"padreId\": \"00000000-0000-4000-8000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`POST /iglesias/{iglesiaId}/horario-misas`\n\nProgramar una misa en el horario semanal (misas:programar; RF-42, RF-43, RF-46)\n\nLa hora es la local de la iglesia (RN-31). 409 si el padre ya tiene una misa que se empalma, aunque sea en otra iglesia o en otra zona horaria (RF-45, RN-26; supuesto P-15); el mensaje dice el día, la hora y la iglesia de la misa con la que choca. 422 si el padre no está asociado a la iglesia.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Cambiar una misa del horario; vuelve a revisar los choques del padre (misas:programar)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/horario-misas/:horarioId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "horario-misas", ":horarioId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "horarioId",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diaSemana\": 0,\n  \"hora\": \"texto\",\n  \"tipo\": \"DIARIA\",\n  \"idioma\": \"ESPANOL\",\n  \"duracionMin\": \"texto\",\n  \"padreId\": \"00000000-0000-4000-8000-000000000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`PATCH /iglesias/{iglesiaId}/horario-misas/{horarioId}`\n\nCambiar una misa del horario; vuelve a revisar los choques del padre (misas:programar)"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Quitar la misa del horario; baja lógica, las misas celebradas la conservan (misas:programar)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/horario-misas/:horarioId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "horario-misas", ":horarioId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "horarioId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "`DELETE /iglesias/{iglesiaId}/horario-misas/{horarioId}`\n\nQuitar la misa del horario; baja lógica, las misas celebradas la conservan (misas:programar)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Padres de todo el país con sus iglesias (padres:gestionar o misas:programar; E3-06)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/padres",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "texto",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "`GET /padres`\n\nPadres de todo el país con sus iglesias (padres:gestionar o misas:programar; E3-06)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Registrar un padre sin asociarlo todavía (padres:gestionar, Coordinación; supuesto P-19)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/padres",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"texto\",\n  \"titulo\": \"texto\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`POST /padres`\n\nRegistrar un padre sin asociarlo todavía (padres:gestionar, Coordinación; supuesto P-19)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Agenda semanal del padre en todas sus iglesias (padres:gestionar o misas:leer; E3-08, RF-47)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/padres/:padreId/agenda",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres", ":padreId", "agenda"],
+              "query": [
+                {
+                  "key": "semana",
+                  "value": "2026-01-15",
+                  "disabled": true,
+                  "description": "Cualquier día de la semana a consultar (aaaa-mm-dd); por omisión, la semana en curso"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "padreId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "`GET /padres/{padreId}/agenda`\n\nAgenda semanal del padre en todas sus iglesias (padres:gestionar o misas:leer; E3-08, RF-47)\n\nSupuesto P-18: la ven la Coordinación y el personal de las iglesias donde celebra (otra iglesia, 403); se arma con el horario normal y no incluye iglesias cerradas. Cada misa trae la fecha y la hora locales de su iglesia y su instante real; van ordenadas por el instante.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Corregir los datos del padre o darlo de baja (padres:gestionar, Coordinación)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/padres/:padreId",
+              "host": ["{{baseUrl}}"],
+              "path": ["padres", ":padreId"],
+              "variable": [
+                {
+                  "key": "padreId",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"texto\",\n  \"titulo\": \"texto\",\n  \"activo\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`PATCH /padres/{padreId}`\n\nCorregir los datos del padre o darlo de baja (padres:gestionar, Coordinación)\n\n422 al darlo de baja si todavía tiene misas en algún horario."
           },
           "response": []
         },
@@ -3425,7 +3747,7 @@
           "response": []
         },
         {
-          "name": "POST Registrar una misa ya celebrada (misas:registrar)",
+          "name": "POST Registrar una misa ya celebrada (misas:registrar; E3-09, RF-48–RF-50)",
           "request": {
             "method": "POST",
             "header": [
@@ -3448,14 +3770,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"inicio\": \"2026-01-15T12:00:00.000Z\",\n  \"padreId\": \"00000000-0000-4000-8000-000000000000\"\n}",
+              "raw": "{\n  \"horarioMisaId\": \"00000000-0000-4000-8000-000000000000\",\n  \"fecha\": \"2026-01-15\",\n  \"padreId\": \"00000000-0000-4000-8000-000000000000\",\n  \"motivo\": \"texto\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "`POST /iglesias/{iglesiaId}/misas-celebradas`\n\nRegistrar una misa ya celebrada (misas:registrar)"
+            "description": "`POST /iglesias/{iglesiaId}/misas-celebradas`\n\nRegistrar una misa ya celebrada (misas:registrar; E3-09, RF-48–RF-50)\n\nDos formas. Desde el horario (`horarioMisaId` + `fecha` local): la hora sale del horario; si la dio otro padre (`padreId`), es una sustitución y lleva `motivo`, que se guarda con quién hizo el cambio y no se edita. 422 si la fecha no es el día del horario, si aún no empieza o si el sustituto no es de la iglesia; 409 si ya está registrada esa fecha o si el sustituto tiene su propia misa a esa hora (supuesto P-17). Suelta (`inicio` + `padreId`): la usa el diezmo y una misa especial de una sola fecha (P-16).\n"
           },
           "response": []
         }
@@ -4368,6 +4690,251 @@
               ]
             },
             "description": "`POST /iglesias/{iglesiaId}/solicitudes-espacio/{id}/sin-lugar`\n\nAvisar que no hay lugar (espacios:gestionar)\n\n422 si la solicitud no está «Recibida». RF-76, CA-27."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Servicios",
+      "item": [
+        {
+          "name": "GET Servicios vigentes de la iglesia (servicios:gestionar; E3-11)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/servicios",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "servicios"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                }
+              ]
+            },
+            "description": "`GET /iglesias/{iglesiaId}/servicios`\n\nServicios vigentes de la iglesia (servicios:gestionar; E3-11)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Registrar un servicio (servicios:gestionar; RF-30–RF-33, RN-22, RN-23)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/servicios",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "servicios"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"texto\",\n  \"formaCosto\": \"MONTO\",\n  \"monto\": \"texto\",\n  \"requisitos\": \"texto\",\n  \"duracionMin\": \"texto\",\n  \"requiereCita\": false,\n  \"horarios\": [\n    {\n      \"diaSemana\": 0,\n      \"hora\": \"texto\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`POST /iglesias/{iglesiaId}/servicios`\n\nRegistrar un servicio (servicios:gestionar; RF-30–RF-33, RN-22, RN-23)\n\nLista abierta de nombres (supuesto P-10); el nombre no se repite en la iglesia (409). El costo es MONTO (monto > 0), GRATUITO (sin monto) o DONATIVO (monto sugerido opcional; P-11).\n"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Modificar un servicio; si vienen horarios, reemplazan a los anteriores (servicios:gestionar; RF-34)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/servicios/:servicioId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "servicios", ":servicioId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "servicioId",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"texto\",\n  \"formaCosto\": \"MONTO\",\n  \"monto\": \"texto\",\n  \"requisitos\": \"texto\",\n  \"duracionMin\": \"texto\",\n  \"requiereCita\": false,\n  \"horarios\": [\n    {\n      \"diaSemana\": 0,\n      \"hora\": \"texto\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`PATCH /iglesias/{iglesiaId}/servicios/{servicioId}`\n\nModificar un servicio; si vienen horarios, reemplazan a los anteriores (servicios:gestionar; RF-34)"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Quitar un servicio (baja lógica) (servicios:gestionar)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/servicios/:servicioId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "servicios", ":servicioId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "servicioId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "`DELETE /iglesias/{iglesiaId}/servicios/{servicioId}`\n\nQuitar un servicio (baja lógica) (servicios:gestionar)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET Pláticas vigentes de la iglesia (servicios:gestionar; E3-13)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/platicas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "platicas"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                }
+              ]
+            },
+            "description": "`GET /iglesias/{iglesiaId}/platicas`\n\nPláticas vigentes de la iglesia (servicios:gestionar; E3-13)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST Registrar una plática (servicios:gestionar; RF-36, RN-24, RN-25)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/platicas",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "platicas"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"PREBAUTISMAL\",\n  \"sesiones\": 1,\n  \"costo\": \"texto\",\n  \"cupo\": 1,\n  \"lugar\": \"texto\",\n  \"imparte\": \"texto\",\n  \"padreId\": \"00000000-0000-4000-8000-000000000000\",\n  \"horarios\": [\n    {\n      \"diaSemana\": 0,\n      \"hora\": \"texto\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`POST /iglesias/{iglesiaId}/platicas`\n\nRegistrar una plática (servicios:gestionar; RF-36, RN-24, RN-25)\n\nCupo informativo (supuesto P-13). Quién la da es texto libre y puede enlazarse a un padre de la iglesia (P-14); un padre de otra iglesia → 422.\n"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Modificar una plática; si vienen horarios, reemplazan a los anteriores (servicios:gestionar; RF-37)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/platicas/:platicaId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "platicas", ":platicaId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "platicaId",
+                  "value": ""
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"PREBAUTISMAL\",\n  \"sesiones\": 1,\n  \"costo\": \"texto\",\n  \"cupo\": 1,\n  \"lugar\": \"texto\",\n  \"imparte\": \"texto\",\n  \"padreId\": \"00000000-0000-4000-8000-000000000000\",\n  \"horarios\": [\n    {\n      \"diaSemana\": 0,\n      \"hora\": \"texto\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`PATCH /iglesias/{iglesiaId}/platicas/{platicaId}`\n\nModificar una plática; si vienen horarios, reemplazan a los anteriores (servicios:gestionar; RF-37)"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Quitar una plática (baja lógica) (servicios:gestionar)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/:iglesiaId/platicas/:platicaId",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", ":iglesiaId", "platicas", ":platicaId"],
+              "variable": [
+                {
+                  "key": "iglesiaId",
+                  "value": "{{iglesiaId}}",
+                  "description": "Iglesia del personal. Si no es la del usuario es 403; si no existe, 404 (alcanceIglesia)."
+                },
+                {
+                  "key": "platicaId",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "`DELETE /iglesias/{iglesiaId}/platicas/{platicaId}`\n\nQuitar una plática (baja lógica) (servicios:gestionar)"
           },
           "response": []
         }
