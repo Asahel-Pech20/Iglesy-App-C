@@ -569,7 +569,7 @@ El diagrama se ajusta con las respuestas de P-26 y P-27.
 | Requerimiento | Párrafo del caso | Código | Prueba |
 |---|---|---|---|
 | RF-01 – RF-05, CA-02, CA-03 | Las iglesias, párrafo 2 | `GET /public/iglesias?estado=` (`consultas.service.ts` `listaPorEstado`, `iglesias.service.ts` `listarPublicas`); pantalla `/templos` | `iglesias.test.ts` (E2-07), `consultas.test.ts` (CA-02), `prueba/patrimonio.spec.ts` |
-| RF-06, RF-16, CA-04 | Las iglesias · El patrimonio | `GET /public/iglesias/:iglesiaId` (`consultas.service.ts` `ficha`); pantalla `/templos/:id`. Servicios, pláticas, misas y espacios: pendientes de los services de Genaro y Oscar | `consultas.test.ts` (CA-04), `prueba/patrimonio.spec.ts` |
+| RF-06, RF-16, CA-04 | Las iglesias · El patrimonio | `GET /public/iglesias/:iglesiaId` (`consultas.service.ts` `ficha`); pantalla `/templos/:id`. Servicios, pláticas y misas vienen de los services de Genaro (E3-10, E3-12, E3-14) y los tipos de espacio del de Oscar (E4-08) | `consultas.test.ts` (CA-04), `prueba/patrimonio.spec.ts` |
 | RF-07, RF-09, CA-09 | Las iglesias | `POST /iglesias` (`iglesias.service.ts` `crear`, `catalogos.service.ts` `validarUbicacion`); diálogo `iglesia-form.dialogo.ts` | `iglesias.test.ts` (E2-06, CA-09), `prueba/patrimonio.spec.ts` |
 | RF-08 | Quién usará el sistema | `PATCH /iglesias/:iglesiaId` con `alcanceIglesia` | `iglesias.test.ts` (E2-06, A2-E2-01/03) |
 | RF-10 | Las iglesias · Quién usará el sistema | `POST /catalogos/importacion`, `prisma/catalogos-inegi.ts` (`db:catalogos`) | `catalogos.test.ts` |
@@ -594,7 +594,7 @@ El diagrama se ajusta con las respuestas de P-26 y P-27.
 | RF-84 *(deseable)* | Si alcanza el tiempo | `GET /iglesias/:iglesiaId/semana-misas` y `POST /iglesias/:iglesiaId/misas-celebradas/semana` (`misas/semana.service.ts`); panel «Semana armada desde el horario» (`misas/semana.panel.ts`); el seed del diezmo arma sus misas desde el horario (`prisma/seed-diezmo.ts`) | `misas/semana-municipio.test.ts` (RF-84); `diezmo/seed-diezmo-horario.test.ts`; `prueba/deseables-genaro.spec.ts` |
 | Seeds mínimos de §12.8 (servicios, pláticas, 15 padres, misa diaria) | Los servicios y las pláticas · Las misas y los padres | `prisma/seed-misas-servicios.ts`; `prisma/verificar-seed-misas.ts` | `misas/seed-misas-servicios.test.ts` (mínimos, 0 choques, idempotente) |
 
-Rutas de código relativas a `backend/src/modules/` y `frontend/src/app/`. Filas RF-30 a RF-52 (Genaro, E3-21): rama `feat/E3-misas-servicios-genaro`, PR #34; los supuestos de P-10 a P-19 están en `docs/ecclesia/plan-genaro.md`. Datos de prueba: `backend/prisma/seed-patrimonio.ts` (E2-09, `seed.test.ts`).
+Rutas de código relativas a `backend/src/modules/` y `frontend/src/app/`. Filas RF-30 a RF-52 (Genaro, E3-21): rama `feat/E3-misas-servicios-genaro`, PR #34; los supuestos de P-10 a P-19 están en `docs/ecclesia/plan-genaro.md`. Datos de prueba: `backend/prisma/seed-patrimonio.ts` (E2-09, `seed.test.ts`). Misas, servicios y pláticas: `backend/prisma/seed-misas-servicios.ts` (E3-19, `misas/seed-misas-servicios.test.ts`).
 
 ### 9.1 Requerimientos no funcionales (Santiago)
 
