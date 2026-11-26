@@ -15,13 +15,22 @@ import {
   ETIQUETAS_TIPO_MISA,
   nombrePadre,
 } from './formato-misas';
+import { ExcepcionesMisaPanel } from './excepciones.panel';
 import { HorarioMisaDialogo } from './horario.dialogo';
 import { MisasService } from './misas.service';
 
 /** Horario semanal de misas con el padre de cada una (RF-42–RF-46). */
 @Component({
   selector: 'app-horario-misas-tab',
-  imports: [MatButton, LucideAngularModule, PuedeDirective, EstadoError, EstadoVacio, Esqueleto],
+  imports: [
+    MatButton,
+    LucideAngularModule,
+    PuedeDirective,
+    EstadoError,
+    EstadoVacio,
+    Esqueleto,
+    ExcepcionesMisaPanel,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="tarjeta">
@@ -100,8 +109,15 @@ import { MisasService } from './misas.service';
         </div>
       }
     </section>
+    @if (misas().length > 0) {
+      <app-excepciones-misa-panel />
+    }
   `,
   styles: `
+    :host {
+      display: grid;
+      gap: 16px;
+    }
     .encabezado {
       display: flex;
       flex-wrap: wrap;

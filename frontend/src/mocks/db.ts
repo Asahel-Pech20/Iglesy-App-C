@@ -34,6 +34,7 @@ import {
 } from './datos/diezmo';
 import type { Padre } from '@/app/tipos/diezmo';
 import {
+  type ExcepcionMisaMock,
   type HorarioMisaMock,
   horariosMisaIniciales,
   type PadreIglesiaMock,
@@ -112,6 +113,7 @@ export const db = {
   padresIglesia: padresIglesiaIniciales(),
   horariosMisa: horariosMisaIniciales(),
   sustitucionesMisa: {} as Record<string, SustitucionMock & { horarioMisaId: string }>,
+  excepcionesMisa: [] as ExcepcionMisaMock[],
   servicios: serviciosIniciales(),
   platicas: platicasIniciales(),
 } satisfies {
@@ -144,6 +146,7 @@ export const db = {
   padresIglesia: PadreIglesiaMock[];
   horariosMisa: HorarioMisaMock[];
   sustitucionesMisa: Record<string, SustitucionMock & { horarioMisaId: string }>;
+  excepcionesMisa: ExcepcionMisaMock[];
   servicios: ServicioMock[];
   platicas: PlaticaMock[];
 };
@@ -179,6 +182,7 @@ export function reiniciarDb() {
   db.padresIglesia = padresIglesiaIniciales();
   db.horariosMisa = horariosMisaIniciales();
   db.sustitucionesMisa = {};
+  db.excepcionesMisa = [];
   db.servicios = serviciosIniciales();
   db.platicas = platicasIniciales();
   sesionMock.cerrar();

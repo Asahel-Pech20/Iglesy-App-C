@@ -14,7 +14,7 @@ import { crearEspaciosPublicRouter } from './modules/espacios/espacios.public.ro
 import { espaciosRouter } from './modules/espacios/espacios.routes';
 import { eventosRouter } from './modules/eventos/eventos.routes';
 import { miembrosRouter } from './modules/miembros/miembros.routes';
-import { misasRouter, padresRouter } from './modules/misas/misas.routes';
+import { misasPublicoRouter, misasRouter, padresRouter } from './modules/misas/misas.routes';
 import { serviciosPublicoRouter, serviciosRouter } from './modules/servicios/servicios.routes';
 import { ministeriosRouter } from './modules/ministerios/ministerios.routes';
 import { crearPublicRouter } from './modules/public/public.routes';
@@ -60,6 +60,7 @@ export function crearModulos(): ModuloApi[] {
     // E3-11 a E3-14 (Genaro): servicios y pláticas; las pláticas por tipo también sin sesión
     { prefijo: '/iglesias/:iglesiaId', router: serviciosRouter },
     { prefijo: '/public', router: serviciosPublicoRouter },
+    { prefijo: '/public', router: misasPublicoRouter },
     { prefijo: '/iglesias/:iglesiaId', router: diezmoRouter },
     // E2-08 (Nataly): objetos del patrimonio e índice de la iglesia
     { prefijo: '/iglesias/:iglesiaId', router: objetosRouter },

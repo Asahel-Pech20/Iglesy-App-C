@@ -112,6 +112,7 @@ model Usuario {
   // E3-05 (Genaro): quién registró cada misa celebrada y cada sustitución (RF-50)
   misasRegistradas   MisaCelebrada[]    @relation("MisaRegistrador")
   sustitucionesMisa  SustitucionMisa[]  @relation("SustitucionAutor")
+  excepcionesMisa    ExcepcionMisa[]    @relation("ExcepcionAutor")
   // E2-10 (Nataly): quién guardó cada versión de los criterios del índice
   criteriosIndice    CriteriosIndice[]
   activo             Boolean            @default(true)
@@ -412,6 +413,7 @@ model Iglesia {
   // E3-05 (Genaro): padres asociados y horario semanal de misas
   padres             PadreIglesia[]
   horariosMisa       HorarioMisa[]
+  excepcionesMisa    ExcepcionMisa[]
   // E3-11 y E3-13 (Genaro): servicios y pláticas
   servicios          Servicio[]
   platicas           Platica[]
@@ -554,6 +556,7 @@ model HorarioMisa {
   updatedAt   DateTime   @updatedAt
 
   celebraciones MisaCelebrada[]
+  excepciones   ExcepcionMisa[]
 
   @@index([iglesiaId, activo, diaSemana])
   @@index([padreId, activo])
@@ -609,6 +612,34 @@ model SustitucionMisa {
 
   @@index([padreProgramadoId])
   @@map("sustituciones_misa")
+}
+
+// E3-25 (supuesto P-33, notas del docente del 2026-11-19): «días inhábiles». En una fecha, una misa del
+// horario no se celebra o se celebra a otra hora, con su motivo. El público ve la excepción.
+enum TipoExcepcionMisa {
+  SIN_MISA
+  OTRA_HORA
+}
+
+model ExcepcionMisa {
+  id              String            @id @default(uuid())
+  iglesiaId       String
+  iglesia         Iglesia           @relation(fields: [iglesiaId], references: [id], onDelete: Restrict)
+  horarioMisaId   String
+  horarioMisa     HorarioMisa       @relation(fields: [horarioMisaId], references: [id], onDelete: Restrict)
+  // Fecha local de la iglesia; debe caer en el día de la misa del horario
+  fecha           DateTime          @db.Date
+  tipo            TipoExcepcionMisa
+  // «HH:mm» en la hora local de la iglesia; solo con OTRA_HORA (CHECK en la migración)
+  horaNueva       String?
+  motivo          String
+  registradoPorId String
+  registradoPor   Usuario           @relation("ExcepcionAutor", fields: [registradoPorId], references: [id], onDelete: Restrict)
+  createdAt       DateTime          @default(now())
+
+  @@unique([horarioMisaId, fecha])
+  @@index([iglesiaId, fecha])
+  @@map("excepciones_misa")
 }
 
 // Diezmo recogido en una misa. Una sola captura por misa (RN-41); se corrige, no se borra.

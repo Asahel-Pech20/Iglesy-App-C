@@ -69,7 +69,7 @@ async function main() {
   const b3 = await seedB3({ ministerios, iglesiaId: iglesia.id });
 
   console.warn(
-    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; misas y servicios en ${misas.iglesias} iglesias: ${misas.padres} padres, ${misas.misas} misas del horario, ${misas.servicios} servicios y ${misas.platicas} pláticas nuevos; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos.`,
+    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; misas y servicios en ${misas.iglesias} iglesias: ${misas.padres} padres, ${misas.misas} misas del horario, ${misas.servicios} servicios, ${misas.platicas} pláticas nuevos y ${misas.excepciones} días sin misa u otra hora; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos.`,
   );
 }
 

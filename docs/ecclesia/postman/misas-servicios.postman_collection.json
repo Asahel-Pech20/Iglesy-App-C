@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Ecclesia · Servicios, pláticas, misas y padres (Genaro)",
-    "description": "Rutas de E3 (RF-30–RF-52 y los deseables RF-83 y RF-84). Detalle en docs/ecclesia/api-misas-servicios.md y backend/openapi.yaml. Primero corre una carpeta «Sesión»: guarda el token y la iglesia. Las altas guardan su id en las variables. Las peticiones marcadas «Coordinación» usan la sesión de «Entrar como Coordinación»; las demás, la del administrador de iglesia. «Limpieza (al final)» deshace las altas.",
+    "description": "Rutas de E3 (RF-30–RF-52 y los deseables RF-83 y RF-84) y los días inhábiles (E3-25). Detalle en docs/ecclesia/api-misas-servicios.md y backend/openapi.yaml. Primero corre una carpeta «Sesión»: guarda el token y la iglesia. Las altas guardan su id en las variables. Las peticiones marcadas «Coordinación» usan la sesión de «Entrar como Coordinación»; las demás, la del administrador de iglesia. «Limpieza (al final)» deshace las altas.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -57,6 +57,16 @@
       "key": "padreNuevoId",
       "value": "",
       "description": "Lo llena «Crear padre (Coordinación)»"
+    },
+    {
+      "key": "domingoProximo",
+      "value": "",
+      "description": "Lo llena «Marcar un domingo sin misa»"
+    },
+    {
+      "key": "excepcionId",
+      "value": "",
+      "description": "Lo llena «Marcar un domingo sin misa»"
     }
   ],
   "item": [
@@ -980,6 +990,146 @@
       ]
     },
     {
+      "name": "Días inhábiles (E3-25)",
+      "description": "Supuesto P-33 (notas del docente del 2026-11-19): una fecha sin misa u otra hora para una misa del horario. Usa la misa que programa «Horario de misas».",
+      "item": [
+        {
+          "name": "Días sin misa o con otra hora",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/excepciones-misa",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "excepciones-misa"]
+            },
+            "description": "Por omisión, de hoy a 60 días."
+          }
+        },
+        {
+          "name": "Marcar un domingo sin misa",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Domingo de dentro de dos semanas (la misa de prueba es los domingos)",
+                  "const d = new Date(Date.now() + 14 * 86400000);",
+                  "while (d.getUTCDay() !== 0) d.setTime(d.getTime() + 86400000);",
+                  "pm.collectionVariables.set('domingoProximo', d.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.id) pm.collectionVariables.set('excepcionId', r.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/excepciones-misa",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "excepciones-misa"]
+            },
+            "description": "La fecha debe caer en el día de la misa (422). Con OTRA_HORA lleva horaNueva y el padre no puede chocar a esa hora (409).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horarioMisaId\": \"{{horarioId}}\",\n  \"fecha\": \"{{domingoProximo}}\",\n  \"tipo\": \"SIN_MISA\",\n  \"motivo\": \"Templo cerrado por reparación.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Marcar la misma fecha otra vez → 409",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/excepciones-misa",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "excepciones-misa"]
+            },
+            "description": "Una excepción por misa y fecha.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"horarioMisaId\": \"{{horarioId}}\",\n  \"fecha\": \"{{domingoProximo}}\",\n  \"tipo\": \"SIN_MISA\",\n  \"motivo\": \"Templo cerrado por reparación.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Quitar la excepción",
+          "request": {
+            "method": "DELETE",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/iglesias/{{iglesiaId}}/excepciones-misa/{{excepcionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["iglesias", "{{iglesiaId}}", "excepciones-misa", "{{excepcionId}}"]
+            },
+            "description": "La misa vuelve a su horario ese día. Con la misa ya celebrada → 409."
+          }
+        }
+      ]
+    },
+    {
       "name": "Público (sin sesión)",
       "item": [
         {
@@ -1043,6 +1193,22 @@
               ]
             },
             "description": "RF-83 (deseable, supuesto P-29). Iglesias abiertas del municipio (clave INEGI de 5 dígitos) con sus pláticas de ese tipo, en orden alfabético."
+          }
+        },
+        {
+          "name": "Cambios al horario (E3-25)",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/public/iglesias/{{iglesiaId}}/excepciones-misa",
+              "host": ["{{baseUrl}}"],
+              "path": ["public", "iglesias", "{{iglesiaId}}", "excepciones-misa"]
+            },
+            "description": "Supuesto P-33: de hoy a 60 días, sin decir quién la registró."
           }
         }
       ]

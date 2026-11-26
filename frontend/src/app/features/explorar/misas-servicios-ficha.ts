@@ -1,7 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { of } from 'rxjs';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
-import { DIAS_SEMANA, formatearMoneda } from '@/app/core/formato';
+import { DIAS_SEMANA, formatearFecha, formatearMoneda } from '@/app/core/formato';
+import { valorDe } from '@/app/core/recurso';
 import {
   describirCosto,
   describirDuracion,
@@ -10,6 +13,7 @@ import {
   ETIQUETAS_TIPO_MISA,
   ETIQUETAS_TIPO_PLATICA,
 } from '@/app/features/misas/formato-misas';
+import { MisasService } from '@/app/features/misas/misas.service';
 import type { IdiomaMisa } from '@/app/tipos/misas';
 import type {
   MisaPublica,
@@ -33,6 +37,21 @@ import { TituloColonial } from './explorar-layout';
       <section aria-labelledby="titulo-misas" class="bloque">
         <app-titulo-colonial texto="Horario de misas" [nivel]="2" idTitulo="titulo-misas" />
         <p class="suave centro">Hora local de la iglesia.</p>
+        <!-- E3-25 (supuesto P-33): días sin misa u otra hora en los próximos 60 días -->
+        @if (cambios().length > 0) {
+          <div class="marco cambios" role="note" aria-labelledby="titulo-cambios">
+            <h3 id="titulo-cambios">Cambios al horario</h3>
+            <ul>
+              @for (c of cambios(); track c.fecha + c.hora) {
+                <li>
+                  <strong>{{ dias[c.diaSemana] }} {{ fecha(c.fecha) }}, {{ c.hora }}:</strong>
+                  {{ c.tipo === 'SIN_MISA' ? 'no hay misa' : 'la misa será a las ' + c.horaNueva }}.
+                  <span class="suave">{{ c.motivo }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
         <div class="dias">
           @for (d of misasPorDia(); track d.dia) {
             <div class="marco dia">
@@ -138,6 +157,17 @@ import { TituloColonial } from './explorar-layout';
       border-radius: 4px;
       margin: 4px;
     }
+    .cambios {
+      margin: 0 auto 16px;
+      max-width: 40rem;
+    }
+    .cambios h3 {
+      margin: 0 0 8px;
+    }
+    .cambios ul {
+      margin: 0;
+      padding-left: 20px;
+    }
     .bloque {
       margin-top: 24px;
     }
@@ -212,6 +242,16 @@ export class MisasServiciosFicha {
   readonly servicios = input<ServicioPublico[]>([]);
   readonly platicas = input<PlaticaPublica[]>([]);
   readonly moneda = input('MXN');
+  /** Para consultar los cambios al horario (E3-25); sin él, la sección no aparece */
+  readonly iglesiaId = input<string | null>(null);
+
+  private readonly misasService = inject(MisasService);
+  private readonly consultaCambios = rxResource({
+    params: () => this.iglesiaId(),
+    stream: ({ params }) => (params ? this.misasService.excepcionesPublicas(params) : of(null)),
+  });
+  protected readonly cambios = computed(() => valorDe(this.consultaCambios)?.excepciones ?? []);
+  protected readonly fecha = formatearFecha;
 
   protected readonly dias = DIAS_SEMANA;
   protected readonly tiposMisa = ETIQUETAS_TIPO_MISA;

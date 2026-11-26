@@ -56,6 +56,9 @@
 | `POST` | `/iglesias/:iglesiaId/misas-celebradas` | `misas:registrar` | Dos formas: **desde el horario** `{ horarioMisaId, fecha, padreId?, motivo? }` (si `padreId` es otro, es una sustitución y el motivo es obligatorio) o **suelta**, la del diezmo, `{ inicio, padreId }`. Solo misas que ya empezaron; una por misa del horario y fecha (409); el sustituto debe ser de la iglesia (422) y estar libre a esa hora (409). La sustitución no se edita ni se borra | RF-48–RF-50, RN-29, RN-30, CA-15, P-17 |
 | `GET` | `/iglesias/:iglesiaId/semana-misas?semana=AAAA-MM-DD` | `misas:leer` | *(Deseable, supuesto P-29.)* La semana armada desde el horario: cada misa con su fecha, el padre programado y su estado (`REGISTRADA`, `PENDIENTE` si ya empezó y falta, o `FUTURA`). `semana` es cualquier día; sin él, la actual | RF-84 |
 | `POST` | `/iglesias/:iglesiaId/misas-celebradas/semana` | `misas:registrar` | *(Deseable.)* `{ semana? }`: registra de una vez las pendientes con su padre programado, con el mismo registro que una misa individual. Responde `creadas`, `yaRegistradas`, `futuras` y `omitidas` (con motivo). Una sustitución se registra antes, misa por misa | RF-84 |
+| `GET` | `/iglesias/:iglesiaId/excepciones-misa?desde&hasta` | `misas:leer` | *(Días inhábiles, supuesto P-33.)* Fechas en que una misa del horario no se celebra (`SIN_MISA`) u otra hora (`OTRA_HORA`), con motivo y quién la registró. Por omisión, de hoy a 60 días | Notas del docente |
+| `POST` | `/iglesias/:iglesiaId/excepciones-misa` | `misas:programar` | `{ horarioMisaId, fecha, tipo, horaNueva?, motivo }`. La fecha cae en el día de esa misa (422); ni ya celebrada ni repetida (409); con otra hora, el padre no choca (409, RN-26). La semana, el registro de la misa celebrada y la agenda la usan | Notas del docente |
+| `DELETE` | `/iglesias/:iglesiaId/excepciones-misa/:excepcionId` | `misas:programar` | La misa vuelve a su horario ese día; no si ya se celebró (409) | Notas del docente |
 
 El registro del diezmo de una misa (`/misas-celebradas/:misaId/diezmo`) es de Oscar: ver [`api-diezmo-espacios.md`](api-diezmo-espacios.md).
 
@@ -79,7 +82,8 @@ El registro del diezmo de una misa (`/misas-celebradas/:misaId/diezmo`) es de Os
 | `GET` | `/public/iglesias/:iglesiaId` | La ficha de Nataly (E2-11) trae `misas` (día, hora, tipo, idioma, duración y «título + nombre» del padre), `servicios` y `platicas`, sin IDs | RF-35, RF-38, RF-44, RF-52, RN-33, CA-10, CA-12, CA-16 |
 | `GET` | `/public/iglesias/:iglesiaId/platicas?tipo=` | «¿Cuándo son las pláticas de bautizo?»: `?tipo=PREBAUTISMAL`. Iglesia cerrada o inexistente → 404 | RF-38, RF-39, CA-11 |
 | `GET` | `/public/platicas?tipo=&municipio=` | *(Deseable, supuesto P-29.)* Pláticas de un tipo en todas las iglesias abiertas de un municipio (clave INEGI de 5 dígitos), en orden alfabético. Sin `tipo` o con un municipio no válido → 400 | RF-83 |
+| `GET` | `/public/iglesias/:iglesiaId/excepciones-misa` | *(Supuesto P-33.)* Cambios al horario de hoy a 60 días: fecha, misa, «sin misa» u otra hora y motivo; del padre solo «título + nombre». Iglesia cerrada → 404 | Notas del docente |
 
 ## Supuestos
 
-Las rutas usan los supuestos P-10 a P-19 (y P-29 para RF-83 y RF-84) de [plan-genaro.md](plan-genaro.md). Si el docente responde otra cosa (E3-01), se ajusta la ruta y este documento.
+Las rutas usan los supuestos P-10 a P-19 (P-29 para RF-83 y RF-84, y P-33 para los días inhábiles) de [plan-genaro.md](plan-genaro.md). Si el docente responde otra cosa (E3-01), se ajusta la ruta y este documento.

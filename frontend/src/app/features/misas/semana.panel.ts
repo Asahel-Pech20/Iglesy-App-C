@@ -17,6 +17,7 @@ const ETIQUETA_ESTADO: Record<EstadoMisaSemana, string> = {
   REGISTRADA: 'Registrada',
   PENDIENTE: 'Pendiente',
   FUTURA: 'Aún no empieza',
+  SIN_MISA: 'Sin misa (día inhábil)',
 };
 
 /**
@@ -62,12 +63,20 @@ const ETIQUETA_ESTADO: Record<EstadoMisaSemana, string> = {
                 @for (m of d.misas; track m.horarioId + m.fecha) {
                   <tr>
                     <td>{{ dias[m.diaSemana] }} {{ fecha(m.fecha) }}</td>
-                    <td class="num">{{ m.hora }}</td>
+                    <td class="num">
+                      {{ m.hora }}
+                      @if (m.excepcion?.tipo === 'OTRA_HORA') {
+                        <span class="texto-suave"> (antes {{ m.excepcion!.horaHorario }})</span>
+                      }
+                    </td>
                     <td>{{ padre(m.padreProgramado) }}</td>
                     <td>
                       <span class="estado" [attr.data-estado]="m.estado">{{
                         estados[m.estado]
                       }}</span>
+                      @if (m.excepcion) {
+                        <span class="texto-suave"> · {{ m.excepcion.motivo }}</span>
+                      }
                       @if (m.misaCelebrada?.conSustitucion) {
                         <span class="texto-suave">
                           · la dio {{ m.misaCelebrada!.padre.nombre }}</span
@@ -129,6 +138,9 @@ const ETIQUETA_ESTADO: Record<EstadoMisaSemana, string> = {
     }
     .estado[data-estado='PENDIENTE'] {
       color: var(--alerta);
+    }
+    .estado[data-estado='SIN_MISA'] {
+      color: var(--texto-suave);
     }
     .estado[data-estado='REGISTRADA'] {
       color: var(--exito);

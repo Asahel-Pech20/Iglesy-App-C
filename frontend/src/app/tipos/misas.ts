@@ -62,6 +62,8 @@ export interface MisaAgenda {
   idioma: IdiomaMisa;
   inicio: string;
   fin: string;
+  /** E3-25: ese día no hubo misa u otra hora */
+  excepcion: ExcepcionDeMisa | null;
 }
 
 /** GET /padres/:id/agenda?semana= */
@@ -72,7 +74,7 @@ export interface AgendaPadre {
 }
 
 /** RF-84: estado de cada misa de la semana armada desde el horario */
-export type EstadoMisaSemana = 'REGISTRADA' | 'PENDIENTE' | 'FUTURA';
+export type EstadoMisaSemana = 'REGISTRADA' | 'PENDIENTE' | 'FUTURA' | 'SIN_MISA';
 
 export interface MisaDeSemana {
   horarioId: string;
@@ -85,6 +87,8 @@ export interface MisaDeSemana {
   duracionMin: number | null;
   padreProgramado: { id: string; nombre: string; titulo: string | null };
   estado: EstadoMisaSemana;
+  /** E3-25: ese día no hubo misa u otra hora (`hora` ya es la nueva) */
+  excepcion: ExcepcionDeMisa | null;
   misaCelebrada: {
     id: string;
     padre: { id: string; nombre: string };
@@ -104,6 +108,8 @@ export interface ResultadoArmarSemana {
   creadas: number;
   yaRegistradas: number;
   futuras: number;
+  /** E3-25: días sin misa, que no se registran */
+  sinMisa: number;
   omitidas: { fecha: string; hora: string; motivo: string }[];
 }
 
@@ -114,4 +120,62 @@ export interface MisaDeHorarioEntrada {
   /** Solo si la dio otro padre (sustitución) */
   padreId?: string;
   motivo?: string;
+}
+
+// ───────── Días inhábiles (E3-25, supuesto P-33) ─────────
+
+export type TipoExcepcionMisa = 'SIN_MISA' | 'OTRA_HORA';
+
+/** La excepción tal como viene en la semana y en la agenda */
+export interface ExcepcionDeMisa {
+  tipo: TipoExcepcionMisa;
+  horaNueva: string | null;
+  motivo: string;
+  /** Hora normal del horario */
+  horaHorario: string;
+}
+
+/** Una excepción del panel: GET /iglesias/:id/excepciones-misa */
+export interface ExcepcionMisa {
+  id: string;
+  fecha: string;
+  tipo: TipoExcepcionMisa;
+  horaNueva: string | null;
+  motivo: string;
+  registradoPor: { id: string; nombre: string };
+  registradaEn: string;
+  misa: {
+    horarioId: string;
+    diaSemana: number;
+    hora: string;
+    tipo: TipoMisa;
+    padre: { id: string; nombre: string; titulo: string | null };
+  };
+}
+
+export interface ExcepcionesMisa {
+  desde: string;
+  hasta: string;
+  excepciones: ExcepcionMisa[];
+}
+
+/** POST /iglesias/:id/excepciones-misa */
+export interface ExcepcionMisaEntrada {
+  horarioMisaId: string;
+  fecha: string;
+  tipo: TipoExcepcionMisa;
+  horaNueva?: string;
+  motivo: string;
+}
+
+/** Para el público (ficha): GET /public/iglesias/:id/excepciones-misa */
+export interface ExcepcionPublica {
+  fecha: string;
+  diaSemana: number;
+  hora: string;
+  tipoMisa: TipoMisa;
+  tipo: TipoExcepcionMisa;
+  horaNueva: string | null;
+  motivo: string;
+  padre: string;
 }

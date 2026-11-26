@@ -18,10 +18,13 @@ import {
   esquemaBuscarPadres,
   esquemaCrearHorario,
   esquemaCrearMisa,
+  esquemaCrearExcepcion,
   esquemaCrearPadre,
+  esquemaExcepcionDeIglesia,
   esquemaHorarioDeIglesia,
   esquemaIdPadre,
   esquemaIglesia,
+  esquemaListarExcepciones,
   esquemaListarMisas,
   esquemaPadreDeIglesia,
 } from './misas.schemas';
@@ -125,6 +128,33 @@ misasRouter.post(
   c.armarSemana,
 );
 
+// ───────────── Días inhábiles (E3-25, supuesto P-33) ─────────────
+
+misasRouter.get(
+  '/excepciones-misa',
+  autenticar,
+  autorizar('misas:leer'),
+  alcance,
+  validar({ params: esquemaIglesia, query: esquemaListarExcepciones }),
+  c.listarExcepciones,
+);
+misasRouter.post(
+  '/excepciones-misa',
+  autenticar,
+  autorizar('misas:programar'),
+  alcance,
+  validar({ params: esquemaIglesia, body: esquemaCrearExcepcion }),
+  c.crearExcepcion,
+);
+misasRouter.delete(
+  '/excepciones-misa/:excepcionId',
+  autenticar,
+  autorizar('misas:programar'),
+  alcance,
+  validar({ params: esquemaExcepcionDeIglesia }),
+  c.quitarExcepcion,
+);
+
 // ───────────── Misas celebradas (versión mínima del diezmo) ─────────────
 
 misasRouter.get(
@@ -177,4 +207,14 @@ padresRouter.patch(
   autorizar('padres:gestionar'),
   validar({ params: esquemaIdPadre, body: esquemaActualizarPadre }),
   c.actualizarPadre,
+);
+
+// ───────────── Sin sesión (E3-25: los cambios al horario, RN-33) ─────────────
+
+export const misasPublicoRouter = Router();
+
+misasPublicoRouter.get(
+  '/iglesias/:iglesiaId/excepciones-misa',
+  validar({ params: esquemaIglesia, query: esquemaListarExcepciones }),
+  c.excepcionesPublicas,
 );

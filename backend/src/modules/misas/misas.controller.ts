@@ -7,18 +7,22 @@ import type {
   ActualizarPadre,
   CrearHorario,
   CrearMisa,
+  CrearExcepcion,
   CrearPadre,
   QueryAgenda,
   QueryBuscarPadres,
+  QueryListarExcepciones,
   QueryListarMisas,
 } from './misas.schemas';
 import * as service from './misas.service';
 import * as semana from './semana.service';
+import * as excepciones from './excepciones.service';
 import * as padres from './padres.service';
 
 type Iglesia = { iglesiaId: string };
 type PadreDeIglesia = { iglesiaId: string; padreId: string };
 type HorarioDeIglesia = { iglesiaId: string; horarioId: string };
+type ExcepcionDeIglesia = { iglesiaId: string; excepcionId: string };
 
 // ───────────── Padres de una iglesia (E3-06) ─────────────
 
@@ -130,4 +134,47 @@ export const registrarMisa: RequestHandler<Iglesia> = async (req, res) => {
         await service.registrarMisa(req.params.iglesiaId, req.body as CrearMisa, usuarioDe(req).id),
       ),
     );
+};
+
+// ───────────── Días inhábiles (E3-25, supuesto P-33) ─────────────
+
+export const listarExcepciones: RequestHandler<Iglesia> = async (req, res) => {
+  res.json(
+    ok(
+      await excepciones.listarExcepciones(
+        req.params.iglesiaId,
+        req.query as unknown as QueryListarExcepciones,
+      ),
+    ),
+  );
+};
+
+export const crearExcepcion: RequestHandler<Iglesia> = async (req, res) => {
+  res
+    .status(201)
+    .json(
+      ok(
+        await excepciones.crearExcepcion(
+          req.params.iglesiaId,
+          req.body as CrearExcepcion,
+          usuarioDe(req).id,
+        ),
+      ),
+    );
+};
+
+export const quitarExcepcion: RequestHandler<ExcepcionDeIglesia> = async (req, res) => {
+  await excepciones.quitarExcepcion(req.params.iglesiaId, req.params.excepcionId);
+  res.status(204).end();
+};
+
+export const excepcionesPublicas: RequestHandler<Iglesia> = async (req, res) => {
+  res.json(
+    ok(
+      await excepciones.excepcionesDeIglesiaPublica(
+        req.params.iglesiaId,
+        req.query as unknown as QueryListarExcepciones,
+      ),
+    ),
+  );
 };

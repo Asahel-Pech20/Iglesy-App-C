@@ -66,6 +66,16 @@ const sumarDias = (fecha: string, dias: number) =>
                   <span class="texto-suave">
                     · {{ tipos[m.tipo] }} · {{ idiomas[m.idioma] }} · {{ duracion(m.duracionMin) }}
                   </span>
+                  <!-- E3-25: ese día no hay misa o cambió la hora -->
+                  @if (m.excepcion; as e) {
+                    <span class="aviso-cambio">
+                      {{
+                        e.tipo === 'SIN_MISA'
+                          ? 'Sin misa este día'
+                          : 'Cambió de las ' + e.horaHorario + ' a las ' + e.horaNueva
+                      }}: {{ e.motivo }}
+                    </span>
+                  }
                 </span>
               </li>
             }
@@ -75,6 +85,11 @@ const sumarDias = (fecha: string, dias: number) =>
     </section>
   `,
   styles: `
+    .aviso-cambio {
+      display: block;
+      color: var(--alerta);
+      font-weight: 500;
+    }
     .semana {
       display: flex;
       flex-wrap: wrap;
