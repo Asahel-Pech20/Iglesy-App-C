@@ -74,6 +74,31 @@
                   "with": "src/environments/environment.real.ts"
                 }
               ]
+            },
+            "landing": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "1.4MB",
+                  "maximumError": "1.5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.landing.ts"
+                },
+                {
+                  "replace": "src/mocks/interceptores.ts",
+                  "with": "src/mocks/interceptores.prod.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

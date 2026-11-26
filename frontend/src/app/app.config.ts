@@ -10,10 +10,12 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
 import { INTERCEPTORES_MOCKS } from '@/mocks/interceptores';
 import { interceptorApi } from './core/api';
+import { URL_APLICACION } from './core/config';
 import { SesionService } from './core/sesion.service';
+import { soloLanding } from './core/solo-landing';
 import { routes } from './app.routes';
 
 registerLocaleData(localeEsMx);
@@ -31,7 +33,11 @@ export const appConfig: ApplicationConfig = {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
       useValue: { appearance: 'outline', subscriptSizing: 'dynamic' },
     },
-    // Restaura la sesión con la cookie de refresh antes de resolver la primera ruta
-    provideAppInitializer(() => inject(SesionService).restaurar()),
+    // Restaura la sesión con la cookie de refresh antes de resolver la primera ruta. En el build
+    // «landing» (sitio principal de Render) no hay sesión: lo demás se abre en el sitio de la app.
+    provideAppInitializer(() => {
+      if (URL_APLICACION) return soloLanding(inject(Router), URL_APLICACION);
+      return inject(SesionService).restaurar();
+    }),
   ],
 };

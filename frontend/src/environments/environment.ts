@@ -3,4 +3,6 @@
 export const environment = {
   apiUrl: 'http://localhost:3000/api/v1',
   usarMocks: true,
+  // Vacío: la app completa en este mismo sitio (ver environment.landing.ts)
+  urlAplicacion: '',
 };

@@ -4,4 +4,6 @@
 export const environment = {
   apiUrl: '/api/v1',
   usarMocks: false,
+  // Vacío: la app completa en este mismo sitio (ver environment.landing.ts)
+  urlAplicacion: '',
 };

@@ -7,16 +7,20 @@ subdominio (`<nombre>.onrender.com`), así que se usa guion:
 |---|---|---|
 | Supabase | *(panel de Supabase)* | La base de datos PostgreSQL |
 | `api-iglesy` | `https://api-iglesy.onrender.com` | La API (Express + Prisma), conectada a Supabase |
-| `principal-iglesy` | `https://principal-iglesy.onrender.com` | Abre en la landing; desde ahí, consultas públicas y login del personal |
-| `demo-iglesy` | `https://demo-iglesy.onrender.com` | La misma app con datos de prueba (mocks), sin backend |
+| `principal-iglesy` | `https://principal-iglesy.onrender.com` | **Solo la landing**. Sus botones y su barra abren `demo-iglesy` |
+| `demo-iglesy` | `https://demo-iglesy.onrender.com` | **La aplicación**: consultas públicas, login y panel, conectada a la API |
+| *(opcional)* `iglesy-app-c` | `https://iglesy-app-c.onrender.com` | La app con datos de prueba (mocks), sin backend |
 
 > La dirección sale del **nombre del servicio al crearlo** y no se cambia después. Si un nombre está
 > ocupado, usa otro y cambia esta guía (las reglas de reescritura apuntan a la API por su dirección).
 
-## Cómo se conectan principal y api
+## Cómo se conectan
 
-El navegador solo habla con `principal-iglesy`. Render **reescribe** `/api/*` y `/uploads/*` hacia
-`api-iglesy` (hace de proxy), así que para el navegador el frontend y la API están en el mismo sitio:
+- **principal → demo:** el build `landing` (`environment.landing.ts`) solo muestra «/». Cualquier otra
+  ruta —un botón, la barra o alguien que escriba `/login`— abre `https://demo-iglesy.onrender.com` con
+  la misma ruta, así que la dirección cambia (`core/solo-landing.ts`).
+- **demo → api:** Render **reescribe** `/api/*` y `/uploads/*` de `demo-iglesy` hacia `api-iglesy`
+  (hace de proxy), así que para el navegador la aplicación y la API están en el mismo sitio:
 
 - la cookie de refresh sigue como pide AGENTS.md §3 (`httpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`);
 - no hace falta CORS (`environment.prod.ts` usa `apiUrl: '/api/v1'`, relativa);
@@ -57,9 +61,9 @@ El plan gratis de Supabase pausa el proyecto tras una semana sin uso; se reactiv
 | `DATABASE_URL` | la URL del **Session pooler** de Supabase |
 | `JWT_ACCESS_SECRET` | botón **Generate** |
 | `JWT_REFRESH_SECRET` | botón **Generate** (distinto del anterior) |
-| `FRONTEND_URL` | `https://principal-iglesy.onrender.com` |
-| `API_PUBLIC_URL` | `https://principal-iglesy.onrender.com` (los logos se piden por la reescritura) |
-| `TRUST_PROXY` | `2` (la reescritura del frontend y el balanceador de Render; ver «Comprobar») |
+| `FRONTEND_URL` | `https://demo-iglesy.onrender.com` |
+| `API_PUBLIC_URL` | `https://demo-iglesy.onrender.com` (los logos se piden por la reescritura) |
+| `TRUST_PROXY` | `2` (la reescritura de `demo-iglesy` y el balanceador de Render; ver «Comprobar») |
 | `SEED_PASSWORD` | la contraseña inicial de los usuarios del seed (no la subas al repo) |
 
 **Datos iniciales (una sola vez), desde tu laptop**, con la misma URL de Supabase:
@@ -67,7 +71,7 @@ El plan gratis de Supabase pausa el proyecto tras una semana sin uso; se reactiv
 ```powershell
 $env:DATABASE_URL = "<URL del Session pooler de Supabase>"; $env:SEED_PASSWORD = "<contraseña de las cuentas>"
 # Los scripts validan todas las variables del backend; estas tres no las usa el seed
-$env:JWT_ACCESS_SECRET = "solo-seed"; $env:JWT_REFRESH_SECRET = "solo-seed-2"; $env:FRONTEND_URL = "https://principal-iglesy.onrender.com"
+$env:JWT_ACCESS_SECRET = "solo-seed"; $env:JWT_REFRESH_SECRET = "solo-seed-2"; $env:FRONTEND_URL = "https://demo-iglesy.onrender.com"
 npx pnpm@12.16.1 --filter backend db:seed
 Remove-Item Env:DATABASE_URL, Env:SEED_PASSWORD, Env:JWT_ACCESS_SECRET, Env:JWT_REFRESH_SECRET, Env:FRONTEND_URL
 ```
@@ -76,7 +80,20 @@ El seed ya trae los 32 estados y los municipios que usan las iglesias; `db:catal
 para importar el catálogo completo del INEGI desde un CSV. La contraseña de las cuentas es la de
 `SEED_PASSWORD` **de este comando** (la variable `SEED_PASSWORD` de Render no la usa nadie).
 
-## 3. Sistema real: Static Site `principal-iglesy`
+## 3. Landing: Static Site `principal-iglesy`
+
+| Campo | Valor |
+|---|---|
+| Root Directory | *(vacío)* |
+| Build Command | `npx pnpm@12.16.1 install --frozen-lockfile --filter frontend... && cd frontend && node scripts/ng-terminar.mjs build --configuration landing` |
+| Publish Directory | `frontend/dist/frontend/browser` |
+| Variable | `NODE_VERSION` = `22.12.0` |
+| Redirects/Rewrites | `/*` → `/index.html`, **Rewrite** (una sola regla: no habla con la API) |
+
+`ng-terminar.mjs` es necesario: con Angular 21.2 `ng build` termina el paquete pero el proceso no sale
+(esbuild queda abierto) y Render esperaría para siempre.
+
+## 4. Aplicación: Static Site `demo-iglesy`
 
 | Campo | Valor |
 |---|---|
@@ -93,27 +110,20 @@ para importar el catálogo completo del INEGI desde un CSV. La contraseña de la
 | `/uploads/*` | `https://api-iglesy.onrender.com/uploads/*` | Rewrite |
 | `/*` | `/index.html` | Rewrite |
 
-`ng-terminar.mjs` es necesario: con Angular 21.2 `ng build` termina el paquete pero el proceso no sale
-(esbuild queda abierto) y Render esperaría para siempre.
+## 5. (Opcional) App con datos de prueba
 
-## 4. Demo: Static Site `demo-iglesy`
-
-| Campo | Valor |
-|---|---|
-| Build Command | `npx pnpm@12.16.1 install --frozen-lockfile --filter frontend... && cd frontend && node scripts/ng-terminar.mjs build --configuration development` |
-| Publish Directory | `frontend/dist/frontend/browser` |
-| Redirects/Rewrites | `/*` → `/index.html`, **Rewrite** |
-
-La configuración `development` incluye los datos de prueba. Cuentas: `<rol>@iglesia.local` con la
-contraseña de `frontend/src/mocks/datos/b1.ts`. Los datos se reinician al recargar.
+El sitio `iglesy-app-c` (o uno nuevo) con `ng build --configuration development`, que incluye los mocks:
+mismo Build Command que el de arriba más `--configuration development`, y la regla `/*` → `/index.html`.
+Cuentas: `<rol>@iglesia.local` con la contraseña de `frontend/src/mocks/datos/b1.ts`.
 
 ## Comprobar después de desplegar
 
-1. `https://principal-iglesy.onrender.com/api/docs` abre Swagger: la reescritura llega a la API.
-2. Inicia sesión, recarga la página y sigue la sesión: la cookie pasa por la reescritura.
-3. Seis intentos de login fallidos seguidos dan «Demasiados intentos»; desde otro dispositivo
+1. `https://principal-iglesy.onrender.com` muestra la landing y «Explorar iglesias» abre `demo-iglesy`.
+2. `https://demo-iglesy.onrender.com/api/docs` abre Swagger: la reescritura llega a la API.
+3. Inicia sesión en `demo-iglesy`, recarga la página y sigue la sesión: la cookie pasa por la reescritura.
+4. Seis intentos de login fallidos seguidos dan «Demasiados intentos»; desde otro dispositivo
    (otra red) se puede entrar: el límite es por persona. Si el límite se comparte, ajusta `TRUST_PROXY`.
-4. Sube un logo en Configuración y que se vea (hasta el siguiente despliegue).
+5. Sube un logo en Configuración y que se vea (hasta el siguiente despliegue).
 
 ## Limitaciones del plan gratis
 
