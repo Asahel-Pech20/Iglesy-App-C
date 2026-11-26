@@ -67,7 +67,9 @@ export class SesionService {
       // aunque falle, se limpia la sesión local
     } finally {
       this.limpiar();
-      await this.router.navigateByUrl('/login');
+      // Al salir por su cuenta, el usuario vuelve a la página de entrada (landing) de Ecclesia.
+      // 'reload' hace que «/» se vuelva a resolver aunque ya esté ahí (el inicio del panel también es «/»).
+      await this.router.navigateByUrl('/', { onSameUrlNavigation: 'reload' });
     }
   }
 

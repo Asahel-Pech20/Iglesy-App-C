@@ -55,6 +55,17 @@ describe('página de entrada', () => {
     expect(router.url).toBe('/');
     expect(textoPagina()).not.toContain('Las iglesias de México y su patrimonio');
   });
+
+  it('al cerrar sesión vuelve a la página de entrada, no al inicio de sesión', async () => {
+    const { router } = await abrirApp('/', { como: 'admin@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Miembros activos'));
+    document.querySelector<HTMLElement>('button.cuenta')!.click();
+    await esperarA(() => conTexto(/Cerrar sesión/) !== undefined);
+    conTexto(/Cerrar sesión/)!.click();
+    await esperarA(() => textoPagina().includes('Las iglesias de México y su patrimonio'));
+    expect(router.url).toBe('/');
+    expect(textoPagina()).not.toContain('Miembros activos');
+  });
 });
 
 describe('consultas públicas (E2-14)', () => {
