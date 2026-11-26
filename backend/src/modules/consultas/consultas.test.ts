@@ -5,6 +5,7 @@ import { crearApp } from '../../app';
 import { prisma } from '../../lib/prisma';
 import { loginComo } from '../../test/helpers';
 import * as catalogosService from '../catalogos/catalogos.service';
+import { crearCacheRanking } from './consultas.service';
 
 const app = crearApp();
 const publica = (url: string) => request(app).get(`/api/v1/public${url}`);
@@ -251,6 +252,61 @@ describe('GET /public/reconocidas (E2-12, ranking)', () => {
   it('400 con más de un nivel de lugar o una clave mal formada', async () => {
     expect((await publica('/reconocidas?estado=21&municipio=21114')).status).toBe(400);
     expect((await publica('/reconocidas?estado=2')).status).toBe(400);
+  });
+});
+
+describe('caché del ranking (E2-19)', () => {
+  const nombresDe = (ranking: { nombre: string }[]) => ranking.map((i) => i.nombre);
+
+  it('reutiliza el ranking mientras nada cambia; cada lugar tiene su entrada', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    await iglesiaCon('Parroquia de San Miguel', OBJETOS_CA01);
+    await iglesiaCon('Parroquia de Atlixco', OBJETOS_45, { municipio: '21019' });
+    const rankingDe = crearCacheRanking();
+    const primero = await rankingDe({ estado: '21' });
+    expect(await rankingDe({ estado: '21' })).toBe(primero);
+    const delMunicipio = await rankingDe({ municipio: '21114' });
+    expect(delMunicipio).not.toBe(primero);
+    expect(nombresDe(delMunicipio)).toEqual(['Parroquia de San Miguel']);
+  });
+
+  it('se invalida al cambiar un objeto, al guardar criterios y al cerrar una iglesia', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    const sanMiguel = await iglesiaCon('Parroquia de San Miguel', OBJETOS_CA01);
+    const a = await iglesiaCon('Iglesia A', OBJETOS_45);
+    const rankingDe = crearCacheRanking();
+    expect(nombresDe(await rankingDe({}))).toEqual(['Iglesia A', 'Parroquia de San Miguel']);
+
+    // Dos imágenes de A se pierden: baja a 15 y queda detrás de San Miguel (35.5)
+    await prisma.objetoPatrimonial.updateMany({
+      where: { iglesiaId: a.id, descripcion: { in: ['Imagen 1', 'Imagen 2'] } },
+      data: { estado: 'PERDIDO', fechaEstado: new Date('2026-01-01'), motivoEstado: 'Prueba' },
+    });
+    expect(nombresDe(await rankingDe({}))).toEqual(['Parroquia de San Miguel', 'Iglesia A']);
+
+    // Criterios nuevos: el INAH vale 10 y San Miguel sube a 40.5 (CA-07)
+    const { auth } = await loginComo('COORDINACION');
+    const vigentes = await request(app).get('/api/v1/criterios-indice').set('Authorization', auth);
+    const { id: _id, vigenteDesde: _v, creadoPor: _c, ...criterios } = vigentes.body.data;
+    await request(app)
+      .put('/api/v1/criterios-indice')
+      .set('Authorization', auth)
+      .send({ ...criterios, puntosInah: 10 });
+    expect((await rankingDe({}))[0]).toMatchObject({
+      nombre: 'Parroquia de San Miguel',
+      indice: 40.5,
+    });
+
+    await prisma.iglesia.update({ where: { id: sanMiguel.id }, data: { activa: false } });
+    expect(nombresDe(await rankingDe({}))).toEqual(['Iglesia A']);
+  });
+
+  it('caduca aunque nada cambie', async () => {
+    await catalogosService.importar(FILAS_INEGI);
+    await iglesiaCon('Parroquia de San Miguel', OBJETOS_CA01);
+    const rankingDe = crearCacheRanking(-1);
+    const primero = await rankingDe({});
+    expect(await rankingDe({})).not.toBe(primero);
   });
 });
 

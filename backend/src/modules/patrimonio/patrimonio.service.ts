@@ -334,6 +334,23 @@ export async function indicesDe(
   return resultado;
 }
 
+/**
+ * E2-19: huella de lo que mueve el índice. Cambia al registrar, editar o cambiar de estado un objeto
+ * (`updatedAt`) y al guardar criterios (cada versión es una fila nueva). Dos consultas baratas.
+ */
+export async function huellaIndice() {
+  const [objetos, criterios] = await Promise.all([
+    prisma.objetoPatrimonial.aggregate({ _count: { _all: true }, _max: { updatedAt: true } }),
+    prisma.criteriosIndice.aggregate({ _count: { _all: true }, _max: { createdAt: true } }),
+  ]);
+  return [
+    objetos._count._all,
+    objetos._max.updatedAt?.toISOString(),
+    criterios._count._all,
+    criterios._max.createdAt?.toISOString(),
+  ].join('|');
+}
+
 /** GET /iglesias/:iglesiaId/indice: el índice de una iglesia para el panel. */
 export async function indiceDeIglesia(iglesiaId: string) {
   const iglesia = await iglesiasService.obtener(iglesiaId);

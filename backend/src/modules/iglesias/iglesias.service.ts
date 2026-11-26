@@ -252,6 +252,18 @@ export async function activasDelLugar(lugar: LugarPublico) {
   });
 }
 
+/**
+ * E2-19: huella de las iglesias para el caché del ranking. Cambia al dar de alta, editar (nombre,
+ * ubicación, zona) o cerrar una iglesia.
+ */
+export async function huellaIglesias() {
+  const { _count, _max } = await prisma.iglesia.aggregate({
+    _count: { _all: true },
+    _max: { updatedAt: true },
+  });
+  return `${_count._all}|${_max.updatedAt?.toISOString()}`;
+}
+
 export async function crear(datos: CrearIglesia) {
   const { estado = null, municipio = null, localidad = null, ...resto } = datos;
   await nombreRepetido(datos.nombre, municipio);

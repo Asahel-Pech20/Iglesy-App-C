@@ -60,7 +60,7 @@ No escribas código hasta que apruebe el plan. Si falta una respuesta del client
 
 | ID | Tarea | Cubre | Valor |
 |---|---|---|---|
-| E2-19 | Caché del ranking que se invalide al cambiar un objeto o un criterio | Puntos extra | 1 punto |
+| E2-19 | Caché del ranking que se invalide al cambiar un objeto o un criterio | Puntos extra | 1 punto. **Hecha (en revisión):** `crearCacheRanking` en `consultas.service.ts`: el ranking completo por lugar, válido 60 s y mientras no cambie la huella de objetos, criterios e iglesias; 3 pruebas en `consultas.test.ts` |
 | E2-20 | Mapa de iglesias con Leaflet y OpenStreetMap usando las coordenadas (dependencia nueva: requiere acuerdo del equipo) | Puntos extra | 2 puntos |
 
 ## Modelo de datos propuesto (E2-03)
@@ -97,7 +97,7 @@ Borrador para que Santiago lo integre en `docs/modelo-datos.md`; se ajusta con l
 
 - **Nombre repetido:** el módulo mínimo rechaza dos iglesias con el mismo nombre en todo el país, pero hay muchas «Parroquia de San Miguel» en distintos municipios. Propongo que el nombre sea único **por municipio**. Se acuerda con Oscar en E2-06.
 - **Búsqueda por nombre sin acentos:** reutilizar el `translate(lower(...))` que ya usa B2 en miembros, sin extensiones nuevas (sujeto a P-02).
-- **Ranking:** se cargan las iglesias activas del lugar con al menos un objeto, se calcula el índice en el dominio, se ordena y se pagina. Con los datos de prueba (40 iglesias) es suficiente; si crece, se agrega la caché de E2-19.
+- **Ranking:** se cargan las iglesias activas del lugar con al menos un objeto, se calcula el índice en el dominio, se ordena y se pagina. El ranking completo de cada lugar se guarda en memoria (E2-19) y se recalcula solo si cambió un objeto, un criterio o una iglesia, o si pasaron 60 s; cada página se recorta del ranking guardado.
 - **Año de cálculo:** el año en curso en la zona horaria de la iglesia, como dice ADR-0005, hasta que se responda P-01.
 - **Catálogo del INEGI:** se carga desde el archivo oficial con un script (`db:catalogos`) y desde la ruta de importación de la Coordinación; sin dependencias nuevas.
 
