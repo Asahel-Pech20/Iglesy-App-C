@@ -153,9 +153,18 @@ export const esquemaPlaticasPublicas = z.object({
   tipo: z.enum(TIPOS_PLATICA, 'Elige un tipo de plática de la lista.').optional(),
 });
 
+// RF-83 (deseable): pláticas de un tipo en todas las iglesias de un municipio (clave INEGI)
+export const esquemaPlaticasDelMunicipio = z.object({
+  tipo: z.enum(TIPOS_PLATICA, 'Elige un tipo de plática de la lista.'),
+  municipio: z
+    .string('Elige un municipio.')
+    .regex(/^\d{5}$/, 'La clave del municipio tiene 5 dígitos (catálogo del INEGI).'),
+});
+
 export type Horario = z.infer<typeof horario>;
 export type CrearServicio = z.infer<typeof esquemaCrearServicio>;
 export type ActualizarServicio = z.infer<typeof esquemaActualizarServicio>;
 export type CrearPlatica = z.infer<typeof esquemaCrearPlatica>;
 export type ActualizarPlatica = z.infer<typeof esquemaActualizarPlatica>;
 export type QueryPlaticasPublicas = z.infer<typeof esquemaPlaticasPublicas>;
+export type QueryPlaticasDelMunicipio = z.infer<typeof esquemaPlaticasDelMunicipio>;

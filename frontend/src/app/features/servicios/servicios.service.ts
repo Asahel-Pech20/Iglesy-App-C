@@ -6,6 +6,7 @@ import type {
   Platica,
   PlaticaEntrada,
   PlaticaPublica,
+  PlaticasDeIglesia,
   Servicio,
   ServicioEntrada,
   TipoPlatica,
@@ -59,6 +60,11 @@ export class ServiciosService {
 
   quitarPlatica(id: string) {
     return this.api.delete(this.ruta(`/platicas/${id}`)).pipe(tap(this.cambio));
+  }
+
+  /** Sin sesión, RF-83: las pláticas de un tipo en todas las iglesias de un municipio */
+  platicasDelMunicipio(tipo: TipoPlatica, municipio: string) {
+    return this.api.objeto<PlaticasDeIglesia[]>('/public/platicas', { tipo, municipio });
   }
 
   /** Sin sesión: «¿cuándo son las pláticas de bautizo?» (RF-39) */

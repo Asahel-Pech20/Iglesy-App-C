@@ -143,6 +143,7 @@ export class TituloColonial {
           <a routerLink="/templos" routerLinkActive="activo">Iglesias</a>
           <a routerLink="/reconocidas" routerLinkActive="activo">Más reconocidas</a>
           <a routerLink="/busqueda-patrimonio" routerLinkActive="activo">Búsqueda</a>
+          <a routerLink="/platicas" routerLinkActive="activo">Pláticas</a>
           <a routerLink="/login">
             <lucide-icon [img]="iconos.LogIn" [size]="14" aria-hidden="true" /> Personal
           </a>

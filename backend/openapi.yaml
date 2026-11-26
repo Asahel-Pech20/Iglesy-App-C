@@ -2867,6 +2867,68 @@ paths:
         '400': { $ref: '#/components/responses/Validacion' }
         '404': { $ref: '#/components/responses/NoEncontrado' }
 
+  /iglesias/{iglesiaId}/semana-misas:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    get:
+      tags: [Misas]
+      summary: Misas de una semana armadas desde el horario, con su estado (misas:leer; RF-84, deseable)
+      description: >
+        Supuesto P-29. Cada misa del horario con su fecha local, el padre programado y su estado: REGISTRADA,
+        PENDIENTE (ya empezó y falta registrarla) o FUTURA.
+      parameters:
+        - name: semana
+          in: query
+          description: Cualquier día de la semana (aaaa-mm-dd); por omisión, la actual
+          schema: { type: string, format: date }
+      responses:
+        '200': { description: 'semana (desde y hasta) y misas' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+
+  /iglesias/{iglesiaId}/misas-celebradas/semana:
+    parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
+    post:
+      tags: [Misas]
+      summary: Registrar de una vez las misas pendientes de la semana con su padre programado (misas:registrar; RF-84)
+      description: >
+        Usa el mismo registro que una misa individual. Las que no se pueden registrar se devuelven en `omitidas`
+        con su motivo. Una sustitución se registra antes, misa por misa.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                semana: { type: string, format: date }
+      responses:
+        '200': { description: 'creadas, yaRegistradas, futuras y omitidas' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+        '422': { $ref: '#/components/responses/ReglaNegocio' }
+
+  /public/platicas:
+    get:
+      tags: [Público]
+      summary: Pláticas de un tipo en todas las iglesias abiertas de un municipio, sin sesión (RF-83, deseable)
+      security: []
+      parameters:
+        - name: tipo
+          in: query
+          required: true
+          schema:
+            { type: string, enum: [PREBAUTISMAL, PRIMERA_COMUNION, CONFIRMACION, PREMATRIMONIAL] }
+        - name: municipio
+          in: query
+          required: true
+          description: Clave del municipio del INEGI (5 dígitos)
+          schema: { type: string, pattern: '^\d{5}$' }
+      responses:
+        '200': { description: 'Lista de iglesia y sus pláticas del tipo, en orden alfabético' }
+        '400': { $ref: '#/components/responses/Validacion' }
+
   /iglesias/{iglesiaId}/misas-celebradas:
     parameters: [{ $ref: '#/components/parameters/IglesiaId' }]
     get:

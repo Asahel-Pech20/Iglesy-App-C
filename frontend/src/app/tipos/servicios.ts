@@ -36,6 +36,12 @@ export interface PlaticaPublica {
   horarios: HorarioSemanal[];
 }
 
+/** GET /public/platicas?tipo=&municipio= (RF-83): las pláticas del tipo en cada iglesia del municipio */
+export interface PlaticasDeIglesia {
+  iglesia: { id: string; nombre: string; tipo: string };
+  platicas: PlaticaPublica[];
+}
+
 /** GET /iglesias/:id/servicios (panel de la iglesia, E3-11) */
 export interface Servicio extends ServicioPublico {
   id: string;
