@@ -34,6 +34,15 @@ describe('sesión y rutas (F1-08, F1-09)', () => {
     await esperarA(() => raiz.querySelector('[role=alert]') !== null);
   });
 
+  it('el login lleva la foto de la landing con su crédito y un enlace de vuelta al inicio', async () => {
+    await abrirApp('/login');
+    await esperarA(() => textoPagina().includes('Inicia sesión'));
+    const fondo = document.querySelector<HTMLElement>('app-auth-layout .fondo')!;
+    expect(fondo.style.backgroundImage).toContain('landing/mamatla.webp');
+    expect(fondo.querySelector('.credito')?.textContent).toContain('Álvaro Jacobo Lagunas');
+    expect(fondo.querySelector('a.volver')?.getAttribute('href')).toBe('/');
+  });
+
   it('valida el formulario antes de enviar', async () => {
     const { harness } = await abrirApp('/login');
     const raiz = harness.routeNativeElement!;

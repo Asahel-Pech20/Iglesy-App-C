@@ -55,19 +55,22 @@
           <lucide-icon class="solo-oscuro" [img]="iconos.Moon" [size]="20" aria-hidden="true" />
         </button>
         <button matButton type="button" class="cuenta" [matMenuTriggerFor]="menuCuenta">
-          <lucide-icon [img]="iconos.UserRound" [size]="20" aria-hidden="true" />
-          @if (usuario(); as u) {
-            <span class="datos-cuenta">
-              <span class="nombre">{{ u.nombre }}</span>
-              <span class="rol">
-                {{ etiquetasRol[u.rol] }}
-                @if (iglesia(); as ig) {
-                  · <span class="iglesia">{{ ig.nombre }}</span>
-                }
+          <!-- Una sola fila: ícono, nombre y flecha (sin esto la flecha bajaba en escritorio) -->
+          <span class="fila-cuenta">
+            <lucide-icon [img]="iconos.UserRound" [size]="20" aria-hidden="true" />
+            @if (usuario(); as u) {
+              <span class="datos-cuenta">
+                <span class="nombre">{{ u.nombre }}</span>
+                <span class="rol">
+                  {{ etiquetasRol[u.rol] }}
+                  @if (iglesia(); as ig) {
+                    · <span class="iglesia">{{ ig.nombre }}</span>
+                  }
+                </span>
               </span>
-            </span>
-          }
-          <lucide-icon [img]="iconos.ChevronDown" [size]="16" aria-hidden="true" />
+            }
+            <lucide-icon [img]="iconos.ChevronDown" [size]="16" aria-hidden="true" />
+          </span>
           <span class="sr-only">Menú de cuenta</span>
         </button>
         <mat-menu #menuCuenta="matMenu" xPosition="before">

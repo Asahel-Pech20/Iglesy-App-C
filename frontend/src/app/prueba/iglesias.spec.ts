@@ -38,19 +38,29 @@ async function elegir(etiqueta: string, opcion: string) {
 }
 
 describe('inicio de la Coordinación', () => {
+  /** Rutas de los mosaicos de accesos rápidos del inicio. */
+  const accesos = () =>
+    [...document.querySelectorAll('nav[aria-label="Accesos rápidos"] a')].map((a) =>
+      a.getAttribute('href'),
+    );
+
   it('no pide el panel de la iglesia: saluda y ofrece sus accesos', async () => {
     await abrirApp('/', { como: 'coordinacion@iglesia.local' });
-    await esperarA(() => textoPagina().includes('Ver y crear iglesias'));
+    await esperarA(() => accesos().includes('/iglesias'));
     expect(textoPagina()).toContain('Bienvenido');
-    expect(textoPagina()).toContain('Administrar usuarios');
+    expect(accesos()).toEqual(expect.arrayContaining(['/iglesias', '/usuarios', '/configuracion']));
+    // Solo lo que su rol puede abrir
+    expect(accesos()).not.toContain('/miembros');
     expect(textoPagina()).not.toContain('Miembros activos');
     expect(textoPagina()).not.toContain('No se pudo');
   });
 
-  it('el personal de una iglesia sigue viendo su panel', async () => {
+  it('el personal de una iglesia sigue viendo su panel, con sus propios accesos', async () => {
     await abrirApp('/', { como: 'pastor@iglesia.local' });
     await esperarA(() => textoPagina().includes('Miembros activos'));
-    expect(textoPagina()).not.toContain('Ver y crear iglesias');
+    expect(accesos()).toContain('/miembros');
+    expect(accesos()).not.toContain('/iglesias');
+    expect(accesos()).not.toContain('/usuarios');
   });
 });
 

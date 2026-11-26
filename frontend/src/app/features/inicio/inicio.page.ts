@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { AccesosRapidos } from '@/app/compartido/accesos-rapidos';
 import { PageHeader } from '@/app/compartido/page-header';
 import { SesionService } from '@/app/core/sesion.service';
 import { DashboardPage } from '@/app/features/dashboard/dashboard.page';
@@ -10,7 +10,7 @@ import { DashboardPage } from '@/app/features/dashboard/dashboard.page';
  */
 @Component({
   selector: 'app-inicio',
-  imports: [RouterLink, PageHeader, DashboardPage],
+  imports: [AccesosRapidos, PageHeader, DashboardPage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (conPanel()) {
@@ -20,24 +20,7 @@ import { DashboardPage } from '@/app/features/dashboard/dashboard.page';
         [titulo]="'Bienvenido, ' + (sesion.usuario()?.nombre ?? '')"
         descripcion="Desde aquí administras las iglesias del sistema y su personal."
       />
-      <section class="tarjeta tarjeta-cuerpo accesos">
-        @if (sesion.puede('iglesias:leer')) {
-          <a routerLink="/iglesias">Ver y crear iglesias</a>
-        }
-        @if (sesion.puede('usuarios:leer')) {
-          <a routerLink="/usuarios">Administrar usuarios</a>
-        }
-        @if (sesion.puede('configuracion:leer')) {
-          <a routerLink="/configuracion">Configuración</a>
-        }
-      </section>
-    }
-  `,
-  styles: `
-    .accesos {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      <app-accesos-rapidos />
     }
   `,
 })
