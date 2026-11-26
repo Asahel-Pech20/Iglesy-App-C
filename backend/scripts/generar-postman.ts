@@ -392,7 +392,7 @@ function peticionLogin(rol: string, email: string): ItemPeticion {
           exec: [
             "pm.test('Inicia sesión (200)', () => pm.response.to.have.status(200));",
             'const sesion = pm.response.json().data;',
-            "pm.environment.set('accessToken', sesion.accessToken);",
+            "pm.environment.set('token', sesion.accessToken);",
             'if (sesion.iglesia && sesion.iglesia.id) {',
             "  pm.environment.set('iglesiaId', sesion.iglesia.id);",
             '}',
@@ -414,7 +414,7 @@ function peticionLogin(rol: string, email: string): ItemPeticion {
         raw: JSON.stringify({ email, password: '{{passwordPrueba}}' }, null, 2),
         options: { raw: { language: 'json' } },
       },
-      description: `Usuario de prueba del seed (${rol}). Guarda accessToken e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP.`,
+      description: `Usuario de prueba del seed (${rol}). Guarda token e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP.`,
     },
     response: [],
   };
@@ -424,7 +424,7 @@ function carpetaDeLogins(): Carpeta {
   return {
     name: '0. Iniciar sesión',
     description:
-      'Un login por rol. Elige uno y todas las demás carpetas usan su accessToken. El login permite 5 por minuto por IP: no corras la carpeta completa de golpe (son 6).',
+      'Un login por rol. Elige uno y todas las demás carpetas usan su token. El login permite 5 por minuto por IP: no corras la carpeta completa de golpe (son 6).',
     item: LOGINS.map(({ rol, email }) => peticionLogin(rol, email)),
   };
 }
@@ -454,7 +454,7 @@ export const PASOS_DEMO: PasoDemo[] = [
     prueba: [
       codigo(200),
       'const sesion = pm.response.json().data;',
-      "pm.environment.set('accessToken', sesion.accessToken);",
+      "pm.environment.set('token', sesion.accessToken);",
       "pm.test('Trae la iglesia', () => { if (!sesion.iglesia) throw new Error('sin iglesia'); });",
       "pm.environment.set('iglesiaId', sesion.iglesia.id);",
     ],
@@ -499,7 +499,7 @@ export const PASOS_DEMO: PasoDemo[] = [
     prueba: [
       codigo(200),
       'const sesion = pm.response.json().data;',
-      "pm.environment.set('accessToken', sesion.accessToken);",
+      "pm.environment.set('token', sesion.accessToken);",
       "pm.environment.set('iglesiaId', sesion.iglesia.id);",
     ],
   },
@@ -636,7 +636,7 @@ export function construirColeccion(doc: DocOpenApi): Coleccion {
     },
     auth: {
       type: 'bearer',
-      bearer: [{ key: 'token', value: '{{accessToken}}', type: 'string' }],
+      bearer: [{ key: 'token', value: '{{token}}', type: 'string' }],
     },
     variable: [],
     item: [carpetaDeLogins(), carpetaDeDemo(), ...carpetasDelOpenApi(doc)],
@@ -655,7 +655,7 @@ export function construirEntorno() {
     name: 'Ecclesia local',
     values: [
       variable('baseUrl', 'http://localhost:3000/api/v1', 'URL base de la API local'),
-      variable('accessToken', '', 'Lo llena el login'),
+      variable('token', '', 'Lo llena el login'),
       variable('iglesiaId', '', 'Lo llena el login (vacío en la Coordinación)'),
       variable('folio', '', 'Lo llena la solicitud pública de espacio'),
       variable('clave', '', 'Lo llena la solicitud pública de espacio'),

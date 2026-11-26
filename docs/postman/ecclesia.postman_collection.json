@@ -9,7 +9,7 @@
     "bearer": [
       {
         "key": "token",
-        "value": "{{accessToken}}",
+        "value": "{{token}}",
         "type": "string"
       }
     ]
@@ -18,7 +18,7 @@
   "item": [
     {
       "name": "0. Iniciar sesión",
-      "description": "Un login por rol. Elige uno y todas las demás carpetas usan su accessToken. El login permite 5 por minuto por IP: no corras la carpeta completa de golpe (son 6).",
+      "description": "Un login por rol. Elige uno y todas las demás carpetas usan su token. El login permite 5 por minuto por IP: no corras la carpeta completa de golpe (son 6).",
       "item": [
         {
           "name": "Login COORDINACION",
@@ -30,7 +30,7 @@
                 "exec": [
                   "pm.test('Inicia sesión (200)', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "if (sesion.iglesia && sesion.iglesia.id) {",
                   "  pm.environment.set('iglesiaId', sesion.iglesia.id);",
                   "}"
@@ -63,7 +63,7 @@
                 }
               }
             },
-            "description": "Usuario de prueba del seed (COORDINACION). Guarda accessToken e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
+            "description": "Usuario de prueba del seed (COORDINACION). Guarda token e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
           },
           "response": []
         },
@@ -77,7 +77,7 @@
                 "exec": [
                   "pm.test('Inicia sesión (200)', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "if (sesion.iglesia && sesion.iglesia.id) {",
                   "  pm.environment.set('iglesiaId', sesion.iglesia.id);",
                   "}"
@@ -110,7 +110,7 @@
                 }
               }
             },
-            "description": "Usuario de prueba del seed (ADMIN_IGLESIA). Guarda accessToken e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
+            "description": "Usuario de prueba del seed (ADMIN_IGLESIA). Guarda token e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
           },
           "response": []
         },
@@ -124,7 +124,7 @@
                 "exec": [
                   "pm.test('Inicia sesión (200)', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "if (sesion.iglesia && sesion.iglesia.id) {",
                   "  pm.environment.set('iglesiaId', sesion.iglesia.id);",
                   "}"
@@ -157,7 +157,7 @@
                 }
               }
             },
-            "description": "Usuario de prueba del seed (PASTOR). Guarda accessToken e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
+            "description": "Usuario de prueba del seed (PASTOR). Guarda token e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
           },
           "response": []
         },
@@ -171,7 +171,7 @@
                 "exec": [
                   "pm.test('Inicia sesión (200)', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "if (sesion.iglesia && sesion.iglesia.id) {",
                   "  pm.environment.set('iglesiaId', sesion.iglesia.id);",
                   "}"
@@ -204,7 +204,7 @@
                 }
               }
             },
-            "description": "Usuario de prueba del seed (SECRETARIO). Guarda accessToken e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
+            "description": "Usuario de prueba del seed (SECRETARIO). Guarda token e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
           },
           "response": []
         },
@@ -218,7 +218,7 @@
                 "exec": [
                   "pm.test('Inicia sesión (200)', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "if (sesion.iglesia && sesion.iglesia.id) {",
                   "  pm.environment.set('iglesiaId', sesion.iglesia.id);",
                   "}"
@@ -251,7 +251,7 @@
                 }
               }
             },
-            "description": "Usuario de prueba del seed (TESORERO). Guarda accessToken e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
+            "description": "Usuario de prueba del seed (TESORERO). Guarda token e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
           },
           "response": []
         },
@@ -265,7 +265,7 @@
                 "exec": [
                   "pm.test('Inicia sesión (200)', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "if (sesion.iglesia && sesion.iglesia.id) {",
                   "  pm.environment.set('iglesiaId', sesion.iglesia.id);",
                   "}"
@@ -298,7 +298,7 @@
                 }
               }
             },
-            "description": "Usuario de prueba del seed (COORDINADOR). Guarda accessToken e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
+            "description": "Usuario de prueba del seed (COORDINADOR). Guarda token e iglesiaId en el entorno. Ojo: el login permite 5 por minuto por IP."
           },
           "response": []
         }
@@ -318,7 +318,7 @@
                 "exec": [
                   "pm.test('Responde 200', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "pm.test('Trae la iglesia', () => { if (!sesion.iglesia) throw new Error('sin iglesia'); });",
                   "pm.environment.set('iglesiaId', sesion.iglesia.id);"
                 ]
@@ -468,7 +468,7 @@
                 "exec": [
                   "pm.test('Responde 200', () => pm.response.to.have.status(200));",
                   "const sesion = pm.response.json().data;",
-                  "pm.environment.set('accessToken', sesion.accessToken);",
+                  "pm.environment.set('token', sesion.accessToken);",
                   "pm.environment.set('iglesiaId', sesion.iglesia.id);"
                 ]
               }

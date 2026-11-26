@@ -60,7 +60,7 @@ async function main() {
   for (const paso of carpeta.item) {
     const { request } = paso;
     if (!request) continue;
-    const token = variables.get('accessToken') ?? '';
+    const token = variables.get('token') ?? '';
     const headers: Record<string, string> = Object.fromEntries(
       request.header.map((h) => [h.key, sustituir(h.value)]),
     );

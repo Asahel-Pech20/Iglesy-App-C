@@ -56,7 +56,7 @@ describe('colección de Postman (OSC-08)', () => {
   it('ninguna ruta pública lleva autenticación y las demás heredan el Bearer de la colección', () => {
     expect(coleccion.auth).toMatchObject({
       type: 'bearer',
-      bearer: [{ key: 'token', value: '{{accessToken}}' }],
+      bearer: [{ key: 'token', value: '{{token}}' }],
     });
     for (const peticion of delYaml) {
       const [metodo, ruta] = (peticion.request.description ?? '')
@@ -112,13 +112,13 @@ describe('colección de Postman (OSC-08)', () => {
     });
   });
 
-  it('hay un login por cada rol, incluido COORDINADOR, que guarda accessToken e iglesiaId', () => {
+  it('hay un login por cada rol, incluido COORDINADOR, que guarda token e iglesiaId', () => {
     expect(LOGINS.map((l) => l.rol).sort()).toEqual([...ROLES].sort());
     const logins = peticiones(carpeta('0. Iniciar sesión')!.item);
     expect(logins).toHaveLength(ROLES.length);
     for (const login of logins) {
       const script = login.event?.[0]?.script.exec.join('\n') ?? '';
-      expect(script).toContain("pm.environment.set('accessToken'");
+      expect(script).toContain("pm.environment.set('token'");
       expect(script).toContain("pm.environment.set('iglesiaId'");
       expect(login.request.auth).toEqual({ type: 'noauth' });
       expect(JSON.stringify(login.request.body)).toContain('{{passwordPrueba}}');
@@ -140,14 +140,7 @@ describe('colección de Postman (OSC-08)', () => {
     const entorno = construirEntorno();
     const nombres = entorno.values.map((v) => v.key);
     expect(nombres).toEqual(
-      expect.arrayContaining([
-        'baseUrl',
-        'accessToken',
-        'iglesiaId',
-        'folio',
-        'clave',
-        'passwordPrueba',
-      ]),
+      expect.arrayContaining(['baseUrl', 'token', 'iglesiaId', 'folio', 'clave', 'passwordPrueba']),
     );
     const password = entorno.values.find((v) => v.key === 'passwordPrueba')!;
     expect(password.description).toMatch(/SOLO DE PRUEBA/);
