@@ -2,6 +2,23 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versiones con [SemVer](https://semver.org/lang/es/).
 
+## [0.4.0] — 2026-11-25
+
+Resultado de la prueba de portabilidad: se instaló el arnés en una API nueva de préstamo de libros ([docs/portabilidad.md](docs/portabilidad.md)).
+
+### Agregado
+- `arnes.config.json` por proyecto (plantilla en `stacks/express/arnes.config.plantilla.json`): carpetas que revisa dependency-cruiser, lista de violaciones conocidas, qué es acceso a datos y desde dónde corren las pruebas. Lo lee `hooks/ajustes.mjs`, con valores por defecto y pruebas.
+- `dependencias.accesoDatos`: la regla `controller-sin-orm` deja de depender de Prisma. Antes, en un proyecto sin Prisma, un controller que leía los datos pasaba el pre-commit.
+- Plantillas de `.prettierignore` y `.gitattributes` (LF en Windows).
+- `docs/portabilidad.md`: qué se probó y qué hubo que ajustar.
+
+### Cambiado
+- `hooks/verificar.mjs` ya no trae rutas fijas de Ecclesia (`backend/src`, `backend/arquitectura-conocidas.json`, pruebas en `backend/`): las toma de `arnes.config.json`. **Migración:** un proyecto con backend en otra carpeta agrega su `arnes.config.json` (el de Ecclesia está en su raíz).
+- La guía de instalación acepta npm además de pnpm y avisa que los comandos se corren en Git Bash en Windows.
+
+### Corregido
+- La plantilla de ESLint marcaba como error los `console.log` de los propios hooks del arnés y los `require()` de los archivos `.cjs` de configuración.
+
 ## [0.3.1] — 2026-11-20
 
 ### Corregido

@@ -24,7 +24,9 @@ export default tseslint.config(
     },
   },
   {
-    // Los controllers y routes no importan el ORM (también lo revisa dependency-cruiser)
+    // Los controllers y routes no importan el ORM (también lo revisa dependency-cruiser).
+    // Si el proyecto no usa Prisma, cambia estos patrones por los de su acceso a datos
+    // (los mismos de dependencias.accesoDatos en arnes.config.json).
     files: ['**/*.controller.ts', '**/*.routes.ts'],
     rules: {
       'no-restricted-imports': [
@@ -39,6 +41,17 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  {
+    // Archivos de configuración en CommonJS (p. ej. .dependency-cruiser.cjs)
+    files: ['**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs' },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
+    // Los hooks del arnés son scripts de consola: sí imprimen
+    files: ['arnes-ia/**/hooks/*.mjs'],
+    rules: { 'no-console': 'off' },
   },
   {
     files: ['**/*.test.ts'],

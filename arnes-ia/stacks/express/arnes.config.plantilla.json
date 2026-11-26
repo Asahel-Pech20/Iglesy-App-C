@@ -1,0 +1,12 @@
+{
+  "dependencias": {
+    "rutas": ["src"],
+    "config": "arnes-ia/stacks/express/.dependency-cruiser.cjs",
+    "conocidas": null,
+    "accesoDatos": null
+  },
+  "pruebas": {
+    "cwd": ".",
+    "args": ["run"]
+  }
+}

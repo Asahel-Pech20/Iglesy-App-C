@@ -1,6 +1,18 @@
-// Reglas de arquitectura del arnés (stack Express). Se ejecuta desde la carpeta del backend:
-//   npx depcruise src --config ../arnes-ia/stacks/express/.dependency-cruiser.cjs
-// Capas: routes → middlewares → controller → service → ORM; dominio/ es puro.
+// Reglas de arquitectura del arnés (stack Express). Se ejecuta desde la raíz del repositorio:
+//   npx depcruise src --config arnes-ia/stacks/express/.dependency-cruiser.cjs
+// Capas: routes → middlewares → controller → service → acceso a datos; dominio/ es puro.
+const { existsSync, readFileSync } = require('node:fs');
+
+// Qué cuenta como acceso a datos para «controller-sin-orm». Por defecto, Prisma; un proyecto con otro
+// ORM o con un almacén propio lo declara en arnes.config.json → dependencias.accesoDatos (expresiones regulares).
+const ACCESO_DATOS_PRISMA = ['(^|/)generated/', '@prisma', '(^|/)lib/prisma'];
+
+function accesoDatos() {
+  if (!existsSync('arnes.config.json')) return ACCESO_DATOS_PRISMA;
+  const propios = JSON.parse(readFileSync('arnes.config.json', 'utf8'))?.dependencias?.accesoDatos;
+  return Array.isArray(propios) && propios.length > 0 ? propios : ACCESO_DATOS_PRISMA;
+}
+
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
@@ -14,9 +26,9 @@ module.exports = {
     {
       name: 'controller-sin-orm',
       severity: 'error',
-      comment: 'Controllers y routes no acceden a la BD: eso lo hace el service.',
+      comment: 'Controllers y routes no acceden a los datos: eso lo hace el service.',
       from: { path: '\\.(controller|routes)\\.ts$' },
-      to: { path: ['(^|/)generated/', '@prisma', '(^|/)lib/prisma'] },
+      to: { path: accesoDatos() },
     },
     {
       name: 'dominio-puro',

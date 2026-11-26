@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+package-lock.json
+pnpm-lock.yaml
+# Documentos: tablas largas que Prettier reacomoda; se revisan a mano
+*.md

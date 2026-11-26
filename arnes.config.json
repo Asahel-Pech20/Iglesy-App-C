@@ -1,0 +1,12 @@
+{
+  "dependencias": {
+    "rutas": ["backend/src", "arnes-ia/stacks/express/modulo-referencia"],
+    "config": "arnes-ia/stacks/express/.dependency-cruiser.cjs",
+    "conocidas": "backend/arquitectura-conocidas.json",
+    "accesoDatos": null
+  },
+  "pruebas": {
+    "cwd": "backend",
+    "args": ["run", "--config", "../arnes-ia/stacks/express/vitest.config.mjs"]
+  }
+}
