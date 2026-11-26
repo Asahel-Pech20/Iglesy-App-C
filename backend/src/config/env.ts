@@ -11,6 +11,10 @@ const esquemaEnv = z.object({
   JWT_ACCESS_TTL: z.string().default('15m'),
   JWT_REFRESH_TTL: z.string().default('7d'),
   FRONTEND_URL: z.url(),
+  // SameSite de la cookie de refresh. «strict» (AGENTS.md §3) cuando el frontend y la API comparten
+  // sitio; «none» solo si están en sitios distintos, como dos servicios *.onrender.com (Render gratis).
+  // Con «none» la cookie va Secure y las rutas de la cookie exigen Origin = FRONTEND_URL (contra CSRF).
+  COOKIE_SAMESITE: z.enum(['strict', 'lax', 'none']).default('strict'),
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_FROM: z.string().default('AppIglesia <no-reply@iglesia.local>'),
