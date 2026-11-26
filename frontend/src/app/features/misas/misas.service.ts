@@ -5,6 +5,10 @@ import { SesionService } from '@/app/core/sesion.service';
 import type { MisaCelebrada, Padre, QueryMisas } from '@/app/tipos/diezmo';
 import type {
   AgendaPadre,
+  ExcepcionesMisa,
+  ExcepcionMisa,
+  ExcepcionMisaEntrada,
+  ExcepcionPublica,
   HorarioMisa,
   HorarioMisaEntrada,
   MisaDeHorarioEntrada,
@@ -106,6 +110,28 @@ export class MisasService {
     return this.api
       .post<ResultadoArmarSemana>(this.ruta('/misas-celebradas/semana'), { semana })
       .pipe(tap(this.cambio));
+  }
+
+  // ───────── Días inhábiles (E3-25) ─────────
+  /** Para el público (ficha), sin sesión: próximos 60 días */
+  excepcionesPublicas(iglesiaId: string) {
+    return this.api.objeto<{ desde: string; hasta: string; excepciones: ExcepcionPublica[] }>(
+      `/public/iglesias/${iglesiaId}/excepciones-misa`,
+    );
+  }
+
+  excepciones(desde?: string, hasta?: string) {
+    return this.api.objeto<ExcepcionesMisa>(this.ruta('/excepciones-misa'), { desde, hasta });
+  }
+
+  crearExcepcion(datos: ExcepcionMisaEntrada) {
+    return this.api
+      .post<ExcepcionMisa>(this.ruta('/excepciones-misa'), datos)
+      .pipe(tap(this.cambio));
+  }
+
+  quitarExcepcion(id: string) {
+    return this.api.delete(this.ruta(`/excepciones-misa/${id}`)).pipe(tap(this.cambio));
   }
 
   registrarDesdeHorario(datos: MisaDeHorarioEntrada) {

@@ -354,6 +354,7 @@ import { PildoraDistincion } from './tarjeta-iglesia';
 
         <!-- E3-18 (Genaro): horario de misas, servicios y pláticas -->
         <app-misas-servicios-ficha
+          [iglesiaId]="f.id"
           [misas]="f.misas"
           [servicios]="f.servicios"
           [platicas]="f.platicas"

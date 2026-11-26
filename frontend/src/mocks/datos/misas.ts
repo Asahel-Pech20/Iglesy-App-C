@@ -133,3 +133,16 @@ export const platicasIniciales = (): PlaticaMock[] => [
     activo: true,
   },
 ];
+
+/** E3-25: día sin misa u otra hora de una misa del horario */
+export interface ExcepcionMisaMock {
+  id: string;
+  iglesiaId: string;
+  horarioMisaId: string;
+  fecha: string;
+  tipo: 'SIN_MISA' | 'OTRA_HORA';
+  horaNueva: string | null;
+  motivo: string;
+  registradoPor: { id: string; nombre: string };
+  createdAt: string;
+}

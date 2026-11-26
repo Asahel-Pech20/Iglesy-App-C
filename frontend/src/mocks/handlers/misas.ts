@@ -1,10 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import { tienePermiso } from '@/app/core/permisos';
 import type { Permiso } from '@/app/tipos/comunes';
-import type { HorarioMisaEntrada } from '@/app/tipos/misas';
+import type { ExcepcionMisaEntrada, HorarioMisaEntrada } from '@/app/tipos/misas';
 import type { PlaticaEntrada, ServicioEntrada } from '@/app/tipos/servicios';
 import type { Usuario } from '@/app/tipos/usuarios';
-import type { HorarioMisaMock } from '../datos/misas';
+import type { ExcepcionMisaMock, HorarioMisaMock } from '../datos/misas';
 import { db } from '../db';
 import { ahora, autenticar, errorApi, paginarMock, ruta } from '../utils';
 
@@ -562,19 +562,31 @@ function semanaMock(iglesiaId: string, semana: string | null) {
       const fecha = new Date(new Date(`${domingo}T12:00:00Z`).getTime() + m.diaSemana * DIA)
         .toISOString()
         .slice(0, 10);
-      const inicio = new Date(`${fecha}T${m.hora}:00-06:00`).toISOString();
+      // E3-25: día sin misa u otra hora
+      const exc = db.excepcionesMisa.find((e) => e.horarioMisaId === m.id && e.fecha === fecha);
+      const hora = exc?.tipo === 'OTRA_HORA' ? (exc.horaNueva as string) : m.hora;
+      const inicio = new Date(`${fecha}T${hora}:00-06:00`).toISOString();
       const hecha = db.misas.find((x) => x.iglesiaId === iglesiaId && x.inicio === inicio);
       return {
         horarioId: m.id,
         diaSemana: m.diaSemana,
         fecha,
-        hora: m.hora,
+        hora,
         inicio,
         tipo: m.tipo,
         idioma: m.idioma,
         duracionMin: m.duracionMin,
         padreProgramado: padreDe(m.padreId),
-        estado: hecha ? 'REGISTRADA' : inicio > ahora() ? 'FUTURA' : 'PENDIENTE',
+        estado: hecha
+          ? 'REGISTRADA'
+          : exc?.tipo === 'SIN_MISA'
+            ? 'SIN_MISA'
+            : inicio > ahora()
+              ? 'FUTURA'
+              : 'PENDIENTE',
+        excepcion: exc
+          ? { tipo: exc.tipo, horaNueva: exc.horaNueva, motivo: exc.motivo, horaHorario: m.hora }
+          : null,
         misaCelebrada: hecha
           ? {
               id: hecha.id,
@@ -589,6 +601,37 @@ function semanaMock(iglesiaId: string, semana: string | null) {
     .toISOString()
     .slice(0, 10);
   return { semana: { desde: domingo, hasta }, misas };
+}
+
+function aExcepcionMock(e: ExcepcionMisaMock) {
+  const h = db.horariosMisa.find((x) => x.id === e.horarioMisaId);
+  return {
+    id: e.id,
+    fecha: e.fecha,
+    tipo: e.tipo,
+    horaNueva: e.horaNueva,
+    motivo: e.motivo,
+    registradoPor: e.registradoPor,
+    registradaEn: e.createdAt,
+    misa: {
+      horarioId: e.horarioMisaId,
+      diaSemana: h?.diaSemana ?? 0,
+      hora: h?.hora ?? '',
+      tipo: h?.tipo ?? 'DOMINICAL',
+      padre: padreDe(h?.padreId ?? ''),
+    },
+  };
+}
+
+/** Excepciones de hoy a 60 días, por fecha */
+function excepcionesMock(iglesiaId: string) {
+  const desde = ahora().slice(0, 10);
+  const hasta = new Date(Date.now() + 60 * DIA).toISOString().slice(0, 10);
+  const excepciones = db.excepcionesMisa
+    .filter((e) => e.iglesiaId === iglesiaId && e.fecha >= desde && e.fecha <= hasta)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .map(aExcepcionMock);
+  return { desde, hasta, excepciones };
 }
 
 export const deseablesHandlers = [
@@ -623,7 +666,88 @@ export const deseablesHandlers = [
         creadas,
         yaRegistradas: s.misas.filter((x) => x.estado === 'REGISTRADA').length,
         futuras: s.misas.filter((x) => x.estado === 'FUTURA').length,
+        sinMisa: s.misas.filter((x) => x.estado === 'SIN_MISA').length,
         omitidas: [],
+      },
+    });
+  }),
+
+  // ───────── E3-25: días sin misa u otra hora ─────────
+  http.get(ruta('/iglesias/:iglesiaId/excepciones-misa'), ({ request, params }) => {
+    const iglesiaId = String(params['iglesiaId']);
+    const u = acceso(request, ['misas:leer'], iglesiaId);
+    if (u instanceof Response) return u;
+    return HttpResponse.json({ data: excepcionesMock(iglesiaId) });
+  }),
+
+  http.post(ruta('/iglesias/:iglesiaId/excepciones-misa'), async ({ request, params }) => {
+    const iglesiaId = String(params['iglesiaId']);
+    const u = acceso(request, ['misas:programar'], iglesiaId);
+    if (u instanceof Response) return u;
+    const d = (await request.json()) as ExcepcionMisaEntrada;
+    const h = db.horariosMisa.find((x) => x.id === d.horarioMisaId && x.iglesiaId === iglesiaId);
+    if (!h) return errorApi(404, 'NOT_FOUND', 'La misa no está en el horario de esta iglesia.');
+    const dia = new Date(`${d.fecha}T12:00:00Z`).getUTCDay();
+    if (dia !== h.diaSemana) {
+      return errorApi(
+        422,
+        'BUSINESS_RULE',
+        `El ${d.fecha} es ${DIAS[dia]}, pero esa misa del horario es los ${DIAS[h.diaSemana]}.`,
+      );
+    }
+    if (db.excepcionesMisa.some((e) => e.horarioMisaId === h.id && e.fecha === d.fecha)) {
+      return errorApi(
+        409,
+        'CONFLICT',
+        'Esa misa ya tiene una excepción en esa fecha. Quítala para cambiarla.',
+      );
+    }
+    const nueva = {
+      id: `ex-${crypto.randomUUID()}`,
+      iglesiaId,
+      horarioMisaId: h.id,
+      fecha: d.fecha,
+      tipo: d.tipo,
+      horaNueva: d.tipo === 'OTRA_HORA' ? (d.horaNueva ?? null) : null,
+      motivo: d.motivo,
+      registradoPor: { id: u.id, nombre: u.nombre },
+      createdAt: ahora(),
+    };
+    db.excepcionesMisa.push(nueva);
+    return HttpResponse.json({ data: aExcepcionMock(nueva) }, { status: 201 });
+  }),
+
+  http.delete(ruta('/iglesias/:iglesiaId/excepciones-misa/:excepcionId'), ({ request, params }) => {
+    const iglesiaId = String(params['iglesiaId']);
+    const u = acceso(request, ['misas:programar'], iglesiaId);
+    if (u instanceof Response) return u;
+    const i = db.excepcionesMisa.findIndex(
+      (e) => e.id === params['excepcionId'] && e.iglesiaId === iglesiaId,
+    );
+    if (i < 0) return errorApi(404, 'NOT_FOUND', 'La excepción no existe en esta iglesia.');
+    db.excepcionesMisa.splice(i, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(ruta('/public/iglesias/:iglesiaId/excepciones-misa'), ({ params }) => {
+    const iglesiaId = String(params['iglesiaId']);
+    const { desde, hasta, excepciones } = excepcionesMock(iglesiaId);
+    return HttpResponse.json({
+      data: {
+        desde,
+        hasta,
+        excepciones: excepciones.map((e) => ({
+          fecha: e.fecha,
+          diaSemana: e.misa.diaSemana,
+          hora: e.misa.hora,
+          tipoMisa: e.misa.tipo,
+          tipo: e.tipo,
+          horaNueva: e.horaNueva,
+          motivo: e.motivo,
+          padre: e.misa.padre.titulo
+            ? `${e.misa.padre.titulo} ${e.misa.padre.nombre}`
+            : e.misa.padre.nombre,
+        })),
       },
     });
   }),
