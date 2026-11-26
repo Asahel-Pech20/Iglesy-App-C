@@ -65,12 +65,11 @@ export async function ficha(iglesiaId: string) {
   };
 }
 
-/** E2-12 (RF-19–RF-21, RN-12, RN-13, CA-06): de mayor a menor índice, con su posición. */
-export async function reconocidas(query: QueryReconocidas) {
-  const { page, limit, skip } = paginar(query);
-  const iglesias = await iglesiasService.activasDelLugar(query);
+/** E2-12: el ranking completo (sin paginar) de las iglesias activas de un lugar. */
+async function calcularRanking(lugar: iglesiasService.LugarPublico) {
+  const iglesias = await iglesiasService.activasDelLugar(lugar);
   const indices = await patrimonioService.indicesDe(iglesias);
-  const ranking = ordenarRanking(
+  return ordenarRanking(
     iglesias.map((i) => {
       const calculo = indices.get(i.id);
       return {
@@ -82,6 +81,47 @@ export async function reconocidas(query: QueryReconocidas) {
       };
     }),
   );
+}
+
+type Ranking = Awaited<ReturnType<typeof calcularRanking>>;
+
+/** E2-19: una entrada vale a lo más 60 s (así también se nota el cambio de año de RN-15). */
+export const CACHE_RANKING_MS = 60_000;
+/** Lugares guardados a la vez; al pasarse se descarta el más antiguo. */
+const MAX_LUGARES = 500;
+
+/**
+ * E2-19: caché en memoria del ranking por lugar. Una entrada sirve mientras no caduque y la huella
+ * no cambie: registrar, editar o cambiar el estado de un objeto, guardar criterios o editar o cerrar
+ * una iglesia la invalidan al instante. Mismo esquema que el caché del dashboard (B4-08).
+ */
+export function crearCacheRanking(duracionMs = CACHE_RANKING_MS) {
+  const guardados = new Map<string, { ranking: Ranking; huella: string; expira: number }>();
+  return async function rankingDe(lugar: iglesiasService.LugarPublico): Promise<Ranking> {
+    const clave = [lugar.estado, lugar.municipio, lugar.localidad].join('|');
+    const [indice, iglesias] = await Promise.all([
+      patrimonioService.huellaIndice(),
+      iglesiasService.huellaIglesias(),
+    ]);
+    const huella = `${indice}|${iglesias}`;
+    const ahora = Date.now();
+    const guardado = guardados.get(clave);
+    if (guardado && guardado.expira > ahora && guardado.huella === huella) return guardado.ranking;
+    const ranking = await calcularRanking(lugar);
+    guardados.delete(clave);
+    const masAntiguo = guardados.keys().next();
+    if (guardados.size >= MAX_LUGARES && !masAntiguo.done) guardados.delete(masAntiguo.value);
+    guardados.set(clave, { ranking, huella, expira: ahora + duracionMs });
+    return ranking;
+  };
+}
+
+const rankingCompartido = crearCacheRanking();
+
+/** E2-12 (RF-19–RF-21, RN-12, RN-13, CA-06): de mayor a menor índice, con su posición. */
+export async function reconocidas(query: QueryReconocidas, rankingDe = rankingCompartido) {
+  const { page, limit, skip } = paginar(query);
+  const ranking = await rankingDe(query);
   return {
     datos: ranking
       .slice(skip, skip + limit)
