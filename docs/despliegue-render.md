@@ -1,11 +1,13 @@
-# Despliegue en Render (plan gratis, tres servicios)
+# Despliegue en Render y Supabase (plan gratis)
 
-Render gratis da un solo nivel de subdominio (`<nombre>.onrender.com`), así que se usa guion:
+La base de datos va en **Supabase** (PostgreSQL) y lo demás en **Render**, que da un solo nivel de
+subdominio (`<nombre>.onrender.com`), así que se usa guion:
 
 | Servicio | Dirección | Qué es |
 |---|---|---|
-| `api-iglesy` | `https://api-iglesy.onrender.com` | La API (Express + Prisma) con Render Postgres |
-| `principal-iglesy` | `https://principal-iglesy.onrender.com` | El sistema real: landing, consultas públicas y panel |
+| Supabase | *(panel de Supabase)* | La base de datos PostgreSQL |
+| `api-iglesy` | `https://api-iglesy.onrender.com` | La API (Express + Prisma), conectada a Supabase |
+| `principal-iglesy` | `https://principal-iglesy.onrender.com` | Abre en la landing; desde ahí, consultas públicas y login del personal |
 | `demo-iglesy` | `https://demo-iglesy.onrender.com` | La misma app con datos de prueba (mocks), sin backend |
 
 > La dirección sale del **nombre del servicio al crearlo** y no se cambia después. Si un nombre está
@@ -23,10 +25,17 @@ El navegador solo habla con `principal-iglesy`. Render **reescribe** `/api/*` y 
 Como todas las peticiones llegan a la API desde el proxy, la API necesita `TRUST_PROXY` para ver la IP
 real del cliente; si no, el límite de intentos del login (5 por minuto) sería uno solo para todos.
 
-## 1. Base de datos: Render Postgres
+## 1. Base de datos: Supabase
 
-**New → Postgres**, nombre `iglesy-db`, plan **Free** (caduca a los 30 días). Copia la **Internal
-Database URL** (para la API) y la **External Database URL** (para cargar los datos desde tu laptop).
+1. En Supabase, **New project** (región cercana, p. ej. *East US*); guarda la contraseña de la base.
+2. **Connect** (arriba) → **Connection string** → **Session pooler**. Copia esa URL y pon la contraseña
+   en lugar de `[YOUR-PASSWORD]`. Agrégale `?sslmode=require` al final si no trae parámetros.
+
+Se usa el **Session pooler** (puerto 5432) y no la *Direct connection* ni el *Transaction pooler*:
+la directa es solo IPv6 y Render no la alcanza, y el de transacciones (puerto 6543) no sirve para las
+migraciones de Prisma. La misma URL va en `DATABASE_URL` de la API y en la carga de datos inicial.
+
+El plan gratis de Supabase pausa el proyecto tras una semana sin uso; se reactiva desde su panel.
 
 ## 2. API: Web Service `api-iglesy`
 
@@ -45,7 +54,7 @@ Database URL** (para la API) y la **External Database URL** (para cargar los dat
 |---|---|
 | `NODE_VERSION` | `22.12.0` |
 | `NODE_ENV` | `production` |
-| `DATABASE_URL` | la *Internal Database URL* de `iglesy-db` |
+| `DATABASE_URL` | la URL del **Session pooler** de Supabase |
 | `JWT_ACCESS_SECRET` | botón **Generate** |
 | `JWT_REFRESH_SECRET` | botón **Generate** (distinto del anterior) |
 | `FRONTEND_URL` | `https://principal-iglesy.onrender.com` |
@@ -53,10 +62,10 @@ Database URL** (para la API) y la **External Database URL** (para cargar los dat
 | `TRUST_PROXY` | `2` (la reescritura del frontend y el balanceador de Render; ver «Comprobar») |
 | `SEED_PASSWORD` | la contraseña inicial de los usuarios del seed (no la subas al repo) |
 
-**Datos iniciales (una sola vez), desde tu laptop**, con la *External Database URL*:
+**Datos iniciales (una sola vez), desde tu laptop**, con la misma URL de Supabase:
 
 ```powershell
-$env:DATABASE_URL = "<External Database URL>"; $env:SEED_PASSWORD = "<la misma de Render>"
+$env:DATABASE_URL = "<URL del Session pooler de Supabase>"; $env:SEED_PASSWORD = "<la misma de Render>"
 pnpm --filter backend db:catalogos
 pnpm --filter backend db:seed
 Remove-Item Env:DATABASE_URL, Env:SEED_PASSWORD
@@ -104,6 +113,6 @@ contraseña de `frontend/src/mocks/datos/b1.ts`. Los datos se reinician al recar
 ## Limitaciones del plan gratis
 
 - La API se duerme tras ~15 min sin uso: la primera petición tarda ~1 min. Ábrela antes de la demo.
-- La base de datos gratis caduca a los 30 días.
+- Supabase gratis pausa el proyecto tras 7 días sin uso (se reactiva desde su panel).
 - Los logos subidos (`uploads/`) se pierden en cada despliegue: el disco del Web Service no persiste.
 - Los correos (invitaciones, recuperar contraseña) no salen sin un SMTP real (`SMTP_HOST`, `SMTP_PORT`).
