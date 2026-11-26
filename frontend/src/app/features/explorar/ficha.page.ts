@@ -81,6 +81,12 @@ import { PildoraDistincion } from './tarjeta-iglesia';
       margin-top: 20px;
       align-items: start;
     }
+    /* Columna derecha: misas, servicios y pláticas, y el patrimonio debajo (no en la de 260 px) */
+    .principal {
+      display: grid;
+      gap: 20px;
+      min-width: 0;
+    }
     .marco {
       background: var(--superficie);
       border: 1px solid var(--marco);
@@ -352,35 +358,37 @@ import { PildoraDistincion } from './tarjeta-iglesia';
           }
         </div>
 
-        <!-- E3-18 (Genaro): horario de misas, servicios y pláticas -->
-        <app-misas-servicios-ficha
-          [misas]="f.misas"
-          [servicios]="f.servicios"
-          [platicas]="f.platicas"
-        />
+        <div class="principal">
+          <!-- E3-18 (Genaro): horario de misas, servicios y pláticas -->
+          <app-misas-servicios-ficha
+            [misas]="f.misas"
+            [servicios]="f.servicios"
+            [platicas]="f.platicas"
+          />
 
-        <section aria-labelledby="titulo-patrimonio">
-          <app-titulo-colonial texto="Patrimonio" [nivel]="2" idTitulo="titulo-patrimonio" />
-          @if (f.objetos.length === 0) {
-            <p class="suave" style="text-align: center">
-              Esta iglesia no tiene objetos vigentes registrados.
-            </p>
-          } @else {
-            <ul class="objetos" aria-label="Objetos vigentes">
-              @for (o of f.objetos; track o.id) {
-                <li class="marco">
-                  <h3>{{ o.descripcion }}</h3>
-                  <span class="detalle">
-                    {{ tiposObjeto[o.tipo] }} · {{ o.epoca }} · {{ o.material }}
-                  </span>
-                  @if (o.catalogadoInah) {
-                    <span class="inah">Catalogado por el INAH</span>
-                  }
-                </li>
-              }
-            </ul>
-          }
-        </section>
+          <section aria-labelledby="titulo-patrimonio">
+            <app-titulo-colonial texto="Patrimonio" [nivel]="2" idTitulo="titulo-patrimonio" />
+            @if (f.objetos.length === 0) {
+              <p class="suave" style="text-align: center">
+                Esta iglesia no tiene objetos vigentes registrados.
+              </p>
+            } @else {
+              <ul class="objetos" aria-label="Objetos vigentes">
+                @for (o of f.objetos; track o.id) {
+                  <li class="marco">
+                    <h3>{{ o.descripcion }}</h3>
+                    <span class="detalle">
+                      {{ tiposObjeto[o.tipo] }} · {{ o.epoca }} · {{ o.material }}
+                    </span>
+                    @if (o.catalogadoInah) {
+                      <span class="inah">Catalogado por el INAH</span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
       </div>
     }
   `,
