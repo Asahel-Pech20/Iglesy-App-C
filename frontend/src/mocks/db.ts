@@ -33,6 +33,17 @@ import {
   padresIniciales,
 } from './datos/diezmo';
 import type { Padre } from '@/app/tipos/diezmo';
+import {
+  type HorarioMisaMock,
+  horariosMisaIniciales,
+  type PadreIglesiaMock,
+  padresIglesiaIniciales,
+  type PlaticaMock,
+  platicasIniciales,
+  type ServicioMock,
+  serviciosIniciales,
+  type SustitucionMock,
+} from './datos/misas';
 import type { Iglesia, LugarInegi } from '@/app/tipos/iglesias';
 import type { VersionCriterios } from '@/app/tipos/patrimonio';
 import {
@@ -97,6 +108,12 @@ export const db = {
   tiposEspacio: tiposEspacioIniciales(),
   solicitudesEspacio: solicitudesEspacioIniciales(),
   cotizacionesEspacio: cotizacionesIniciales(),
+  // E3 (Genaro): padres por iglesia, horario de misas, sustituciones, servicios y pláticas
+  padresIglesia: padresIglesiaIniciales(),
+  horariosMisa: horariosMisaIniciales(),
+  sustitucionesMisa: {} as Record<string, SustitucionMock & { horarioMisaId: string }>,
+  servicios: serviciosIniciales(),
+  platicas: platicasIniciales(),
 } satisfies {
   usuarios: Usuario[];
   configuracion: ConfiguracionIglesia;
@@ -124,6 +141,11 @@ export const db = {
   tiposEspacio: TipoEspacioMock[];
   solicitudesEspacio: SolicitudEspacioMock[];
   cotizacionesEspacio: CotizacionMock[];
+  padresIglesia: PadreIglesiaMock[];
+  horariosMisa: HorarioMisaMock[];
+  sustitucionesMisa: Record<string, SustitucionMock & { horarioMisaId: string }>;
+  servicios: ServicioMock[];
+  platicas: PlaticaMock[];
 };
 
 /** Restaura los datos iniciales (se llama entre pruebas). */
@@ -154,6 +176,11 @@ export function reiniciarDb() {
   db.tiposEspacio = tiposEspacioIniciales();
   db.solicitudesEspacio = solicitudesEspacioIniciales();
   db.cotizacionesEspacio = cotizacionesIniciales();
+  db.padresIglesia = padresIglesiaIniciales();
+  db.horariosMisa = horariosMisaIniciales();
+  db.sustitucionesMisa = {};
+  db.servicios = serviciosIniciales();
+  db.platicas = platicasIniciales();
   sesionMock.cerrar();
 }
 // Sesión simulada: en el navegador sobrevive a recargas (como la cookie de refresh real)

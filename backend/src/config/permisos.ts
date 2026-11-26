@@ -63,6 +63,11 @@ export const PERMISOS = [
   // Misas celebradas y padres (versión mínima que necesita el diezmo)
   'misas:leer',
   'misas:registrar',
+  // E3-06 y E3-07 (Genaro): horario semanal y padres de la iglesia; padres a nivel nacional (P-19)
+  'misas:programar',
+  'padres:gestionar',
+  // E3-11 y E3-13 (Genaro): servicios y pláticas de la iglesia
+  'servicios:gestionar',
   // Iglesias del sistema nacional (solo la Coordinación)
   'iglesias:leer',
   'iglesias:crear',
@@ -98,6 +103,9 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'patrimonio:leer',
     'criterios:leer',
     'criterios:editar',
+    // E3-06 (supuesto P-19): crea y edita los datos de los padres y consulta los horarios de cualquier
+    // iglesia. No lleva misas:leer: las misas celebradas van con el diezmo, que es privado (RNF-08)
+    'padres:gestionar',
   ],
   ADMIN_IGLESIA: [
     ...CLED('usuarios'),
@@ -124,6 +132,8 @@ export const PERMISOS_POR_ROL: Record<RolUsuario, readonly Permiso[]> = {
     'espacios:gestionar',
     'misas:leer',
     'misas:registrar',
+    'misas:programar',
+    'servicios:gestionar',
   ],
   PASTOR: [
     'usuarios:opciones',

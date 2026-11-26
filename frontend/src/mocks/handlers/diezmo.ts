@@ -73,6 +73,18 @@ const nombreUsuario = (id: string) => ({
   nombre: db.usuarios.find((u: Usuario) => u.id === id)?.nombre ?? '—',
 });
 
+function sustitucionDe(misaId: string): MisaCelebrada['sustitucion'] {
+  const s = db.sustitucionesMisa[misaId];
+  if (!s) return null;
+  const programado = db.padres.find((p) => p.id === s.padreProgramadoId);
+  return {
+    padreProgramado: { id: s.padreProgramadoId, nombre: programado?.nombre ?? '—' },
+    motivo: s.motivo,
+    hechaPor: nombreUsuario(s.hechaPorId),
+    hechaEn: s.hechaEn,
+  };
+}
+
 function aMisa(m: MisaMock): MisaCelebrada {
   const local = partes(new Date(m.inicio), zonaDe());
   const d = db.diezmos.find((x) => x.misaId === m.id);
@@ -83,6 +95,9 @@ function aMisa(m: MisaMock): MisaCelebrada {
     fechaLocal: local.fecha,
     horaLocal: local.hora,
     padre,
+    // E3-09: si la registró misas.ts desde el horario, trae su sustitución
+    horarioMisaId: db.sustitucionesMisa[m.id]?.horarioMisaId ?? null,
+    sustitucion: sustitucionDe(m.id),
     diezmo: d ? { monto: d.monto, actualizadoEn: d.updatedAt } : null,
   };
 }
