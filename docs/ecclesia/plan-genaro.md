@@ -31,6 +31,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 | P-16 | Una misa especial puede estar en el horario semanal como cualquier otra (por ejemplo, la misa de sanación de los jueves). Una especial de una sola fecha se registra como misa celebrada. | E3-07, E3-09 |
 | P-17 | Lo registra el administrador de la iglesia, solo cuando la misa ya empezó (no a futuro). Hay una celebración por misa del horario y día. El sustituto debe estar asociado a la iglesia y no puede tener otra misa del horario empalmada (RN-26). | E3-09 |
 | P-18 | La agenda la ve solo el personal (Coordinación e iglesias del padre). Se arma con el horario normal; las iglesias cerradas salen de la agenda. | E3-08 |
+| P-33 | «Días inhábiles» (notas del docente del 2026-11-19): el administrador marca una fecha en la que una misa del horario no se celebra (`SIN_MISA`) o se celebra a otra hora (`OTRA_HORA`), siempre con motivo. El horario semanal no cambia; el público lo ve en la ficha. Solo misas. No se marca ni se quita si la misa ya se registró como celebrada. | E3-25 |
 | P-19 | Del padre se guardan nombre y título (Pbro., Fr., Mons.…); el público ve solo «título + nombre». La Coordinación crea y edita los datos del padre. El administrador de una iglesia lo asocia o desasocia de **su** iglesia, y solo crea un padre si no existe. Los idiomas son una lista fija: español y las lenguas indígenas más habladas (náhuatl, maya, tseltal, tsotsil, mixteco, zapoteco, otomí, totonaco, mazateco, chol) más «otra». | E3-05, E3-06 |
 
 ## Tareas
@@ -87,6 +88,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 |---|---|---|---|---|
 | E3-22 | Pláticas de un tipo en todas las iglesias de un municipio: `GET /public/platicas` y página `/platicas` | RF-83, supuesto P-29 | E3-14 | Hecha (en revisión) |
 | E3-23 | Semana de misas armada desde el horario: consulta, registro de las pendientes y panel en Celebradas | RF-84, supuesto P-29 | E3-09 | Hecha (en revisión) |
+| E3-25 | Días inhábiles: una misa del horario sin misa u otra hora en una fecha, con motivo; la semana, el registro y la agenda lo respetan; panel y ficha pública | Notas del docente del 2026-11-19, supuesto P-33 | E3-07, E3-09, E3-23 | Hecha (en revisión) |
 | E3-24 | Colección de Postman de las rutas de Genaro, probada contra la API | `specs.md §12.6` | E3-06 a E3-23 | Hecha (en revisión): [`postman/misas-servicios.postman_collection.json`](postman/misas-servicios.postman_collection.json) (base de Nataly en el PR #37, con RF-83/84 y orden corregido); 32 peticiones probadas contra la API local el 2026-11-25: 33 de 33 ejecuciones con la respuesta esperada (bitácora 81) |
 
 ## Lo que necesito de otros
