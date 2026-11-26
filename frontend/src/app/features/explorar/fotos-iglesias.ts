@@ -54,7 +54,7 @@ export interface FotoDeIglesia {
  */
 export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
   'ig-santo-domingo': {
-    archivo: 'iglesias/santo-domingo.jpg',
+    archivo: 'iglesias/santo-domingo.webp',
     autor: 'Diego Delso',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
@@ -62,7 +62,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Iglesia_de_Santo_Domingo,_Puebla,_M%C3%A9xico,_2013-10-11,_DD_01.JPG',
   },
   'ig-merida': {
-    archivo: 'iglesias/merida.jpg',
+    archivo: 'iglesias/merida.webp',
     autor: 'Gideonximi',
     licencia: 'CC BY 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by/4.0',
@@ -70,7 +70,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Catedral_de_San_Ildefonso,_M%C3%A9rida,_Yucat%C3%A1n,_fachada_principal.jpg',
   },
   'ig-catedral-cdmx': {
-    archivo: 'iglesias/catedral-cdmx.jpg',
+    archivo: 'iglesias/catedral-cdmx.webp',
     autor: 'ProtoplasmaKid',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -78,7 +78,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Catedral_Metropolitana_de_la_Ciudad_de_M%C3%A9xico_1.jpg',
   },
   'ig-basilica': {
-    archivo: 'iglesias/basilica.jpg',
+    archivo: 'iglesias/basilica.webp',
     autor: 'Jarek Tuszyński',
     licencia: 'CC BY 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by/4.0',
@@ -86,7 +86,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Nueva_Bas%C3%ADlica_de_Nuestra_Se%C3%B1ora_de_Guadalupe_-_Outside_-_1.JPG',
   },
   'ig-catedral-puebla': {
-    archivo: 'iglesias/catedral-puebla.jpg',
+    archivo: 'iglesias/catedral-puebla.webp',
     autor: 'Juan Carlos Fonseca Mata',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -100,14 +100,14 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
     enlace: 'https://unsplash.com/photos/8gJqRaAaKx4',
   },
   'ig-santa-prisca': {
-    archivo: 'iglesias/santa-prisca.jpg',
+    archivo: 'iglesias/santa-prisca.webp',
     autor: 'Carlos Roberto Gobe',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Santa_Prisca,_fachada_oriente.JPG',
   },
   'ig-santo-domingo-oax': {
-    archivo: 'iglesias/santo-domingo-oax.jpg',
+    archivo: 'iglesias/santo-domingo-oax.webp',
     autor: 'Luisalvaz',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -115,14 +115,14 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Fachada_del_Templo_de_Santo_Domingo_de_Guzm%C3%A1n,_Oaxaca,_Oax._(1).JPG',
   },
   'ig-catedral-morelia': {
-    archivo: 'iglesias/catedral-morelia.jpg',
+    archivo: 'iglesias/catedral-morelia.webp',
     autor: 'Adavyd',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Morelia_Cathedral_DSC_0524_AD.JPG',
   },
   'ig-san-miguel': {
-    archivo: 'iglesias/san-miguel.jpg',
+    archivo: 'iglesias/san-miguel.webp',
     autor: 'Peter K Burian',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -130,7 +130,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Parroquia_de_San_Miguel_Arc%C3%A1ngel_4673.jpg',
   },
   'ig-atlixco': {
-    archivo: 'iglesias/atlixco.jpg',
+    archivo: 'iglesias/atlixco.webp',
     autor: 'AlejandroLinaresGarcia',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -138,14 +138,14 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Capilla_de_la_Tercera_Orden,_Atlixco,_Puebla_11.JPG',
   },
   'ig-catedral-gdl': {
-    archivo: 'iglesias/catedral-gdl.jpg',
+    archivo: 'iglesias/catedral-gdl.webp',
     autor: 'Luisalvaz',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Fachada_de_la_Catedral_de_Guadalajara_01.jpg',
   },
   'ig-expiatorio': {
-    archivo: 'iglesias/expiatorio.jpg',
+    archivo: 'iglesias/expiatorio.webp',
     autor: 'ProtoplasmaKid',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -153,7 +153,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Templo_Expiatorio_del_Sant%C3%ADsimo_Sacramento_de_Guadalajara_3.jpg',
   },
   'ig-catedral-zac': {
-    archivo: 'iglesias/catedral-zac.jpg',
+    archivo: 'iglesias/catedral-zac.webp',
     autor: 'Martín Daniel Cordero Amézquita',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
@@ -161,21 +161,21 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Fachada_Frontal_de_la_Catedral_de_Zacatecas,_Zac.jpg',
   },
   'ig-ocotlan': {
-    archivo: 'iglesias/ocotlan.jpg',
+    archivo: 'iglesias/ocotlan.webp',
     autor: 'Juan de la Malinche',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Basilica-de-Ocotl%C3%A1n-Tlaxcala.jpg',
   },
   'ig-tonantzintla': {
-    archivo: 'iglesias/tonantzintla.jpg',
+    archivo: 'iglesias/tonantzintla.webp',
     autor: 'Clau Del Lop',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Santa_Mar%C3%ADa_Tonantzintla.jpg',
   },
   'ig-acatepec': {
-    archivo: 'iglesias/acatepec.jpg',
+    archivo: 'iglesias/acatepec.webp',
     autor: 'Luisalvaz',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -183,7 +183,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Fachada_del_Templo_de_San_Francisco_Acatepec_01.jpg',
   },
   'ig-santa-rosa': {
-    archivo: 'iglesias/santa-rosa.jpg',
+    archivo: 'iglesias/santa-rosa.webp',
     autor: 'Juan Carlos Fonseca Mata',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -191,7 +191,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Templo_de_Santa_Rosa_de_Viterbo,_Quer%C3%A9taro.jpg',
   },
   'ig-catedral-sclc': {
-    archivo: 'iglesias/catedral-sclc.jpg',
+    archivo: 'iglesias/catedral-sclc.webp',
     autor: 'GameOfLight',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
@@ -199,7 +199,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Catedral_de_San_Crist%C3%B3bal_de_las_Casas_1.jpg',
   },
   'ig-catedral-ags': {
-    archivo: 'iglesias/catedral-ags.jpg',
+    archivo: 'iglesias/catedral-ags.webp',
     autor: 'MIMI.EXE',
     licencia: 'CC0',
     licenciaUrl: 'http://creativecommons.org/publicdomain/zero/1.0/deed.en',
@@ -207,7 +207,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Vista_general_de_la_catedral_bas%C3%ADlica_de_nuestra_se%C3%B1ora_de_la_asunci%C3%B3n_de_Aguascalientes._28-03-25.jpg',
   },
   'ig-catedral-tij': {
-    archivo: 'iglesias/catedral-tij.jpg',
+    archivo: 'iglesias/catedral-tij.webp',
     autor: 'Juan.osunacastro',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
@@ -215,7 +215,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Catedral_de_Nuestra_Se%C3%B1ora_de_Guadalupe_TIjuana_BC.jpg',
   },
   'ig-loreto': {
-    archivo: 'iglesias/loreto.jpg',
+    archivo: 'iglesias/loreto.webp',
     autor: 'Kirt Edblom',
     licencia: 'CC BY-SA 2.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/2.0',
@@ -223,42 +223,42 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Misi%C3%B3n_de_Nuestra_Se%C3%B1ora_de_Loreto_-_Baja_California_Sur_(14563323178).jpg',
   },
   'ig-catedral-camp': {
-    archivo: 'iglesias/catedral-camp.jpg',
+    archivo: 'iglesias/catedral-camp.webp',
     autor: 'Cass D.arq',
     licencia: 'CC BY 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Campeche_Fachada.jpg',
   },
   'ig-catedral-salt': {
-    archivo: 'iglesias/catedral-salt.jpg',
+    archivo: 'iglesias/catedral-salt.webp',
     autor: 'Marioli925',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Santiago_de_Saltillo,_fachada.JPG',
   },
   'ig-catedral-col': {
-    archivo: 'iglesias/catedral-col.jpg',
+    archivo: 'iglesias/catedral-col.webp',
     autor: 'Salvador alc',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Colima.jpg',
   },
   'ig-catedral-chih': {
-    archivo: 'iglesias/catedral-chih.jpg',
+    archivo: 'iglesias/catedral-chih.webp',
     autor: 'Battroid',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Chihuahua_-_04.JPG',
   },
   'ig-catedral-dgo': {
-    archivo: 'iglesias/catedral-dgo.jpg',
+    archivo: 'iglesias/catedral-dgo.webp',
     autor: 'Toto the egg',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_bas%C3%ADlica_de_Durango.jpg',
   },
   'ig-actopan': {
-    archivo: 'iglesias/actopan.jpg',
+    archivo: 'iglesias/actopan.webp',
     autor: 'RubeHM',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -266,7 +266,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Templo_y_exconvento_de_San_Nicol%C3%A1s_de_Tolentino_(Actopan)._142.jpg',
   },
   'ig-tepotzotlan': {
-    archivo: 'iglesias/tepotzotlan.jpg',
+    archivo: 'iglesias/tepotzotlan.webp',
     autor: 'Luisalvaz',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -274,21 +274,21 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Fachada_del_Templo_de_San_Francisco_Javier,_Tepotzotl%C3%A1n_1.jpg',
   },
   'ig-catedral-cva': {
-    archivo: 'iglesias/catedral-cva.jpg',
+    archivo: 'iglesias/catedral-cva.webp',
     autor: 'José Luis Tristán Espino',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:02564_COPIA_CATEDRAL_CUERNAVACA.jpg',
   },
   'ig-catedral-tep': {
-    archivo: 'iglesias/catedral-tep.jpg',
+    archivo: 'iglesias/catedral-tep.webp',
     autor: 'Christian Frausto Bernal',
     licencia: 'CC BY-SA 2.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/2.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Tepic,_Nayarit,_MEXICO.jpg',
   },
   'ig-catedral-mty': {
-    archivo: 'iglesias/catedral-mty.jpg',
+    archivo: 'iglesias/catedral-mty.webp',
     autor: '© Peter Potrowl',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -296,7 +296,7 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Monterrey_-_Catedral_de_la_Inmaculada_Concepci%C3%B3n_-_4.jpg',
   },
   'ig-playa': {
-    archivo: 'iglesias/playa.jpg',
+    archivo: 'iglesias/playa.webp',
     autor: 'Nheyob',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
@@ -304,47 +304,53 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
       'https://commons.wikimedia.org/wiki/File:Parroquia_de_Nuestra_Se%C3%B1ora_del_Carmen_(Playa_del_Carmen,_QR)_-_exterior.jpg',
   },
   'ig-carmen-slp': {
-    archivo: 'iglesias/carmen-slp.jpg',
+    archivo: 'iglesias/carmen-slp.webp',
     autor: 'Sombra Inquieta',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Templo_del_Carmen,_San_Luis_Potos%C3%AD.jpg',
   },
   'ig-catedral-maz': {
-    archivo: 'iglesias/catedral-maz.jpg',
+    archivo: 'iglesias/catedral-maz.webp',
     autor: 'Trevor Cameron',
     licencia: 'CC BY 2.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by/2.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Mazatl%C3%A1n_02.jpg',
   },
   'ig-catedral-hmo': {
-    archivo: 'iglesias/catedral-hmo.jpg',
+    archivo: 'iglesias/catedral-hmo.webp',
     autor: 'Gabriel Perez Salazar',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Hermosillo_Cathedral_Plaza_Zaragoza.jpg',
   },
   'ig-catedral-vsa': {
-    archivo: 'iglesias/catedral-vsa.jpg',
+    archivo: 'iglesias/catedral-vsa.webp',
     autor: 'Alfonsobouchot',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Villahermosa_5.JPG',
   },
   'ig-catedral-tam': {
-    archivo: 'iglesias/catedral-tam.jpg',
+    archivo: 'iglesias/catedral-tam.webp',
     autor: 'JuanGLoya',
     licencia: 'CC BY-SA 3.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/3.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Tampico..JPG',
   },
   'ig-catedral-xal': {
-    archivo: 'iglesias/catedral-xal.jpg',
+    archivo: 'iglesias/catedral-xal.webp',
     autor: 'Koffer',
     licencia: 'CC BY-SA 4.0',
     licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
     enlace: 'https://commons.wikimedia.org/wiki/File:Catedral_de_Xalapa_bajo_la_lluvia.jpg',
   },
 };
+
+/**
+ * Las licencias CC BY y CC BY-SA piden indicar si la obra se modificó: las fotos están recortadas y
+ * comprimidas, así que su crédito lo dice.
+ */
+export const fueRecortada = (foto: FotoDeIglesia): boolean => foto.licencia.startsWith('CC BY');
 
 export const fotoDeIglesia = (id: string): FotoDeIglesia | null => FOTOS_POR_IGLESIA[id] ?? null;

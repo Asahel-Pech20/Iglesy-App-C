@@ -9,6 +9,7 @@ import type { Lugar } from '@/app/tipos/patrimonio';
 import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
+import { AvisoDemo, esIglesiaRealDeDemo } from './aviso-demo';
 import { TarjetaIglesia } from './tarjeta-iglesia';
 import { FOTOS_IGLESIAS } from './fotos-iglesias';
 
@@ -27,6 +28,7 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
     SelectorLugar,
     TarjetaIglesia,
     TituloColonial,
+    AvisoDemo,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
@@ -122,6 +124,9 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
             descripcion="Solo aparecen iglesias abiertas con objetos patrimoniales registrados."
           />
         } @else {
+          @if (hayReales()) {
+            <app-aviso-demo />
+          }
           <ol class="lista" aria-label="Ranking de iglesias">
             @for (i of ranking(); track i.id) {
               <li>
@@ -173,6 +178,10 @@ export class ReconocidasPage {
       }),
   });
   protected readonly ranking = computed(() => valorDe(this.consulta)?.data ?? []);
+  /** Si sale alguna iglesia real de la demo, se avisa que sus objetos e índice son ilustrativos. */
+  protected readonly hayReales = computed(() =>
+    this.ranking().some((i) => esIglesiaRealDeDemo(i.id)),
+  );
 
   protected lugar(l: Lugar) {
     this.filtros.cambiar({

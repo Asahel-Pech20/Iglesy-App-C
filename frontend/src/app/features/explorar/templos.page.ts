@@ -16,6 +16,7 @@ import type { Lugar } from '@/app/tipos/patrimonio';
 import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
+import { AvisoDemo, esIglesiaRealDeDemo } from './aviso-demo';
 import { TarjetaIglesia } from './tarjeta-iglesia';
 import { FOTOS_IGLESIAS } from './fotos-iglesias';
 
@@ -40,6 +41,7 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
     SelectorLugar,
     TarjetaIglesia,
     TituloColonial,
+    AvisoDemo,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
@@ -186,6 +188,9 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
             descripcion="Quita algún filtro para ver más iglesias del estado."
           />
         } @else {
+          @if (hayReales()) {
+            <app-aviso-demo />
+          }
           <section class="lista" aria-label="Iglesias del estado">
             @for (i of iglesias(); track i.id) {
               <app-tarjeta-iglesia
@@ -245,6 +250,10 @@ export class TemplosPage {
         : of(null),
   });
   protected readonly iglesias = computed(() => valorDe(this.consulta)?.data ?? []);
+  /** Si sale alguna iglesia real de la demo, se avisa que sus objetos e índice son ilustrativos. */
+  protected readonly hayReales = computed(() =>
+    this.iglesias().some((i) => esIglesiaRealDeDemo(i.id)),
+  );
 
   protected lugar(l: Lugar) {
     this.filtros.cambiar({

@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Award, LucideAngularModule } from 'lucide-angular';
 import { ETIQUETAS_TIPO_IGLESIA, formatearIndice } from '@/app/core/formato';
 import type { LugarInegi, TipoIglesia } from '@/app/tipos/iglesias';
-import { fotoDeIglesia } from './fotos-iglesias';
+import { fotoDeIglesia, fueRecortada } from './fotos-iglesias';
 
 /** Nivel de la distinción (RN-06) para elegir colores: la más alta resalta más. */
 export type NivelDistincion = 'sobresaliente' | 'alto' | 'valor' | 'ninguna';
@@ -188,6 +188,9 @@ export class PildoraDistincion {
           <figcaption>
             Foto: <a [href]="f.enlace" target="_blank" rel="noopener noreferrer">{{ f.autor }}</a> ·
             <a [href]="f.licenciaUrl" target="_blank" rel="noopener noreferrer">{{ f.licencia }}</a>
+            @if (recortada(f)) {
+              (recortada)
+            }
           </figcaption>
         </figure>
       }
@@ -227,6 +230,7 @@ export class TarjetaIglesia {
   protected readonly nivel = computed(() => nivelDistincion(this.distincion()));
   /** Foto de la iglesia, si la tiene (solo las iglesias reales de la demo). */
   protected readonly foto = computed(() => fotoDeIglesia(this.id()));
+  protected readonly recortada = fueRecortada;
   protected readonly lugar = computed(
     () =>
       [this.localidad()?.nombre ?? this.municipio()?.nombre, this.estado()?.nombre]
