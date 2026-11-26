@@ -1,6 +1,8 @@
 // E2-14 y E2-15 (Nataly): consultas públicas, iglesias del panel, patrimonio y criterios del índice.
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, it } from 'vitest';
+import { provideRouter } from '@angular/router';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FOTOS_PORTADA, LandingPage } from '@/app/features/explorar/landing.page';
 import { db } from '@/mocks/db';
 import { indiceDeIglesia } from '@/mocks/handlers/patrimonio';
 import { abrirApp, escribir, esperarA, textoPagina } from './entorno';
@@ -56,6 +58,18 @@ describe('página de entrada', () => {
     expect(textoPagina()).not.toContain('Las iglesias de México y su patrimonio');
   });
 
+  it('la portada tiene de fondo fotos de iglesias con su crédito; al entrar solo pide la primera', async () => {
+    await abrirApp('/');
+    await esperarA(() => document.querySelectorAll('.portada .foto').length === 4);
+    const fotos = [...document.querySelectorAll<HTMLElement>('.portada .foto')];
+    expect(fotos.map((f) => f.classList.contains('visible'))).toEqual([true, false, false, false]);
+    expect(fotos.map((f) => f.style.backgroundImage !== '')).toEqual([true, false, false, false]);
+    expect(fotos.every((f) => f.getAttribute('aria-hidden') === 'true')).toBe(true);
+    const credito = document.querySelector('.portada .credito a');
+    expect(credito?.textContent).toContain('Pedro Lastra en Unsplash');
+    expect(credito?.getAttribute('href')).toBe(FOTOS_PORTADA[0].enlace);
+  });
+
   it('al cerrar sesión vuelve a la página de entrada, no al inicio de sesión', async () => {
     const { router } = await abrirApp('/', { como: 'admin@iglesia.local' });
     await esperarA(() => textoPagina().includes('Miembros activos'));
@@ -65,6 +79,58 @@ describe('página de entrada', () => {
     await esperarA(() => textoPagina().includes('Las iglesias de México y su patrimonio'));
     expect(router.url).toBe('/');
     expect(textoPagina()).not.toContain('Miembros activos');
+  });
+});
+
+describe('fotos de la portada', () => {
+  /** Crea la landing sola, con el reloj falso ya puesto para controlar el cambio de foto. */
+  function crearLanding() {
+    TestBed.configureTestingModule({ imports: [LandingPage], providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(LandingPage);
+    fixture.detectChanges();
+    const estado = () => {
+      fixture.detectChanges();
+      const fotos = [...fixture.nativeElement.querySelectorAll('.foto')] as HTMLElement[];
+      return {
+        visible: fotos.findIndex((f) => f.classList.contains('visible')),
+        cargadas: fotos.filter((f) => f.style.backgroundImage !== '').length,
+        credito: fixture.nativeElement.querySelector('.credito')?.textContent ?? '',
+      };
+    };
+    return estado;
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('cambia cada 7 s y pide cada foto antes de mostrarla', () => {
+    vi.useFakeTimers();
+    const estado = crearLanding();
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 1 });
+    // La segunda se pide a los 3.5 s, no antes
+    vi.advanceTimersByTime(3499);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 1 });
+    vi.advanceTimersByTime(1);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 2 });
+    // Cambia justo a los 7 s y entonces pide la tercera
+    vi.advanceTimersByTime(3499);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 2 });
+    vi.advanceTimersByTime(1);
+    expect(estado()).toMatchObject({ visible: 1, cargadas: 3 });
+    expect(estado().credito).toContain('Francisco Fuentes');
+    // Después de la cuarta vuelve a la primera
+    vi.advanceTimersByTime(7000 * 3);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 4 });
+  });
+
+  it('con «reducir movimiento» se queda la primera foto', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce') }));
+    const estado = crearLanding();
+    vi.advanceTimersByTime(30000);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 1 });
   });
 });
 
