@@ -41,7 +41,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 |---|---|---|---|---|
 | E3-01 | Llevar P-10–P-19 (con los supuestos de arriba) a la sesión con el docente y anotar las respuestas en la sección 8 | Sección 8 | Sesión con el docente | Pendiente |
 | E3-02 | Definir en `docs/modelo-datos.md`: `PadreIglesia`, `HorarioMisa`, `SustitucionMisa`, ampliar `Padre` y `MisaCelebrada`; `Servicio`, `HorarioServicio` y `Platica` | RN-20–33 | Santiago integra el modelo | Hecha (PR #34, en `main`): misas en E3-05; servicios y pláticas en E3-11 y E3-13 |
-| E3-03 | Diseñar las rutas (`docs/ecclesia/api-misas-servicios.md`) y agregarlas a `openapi.yaml` y a Postman | RF-30–52 | E3-02 | Hecha: [`api-misas-servicios.md`](api-misas-servicios.md), rutas en `openapi.yaml` (PR #34) y colección [`postman/misas-servicios.postman_collection.json`](postman/misas-servicios.postman_collection.json) (29 peticiones). Hecha por Nataly con permiso de Genaro |
+| E3-03 | Diseñar las rutas (`docs/ecclesia/api-misas-servicios.md`) y agregarlas a `openapi.yaml` y a Postman | RF-30–52 | E3-02 | Hecha: [`api-misas-servicios.md`](api-misas-servicios.md), rutas en `openapi.yaml` (PR #34) y colección [`postman/misas-servicios.postman_collection.json`](postman/misas-servicios.postman_collection.json) (32 peticiones con RF-83 y RF-84). Hecha por Nataly con permiso de Genaro |
 
 ### Fase 2 · Misas y padres (prioridad)
 
@@ -87,7 +87,7 @@ Cada supuesto se lleva a la sesión con el docente (E3-01). Si la respuesta es d
 |---|---|---|---|---|
 | E3-22 | Pláticas de un tipo en todas las iglesias de un municipio: `GET /public/platicas` y página `/platicas` | RF-83, supuesto P-29 | E3-14 | Hecha (en revisión) |
 | E3-23 | Semana de misas armada desde el horario: consulta, registro de las pendientes y panel en Celebradas | RF-84, supuesto P-29 | E3-09 | Hecha (en revisión) |
-| E3-24 | Colección de Postman de las rutas de Genaro, probada contra la API | `specs.md §12.6` | E3-06 a E3-23 | Hecha (en revisión): [`postman/misas-servicios.postman_collection.json`](postman/misas-servicios.postman_collection.json) (base de Nataly en el PR #37, con RF-83/84 y orden corregido); 34 peticiones contra la API local el 2026-11-25, todas con la respuesta esperada (bitácora 81) |
+| E3-24 | Colección de Postman de las rutas de Genaro, probada contra la API | `specs.md §12.6` | E3-06 a E3-23 | Hecha (en revisión): [`postman/misas-servicios.postman_collection.json`](postman/misas-servicios.postman_collection.json) (base de Nataly en el PR #37, con RF-83/84 y orden corregido); 32 peticiones probadas contra la API local el 2026-11-25: 33 de 33 ejecuciones con la respuesta esperada (bitácora 81) |
 
 ## Lo que necesito de otros
 
