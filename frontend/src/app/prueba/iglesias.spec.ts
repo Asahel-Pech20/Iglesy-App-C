@@ -38,34 +38,66 @@ async function elegir(etiqueta: string, opcion: string) {
 }
 
 describe('inicio de la Coordinación', () => {
+  /** Rutas de los mosaicos de accesos rápidos del inicio. */
+  const accesos = () =>
+    [...document.querySelectorAll('nav[aria-label="Accesos rápidos"] a')].map((a) =>
+      a.getAttribute('href'),
+    );
+
   it('no pide el panel de la iglesia: saluda y ofrece sus accesos', async () => {
     await abrirApp('/', { como: 'coordinacion@iglesia.local' });
-    await esperarA(() => textoPagina().includes('Ver y crear iglesias'));
+    await esperarA(() => accesos().includes('/iglesias'));
     expect(textoPagina()).toContain('Bienvenido');
-    expect(textoPagina()).toContain('Administrar usuarios');
+    expect(accesos()).toEqual(expect.arrayContaining(['/iglesias', '/usuarios', '/configuracion']));
+    // Solo lo que su rol puede abrir
+    expect(accesos()).not.toContain('/miembros');
     expect(textoPagina()).not.toContain('Miembros activos');
     expect(textoPagina()).not.toContain('No se pudo');
   });
 
-  it('el personal de una iglesia sigue viendo su panel', async () => {
+  it('el personal de una iglesia sigue viendo su panel, con sus propios accesos', async () => {
     await abrirApp('/', { como: 'pastor@iglesia.local' });
     await esperarA(() => textoPagina().includes('Miembros activos'));
-    expect(textoPagina()).not.toContain('Ver y crear iglesias');
+    expect(accesos()).toContain('/miembros');
+    expect(accesos()).not.toContain('/iglesias');
+    expect(accesos()).not.toContain('/usuarios');
   });
 });
 
 describe('iglesias', () => {
+  it('la Coordinación filtra por estado, municipio y tipo, como en la parte pública', async () => {
+    await abrirApp('/iglesias?estado=21&municipio=21114', { como: 'coordinacion@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Catedral de Puebla'));
+    expect(textoPagina()).toContain('Parroquia Comunidad de Fe');
+    // De otro municipio de Puebla y de otro estado: fuera
+    expect(textoPagina()).not.toContain('Capilla de la Tercera Orden');
+    expect(textoPagina()).not.toContain('Basílica de Santa María de Guadalupe');
+    TestBed.resetTestingModule();
+    document.body.innerHTML = '';
+    await abrirApp('/iglesias?estado=21&municipio=21114&tipo=CATEDRAL', {
+      como: 'coordinacion@iglesia.local',
+    });
+    await esperarA(() => textoPagina().includes('Catedral de Puebla'));
+    expect(textoPagina()).not.toContain('Parroquia Comunidad de Fe');
+  });
+
   it('la Coordinación ve la lista con el tipo de cada una', async () => {
     await abrirApp('/iglesias', { como: 'coordinacion@iglesia.local' });
     await esperarA(() => textoPagina().includes('Capilla del Valle'));
-    expect(textoPagina()).toContain('Parroquia Comunidad de Fe');
     expect(textoPagina()).toContain('Capilla');
     expect(textoPagina()).toContain('America/Mexico_City');
+    // Con las iglesias reales de la demo la lista tiene varias páginas: la parroquia se busca
+    TestBed.resetTestingModule();
+    document.body.innerHTML = '';
+    await abrirApp('/iglesias?q=Comunidad', { como: 'coordinacion@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Parroquia Comunidad de Fe'));
+    expect(textoPagina()).toContain('Parroquia');
   });
 
   it('crea una iglesia y aparece en la lista', async () => {
-    await abrirApp('/iglesias', { como: 'coordinacion@iglesia.local' });
-    await esperarA(() => textoPagina().includes('Capilla del Valle'));
+    // Filtrada por «Santuario» para que la nueva quede en la primera página
+    await abrirApp('/iglesias?q=Santuario', { como: 'coordinacion@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Santuario de la Virgen de los Remedios'));
     conTexto(/Nueva iglesia/)!.click();
     await esperarA(() => enDialogo('Guardar') !== undefined);
     escribir(document.querySelector('mat-dialog-container input'), 'Santuario del Cerro');

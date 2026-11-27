@@ -89,8 +89,9 @@ export class ConfiguracionService {
     });
   }
 
-  obtener() {
-    return this.api.objeto<ConfiguracionIglesia>('/configuracion');
+  /** La de la iglesia de la sesión; la Coordinación indica cuál (el backend exige ?iglesiaId). */
+  obtener(iglesiaId?: string) {
+    return this.api.objeto<ConfiguracionIglesia>('/configuracion', { iglesiaId });
   }
 
   actualizar(datos: EditarConfiguracion) {
@@ -121,8 +122,8 @@ export class ConfiguracionService {
       );
   }
 
-  listarHorarios() {
-    return this.api.objeto<HorarioReunion[]>('/configuracion/horarios');
+  listarHorarios(iglesiaId?: string) {
+    return this.api.objeto<HorarioReunion[]>('/configuracion/horarios', { iglesiaId });
   }
 
   guardarHorario(datos: GuardarHorario, id?: string) {

@@ -1,8 +1,10 @@
+import type { FotoApi } from '@/app/tipos/patrimonio';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Award, LucideAngularModule } from 'lucide-angular';
 import { ETIQUETAS_TIPO_IGLESIA, formatearIndice } from '@/app/core/formato';
 import type { LugarInegi, TipoIglesia } from '@/app/tipos/iglesias';
+import { deFotoApi, fotoDeIglesia, fueRecortada } from './fotos-iglesias';
 
 /** Nivel de la distinción (RN-06) para elegir colores: la más alta resalta más. */
 export type NivelDistincion = 'sobresaliente' | 'alto' | 'valor' | 'ninguna';
@@ -82,9 +84,11 @@ export class PildoraDistincion {
     }
     article {
       display: flex;
+      flex-wrap: wrap;
       gap: 12px;
       align-items: flex-start;
       height: 100%;
+      box-sizing: border-box;
       padding: 12px 14px;
       background: var(--superficie);
       border: 1px solid var(--marco);
@@ -154,9 +158,43 @@ export class PildoraDistincion {
       color: var(--texto-suave);
       font-size: 13px;
     }
+    /* Foto de la iglesia (solo las que tienen, ver fotos-iglesias.ts): ocupa todo el ancho arriba */
+    figure {
+      flex: 0 0 calc(100% + 28px);
+      margin: -12px -14px 0;
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 4px 4px 0 0;
+    }
+    figcaption {
+      padding: 4px 14px 0;
+      font-size: 11px;
+      color: var(--texto-suave);
+    }
+    figcaption a {
+      color: inherit;
+      text-decoration: underline;
+    }
   `,
   template: `
     <article>
+      @if (foto(); as f) {
+        <figure>
+          <img [src]="f.archivo" alt="" loading="lazy" width="1000" height="563" />
+          <figcaption>
+            Foto: <a [href]="f.enlace" target="_blank" rel="noopener noreferrer">{{ f.autor }}</a> ·
+            <a [href]="f.licenciaUrl" target="_blank" rel="noopener noreferrer">{{ f.licencia }}</a>
+            @if (recortada(f)) {
+              (recortada)
+            }
+          </figcaption>
+        </figure>
+      }
       @if (posicion()) {
         <span class="numero posicion" aria-label="Lugar en el ranking">{{ posicion() }}</span>
       }
@@ -191,6 +229,11 @@ export class TarjetaIglesia {
   protected readonly tipos = ETIQUETAS_TIPO_IGLESIA;
   protected readonly formato = formatearIndice;
   protected readonly nivel = computed(() => nivelDistincion(this.distincion()));
+  /** Foto de la iglesia, si la tiene (solo las iglesias reales de la demo). */
+  /** Foto que trae la API (iglesias reales); sin ella, la de los datos de prueba. */
+  readonly fotoApi = input<FotoApi | null | undefined>(null, { alias: 'foto' });
+  protected readonly foto = computed(() => deFotoApi(this.fotoApi()) ?? fotoDeIglesia(this.id()));
+  protected readonly recortada = fueRecortada;
   protected readonly lugar = computed(
     () =>
       [this.localidad()?.nombre ?? this.municipio()?.nombre, this.estado()?.nombre]

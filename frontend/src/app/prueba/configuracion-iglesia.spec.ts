@@ -12,6 +12,22 @@ afterEach(() => {
 });
 
 describe('configuración por iglesia (E1-06b)', () => {
+  it('la Coordinación elige la iglesia (no ve el error de ?iglesiaId) y consulta su configuración', async () => {
+    await abrirApp('/configuracion', { como: 'coordinacion@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Elige una iglesia'));
+    expect(textoPagina()).not.toContain('No se pudo cargar');
+    expect(textoPagina()).not.toContain('?iglesiaId');
+
+    TestBed.resetTestingModule();
+    document.body.innerHTML = '';
+    await abrirApp(`/configuracion?iglesiaId=${IGLESIA_MOCK}`, {
+      como: 'coordinacion@iglesia.local',
+    });
+    await esperarA(() => textoPagina().includes('Datos de la ficha'));
+    expect(textoPagina()).toContain(db.configuracion.nombre);
+    expect(textoPagina()).not.toContain('No se pudo cargar');
+  });
+
   it('nombre, dirección y contacto se muestran en solo lectura con enlace a la ficha', async () => {
     await abrirApp('/configuracion', { como: 'admin@iglesia.local' });
     await esperarA(() => textoPagina().includes('Datos de la ficha'));

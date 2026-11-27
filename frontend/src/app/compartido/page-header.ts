@@ -1,71 +1,105 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { AdornoColonial } from '@/app/compartido/adorno-colonial';
+import { FOTOS_IGLESIAS, type FotoIglesia } from '@/app/features/explorar/fotos-iglesias';
 
 /**
  * Encabezado estándar de toda página: título + acciones (AGENTS.md §4 Layout).
- * Las acciones van como contenido proyectado.
+ * Con el estilo de la landing: una banda redondeada con la foto de una iglesia, sombra oscura y el
+ * título en blanco. Las acciones van debajo, a la derecha, sobre el fondo normal (así los botones
+ * conservan su contraste).
  * @example <app-page-header titulo="Miembros"><button matButton="filled">Nuevo miembro</button></app-page-header>
  */
 @Component({
   selector: 'app-page-header',
-  imports: [AdornoColonial],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="encabezado">
-      <div class="textos">
-        <h1>{{ titulo() }}</h1>
-        <app-adorno-colonial />
-        @if (descripcion()) {
-          <p class="texto-suave">{{ descripcion() }}</p>
-        }
-      </div>
-      <div class="acciones"><ng-content /></div>
+    <div class="banda" [style.background-image]="'url(' + foto().archivo + ')'">
+      <h1>{{ titulo() }}</h1>
+      <span class="filete" aria-hidden="true"></span>
+      @if (descripcion()) {
+        <p>{{ descripcion() }}</p>
+      }
+      <p class="credito">
+        Foto:
+        <a [href]="foto().enlace" target="_blank" rel="noopener noreferrer">{{ foto().autor }}</a>
+        en Unsplash
+      </p>
     </div>
+    <div class="acciones"><ng-content /></div>
   `,
   styles: `
-    /* Estilo colonial: título centrado con el adorno de cruz, como las pantallas públicas */
-    .encabezado {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      justify-items: center;
-      gap: 12px;
+    :host {
+      display: block;
       margin-bottom: 24px;
     }
-    .textos {
-      min-width: 0;
-      text-align: center;
+    .banda {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      min-height: 140px;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 32px 24px 20px;
+      overflow: hidden;
+      border-radius: 16px;
+      color: var(--foto-texto);
+      background-color: var(--foto-sombra);
+      background-position: center;
+      background-size: cover;
+      box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
     }
-    /* Desde 768 px las acciones van a la derecha sin descentrar el título */
-    @media (min-width: 768px) {
-      .encabezado {
-        grid-template-columns: 1fr minmax(0, auto) 1fr;
-        align-items: start;
-      }
-      .textos {
-        grid-column: 2;
-      }
-      .acciones {
-        grid-column: 3;
-        justify-self: end;
-      }
+    /* Sombra pareja: texto blanco con contraste ≥ 4.5:1 sobre cualquier parte de la foto */
+    .banda::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: color-mix(in srgb, var(--foto-sombra) 72%, transparent);
     }
     h1 {
       margin: 0;
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 26px;
+      font-size: 30px;
       font-weight: 400;
-      color: var(--primario);
+      line-height: 1.15;
       overflow-wrap: anywhere;
     }
+    .filete {
+      width: 56px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--acento);
+    }
     p {
-      margin: 8px 0 0;
+      margin: 0;
+      max-width: 48rem;
+    }
+    .credito {
+      font-size: 11px;
+    }
+    .credito a {
+      color: inherit;
+    }
+    @media (min-width: 768px) {
+      .banda {
+        padding: 40px 32px 24px;
+      }
+      .credito {
+        position: absolute;
+        right: 12px;
+        bottom: 10px;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--foto-sombra) 80%, transparent);
+      }
     }
     .acciones {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-end;
       gap: 8px;
+      margin-top: 12px;
     }
     .acciones:empty {
       display: none;
@@ -75,4 +109,6 @@ import { AdornoColonial } from '@/app/compartido/adorno-colonial';
 export class PageHeader {
   readonly titulo = input.required<string>();
   readonly descripcion = input<string>();
+  /** Foto de fondo de la banda; por omisión, la de la iglesia barroca de la landing. */
+  readonly foto = input<FotoIglesia>(FOTOS_IGLESIAS[1]);
 }

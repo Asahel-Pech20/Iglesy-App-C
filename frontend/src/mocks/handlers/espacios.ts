@@ -131,6 +131,41 @@ function guardarVencimiento(s: SolicitudEspacioMock) {
   abierta.respondidaEn = abierta.venceEn;
 }
 
+/** Aceptar, rechazar o cancelar: la misma regla con folio y clave o desde la cuenta del cliente. */
+function responderSolicitud(s: SolicitudEspacioMock, accion: RespuestaSolicitud, instante: Date) {
+  if (iglesiaDe(s.iglesiaId)?.activa === false) {
+    return errorApi(
+      422,
+      'BUSINESS_RULE',
+      'Esta iglesia ya no recibe respuestas a sus solicitudes.',
+    );
+  }
+  // Cotización vencida: se guarda ese estado primero y después se responde 422
+  if (s.estado === 'COTIZADA' && estadoEfectivo(s, instante) === 'VENCIDA') {
+    guardarVencimiento(s);
+    return errorApi(
+      422,
+      'BUSINESS_RULE',
+      'La cotización venció. Haz una nueva solicitud si todavía te interesa.',
+    );
+  }
+  const permitido = accion === 'cancelar' ? ['RECIBIDA', 'COTIZADA'] : ['COTIZADA'];
+  if (!permitido.includes(s.estado)) {
+    return errorApi(
+      422,
+      'BUSINESS_RULE',
+      `No se puede ${accion} una solicitud en estado «${ETIQUETA_ESTADO[s.estado]}».`,
+    );
+  }
+  const abierta = sinRespuesta(s);
+  s.estado = accion === 'aceptar' ? 'ACEPTADA' : accion === 'rechazar' ? 'RECHAZADA' : 'CANCELADA';
+  if (accion !== 'cancelar' && abierta) {
+    abierta.respuesta = accion === 'aceptar' ? 'ACEPTADA' : 'RECHAZADA';
+    abierta.respondidaEn = ahora();
+  }
+  return HttpResponse.json({ data: aVistaPublica(s, instante) });
+}
+
 const MONTO_ERROR: DetalleError = {
   campo: 'monto',
   mensaje: 'Monto no válido (hasta 2 decimales).',
@@ -477,38 +512,33 @@ export const espaciosHandlers = [
       const instante = new Date();
       const s = verificarAcceso(String(params['folio']), clave, instante);
       if (s instanceof Response) return s;
-      if (iglesiaDe(s.iglesiaId)?.activa === false) {
-        return errorApi(
-          422,
-          'BUSINESS_RULE',
-          'Esta iglesia ya no recibe respuestas a sus solicitudes.',
-        );
-      }
-      // Cotización vencida: se guarda ese estado primero y después se responde 422
-      if (s.estado === 'COTIZADA' && estadoEfectivo(s, instante) === 'VENCIDA') {
-        guardarVencimiento(s);
-        return errorApi(
-          422,
-          'BUSINESS_RULE',
-          'La cotización venció. Haz una nueva solicitud si todavía te interesa.',
-        );
-      }
-      const permitido = accion === 'cancelar' ? ['RECIBIDA', 'COTIZADA'] : ['COTIZADA'];
-      if (!permitido.includes(s.estado)) {
-        return errorApi(
-          422,
-          'BUSINESS_RULE',
-          `No se puede ${accion} una solicitud en estado «${ETIQUETA_ESTADO[s.estado]}».`,
-        );
-      }
-      const abierta = sinRespuesta(s);
-      s.estado =
-        accion === 'aceptar' ? 'ACEPTADA' : accion === 'rechazar' ? 'RECHAZADA' : 'CANCELADA';
-      if (accion !== 'cancelar' && abierta) {
-        abierta.respuesta = accion === 'aceptar' ? 'ACEPTADA' : 'RECHAZADA';
-        abierta.respondidaEn = ahora();
-      }
-      return HttpResponse.json({ data: aVistaPublica(s, instante) });
+      return responderSolicitud(s, accion, instante);
+    }),
+  ),
+
+  // ───────── PROPUESTA: cuenta de cliente (solo mocks; specs.md §12.3) ─────────
+  // Sus solicitudes son las que hizo con el correo de su cuenta; no necesita folio ni clave
+  http.get(ruta('/mis-solicitudes'), ({ request }) => {
+    const usuario = autenticar(request, 'solicitudes:propias');
+    if (usuario instanceof Response) return usuario;
+    const instante = new Date();
+    const lista = db.solicitudesEspacio
+      .filter((x) => x.contactoCorreo === usuario.email)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((x) => aVistaPublica(x, instante));
+    return paginarMock(lista, new URL(request.url));
+  }),
+
+  ...(['aceptar', 'rechazar', 'cancelar'] as RespuestaSolicitud[]).map((accion) =>
+    http.post(ruta(`/mis-solicitudes/:folio/${accion}`), ({ request, params }) => {
+      const usuario = autenticar(request, 'solicitudes:propias');
+      if (usuario instanceof Response) return usuario;
+      const s = db.solicitudesEspacio.find(
+        (x) => x.folio === params['folio'] && x.contactoCorreo === usuario.email,
+      );
+      // De otra persona o inexistente: lo mismo, para no revelar folios ajenos
+      if (!s) return errorApi(404, 'NOT_FOUND', 'No encontramos esa solicitud en tu cuenta.');
+      return responderSolicitud(s, accion, new Date());
     }),
   ),
 ];

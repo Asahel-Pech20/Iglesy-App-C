@@ -32,6 +32,7 @@ const resumen = (i: Iglesia) => {
     estado: i.estado ?? null,
     municipio: i.municipio ?? null,
     localidad: i.localidad ?? null,
+    foto: i.foto ?? null,
     indice,
     distincion,
   };
@@ -145,6 +146,7 @@ export const explorarHandlers = [
         capacidad: i.capacidad ?? null,
         anioConstruccion: i.anioConstruccion ?? null,
         contacto: { telefono: i.telefono ?? null, correo: i.correo ?? null },
+        foto: i.foto ?? null,
         ...(i.latitud &&
           i.longitud && { coordenadas: { latitud: i.latitud, longitud: i.longitud } }),
         indice,

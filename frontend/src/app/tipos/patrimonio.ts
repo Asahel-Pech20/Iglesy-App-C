@@ -92,6 +92,15 @@ export interface VersionCriterios extends CriteriosIndice {
 
 // ───────── Consultas públicas ─────────
 
+/** Foto de una iglesia (por URL) con lo que su licencia pide mostrar; null si no tiene. */
+export interface FotoApi {
+  url: string;
+  autor: string | null;
+  licencia: string | null;
+  licenciaUrl: string | null;
+  enlace: string | null;
+}
+
 export interface IglesiaEnLista {
   id: string;
   nombre: string;
@@ -100,6 +109,7 @@ export interface IglesiaEnLista {
   capacidad: number | null;
   municipio: LugarInegi | null;
   localidad: LugarInegi | null;
+  foto?: FotoApi | null;
   indice: number;
   distincion: string | null;
 }
@@ -138,6 +148,7 @@ export interface FichaIglesia {
   anioConstruccion: number | null;
   contacto: { telefono: string | null; correo: string | null };
   coordenadas?: { latitud: string; longitud: string };
+  foto?: FotoApi | null;
   indice: number;
   distincion: string | null;
   anioCalculo: number;
@@ -158,6 +169,7 @@ export interface IglesiaReconocida {
   estado: LugarInegi | null;
   municipio: LugarInegi | null;
   localidad: LugarInegi | null;
+  foto?: FotoApi | null;
   indice: number;
   distincion: string | null;
 }

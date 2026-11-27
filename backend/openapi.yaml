@@ -227,6 +227,33 @@ components:
           { type: number, minimum: -90, maximum: 90, nullable: true, description: Va con longitud }
         longitud:
           { type: number, minimum: -180, maximum: 180, nullable: true, description: Va con latitud }
+        fotoUrl:
+          {
+            type: string,
+            format: uri,
+            nullable: true,
+            description: 'Foto por URL https (sin subir archivos)',
+          }
+        fotoAutor: { type: string, maxLength: 150, nullable: true }
+        fotoLicencia: { type: string, maxLength: 60, nullable: true, example: CC BY-SA 4.0 }
+        fotoLicenciaUrl: { type: string, format: uri, nullable: true }
+        fotoEnlace:
+          {
+            type: string,
+            format: uri,
+            nullable: true,
+            description: Página de la foto en su sitio de origen,
+          }
+    FotoIglesia:
+      type: object
+      nullable: true
+      description: Foto de la iglesia con lo que su licencia pide mostrar; null si no tiene
+      properties:
+        url: { type: string, format: uri }
+        autor: { type: string, nullable: true }
+        licencia: { type: string, nullable: true }
+        licenciaUrl: { type: string, nullable: true }
+        enlace: { type: string, nullable: true }
     LugarInegi:
       type: object
       nullable: true
@@ -318,6 +345,7 @@ components:
         estado: { $ref: '#/components/schemas/LugarInegi' }
         municipio: { $ref: '#/components/schemas/LugarInegi' }
         localidad: { $ref: '#/components/schemas/LugarInegi' }
+        foto: { $ref: '#/components/schemas/FotoIglesia' }
         indice: { type: number }
         distincion: { type: string, nullable: true }
     FichaIglesia:
@@ -331,6 +359,7 @@ components:
         anioConstruccion: { type: integer, nullable: true }
         contacto: { type: object }
         coordenadas: { type: object, description: Se omite si no se conocen }
+        foto: { $ref: '#/components/schemas/FotoIglesia' }
         indice: { type: number }
         distincion: { type: string, nullable: true }
         anioCalculo: { type: integer }
@@ -350,6 +379,7 @@ components:
         capacidad: { type: integer, nullable: true }
         municipio: { $ref: '#/components/schemas/LugarInegi' }
         localidad: { $ref: '#/components/schemas/LugarInegi' }
+        foto: { $ref: '#/components/schemas/FotoIglesia' }
         indice: { type: number, description: Índice patrimonial (RF-18) }
         distincion: { type: string, nullable: true }
     Iglesia:
@@ -372,6 +402,7 @@ components:
         longitud: { type: string, nullable: true, example: '-98.198200' }
         fechaCierre: { type: string, format: date, nullable: true }
         motivoCierre: { type: string, nullable: true }
+        foto: { $ref: '#/components/schemas/FotoIglesia' }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
     Meta:

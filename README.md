@@ -10,6 +10,12 @@ Aplicación web para la administración interna de una iglesia: usuarios con rol
 - Tareas por integrante → [docs/README.md](docs/README.md)
 - Arnés de IA (Claude Code) → [docs/arnes.md](docs/arnes.md)
 
+## En línea
+
+La web está publicada en Render: landing en https://principal-iglesy.onrender.com y aplicación en
+https://demo-iglesy.onrender.com. Direcciones, cuentas de prueba y cómo se despliega:
+[docs/despliegue-render.md](docs/despliegue-render.md).
+
 ## Requisitos
 
 > **¿Tu laptop puede con esto?** Ejecuta `node scripts/verificar-equipo.mjs` y lee [docs/requisitos.md](docs/requisitos.md): qué necesitas según tu parte, cuánto consume cada programa y opciones sin Docker (PostgreSQL directo o GitHub Codespaces). El frontend se puede trabajar sin base de datos.

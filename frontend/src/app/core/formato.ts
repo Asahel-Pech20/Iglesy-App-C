@@ -105,6 +105,7 @@ export const ETIQUETAS_ROL: Record<Rol, string> = {
   SECRETARIO: 'Secretario',
   TESORERO: 'Tesorero',
   COORDINADOR: 'Coordinador',
+  CLIENTE: 'Cliente',
 };
 
 // F3: eventos y anuncios

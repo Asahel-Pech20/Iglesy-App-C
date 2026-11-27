@@ -16,7 +16,9 @@ import type { Lugar } from '@/app/tipos/patrimonio';
 import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
+import { AvisoDemo, esIglesiaRealDeDemo } from './aviso-demo';
 import { TarjetaIglesia } from './tarjeta-iglesia';
+import { FOTOS_IGLESIAS } from './fotos-iglesias';
 
 /**
  * /templos — el visitante elige un estado y ve sus iglesias activas; acota por municipio,
@@ -39,29 +41,45 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     SelectorLugar,
     TarjetaIglesia,
     TituloColonial,
+    AvisoDemo,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     .pagina {
       display: grid;
-      gap: 16px;
+      gap: 24px;
       align-items: start;
     }
+    /* Filtros en una barra horizontal sobre los resultados: cada campo tiene al menos 220 px, así
+       que las opciones largas («Imagen (santo, virgen o cristo)») ya no se cortan */
     .filtros {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+      gap: 0 16px;
+      align-items: start;
+      padding: 16px 20px 4px;
       background: var(--superficie);
       border: 1px solid var(--marco);
-      border-radius: 4px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
     }
     .filtros h2 {
-      margin: 0 0 8px;
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 400;
       color: var(--primario);
+    }
+    .filtros h2::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--acento);
+      transform: rotate(45deg);
     }
     .filtros mat-form-field,
     .filtros app-campo-busqueda {
@@ -81,9 +99,6 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
       list-style: none;
     }
     @media (min-width: 768px) {
-      .pagina {
-        grid-template-columns: 200px minmax(0, 1fr);
-      }
       .lista {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -96,6 +111,7 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   `,
   template: `
     <app-titulo-colonial
+      [foto]="foto"
       texto="Iglesias de México"
       subtitulo="Elige un estado para ver sus iglesias y su valor patrimonial."
     />
@@ -172,6 +188,9 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
             descripcion="Quita algún filtro para ver más iglesias del estado."
           />
         } @else {
+          @if (hayReales()) {
+            <app-aviso-demo />
+          }
           <section class="lista" aria-label="Iglesias del estado">
             @for (i of iglesias(); track i.id) {
               <app-tarjeta-iglesia
@@ -182,6 +201,7 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
                 [localidad]="i.localidad"
                 [indice]="i.indice"
                 [distincion]="i.distincion"
+                [foto]="i.foto"
               />
             }
           </section>
@@ -195,6 +215,8 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   `,
 })
 export class TemplosPage {
+  /** Foto de la banda de portada del título. */
+  protected readonly foto = FOTOS_IGLESIAS[2];
   private readonly servicio = inject(ExplorarService);
 
   protected readonly iconos = { Church };
@@ -229,6 +251,10 @@ export class TemplosPage {
         : of(null),
   });
   protected readonly iglesias = computed(() => valorDe(this.consulta)?.data ?? []);
+  /** Si sale alguna iglesia real de la demo, se avisa que sus objetos e índice son ilustrativos. */
+  protected readonly hayReales = computed(() =>
+    this.iglesias().some((i) => esIglesiaRealDeDemo(i.id) || Boolean(i.foto)),
+  );
 
   protected lugar(l: Lugar) {
     this.filtros.cambiar({

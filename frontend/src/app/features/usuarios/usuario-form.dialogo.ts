@@ -121,7 +121,8 @@ export class UsuarioFormDialogo {
 
   protected readonly errorIglesia = signal('');
 
-  protected readonly roles = opcionesDe(ETIQUETAS_ROL);
+  // El cliente no es personal: su cuenta no se da de alta aquí
+  protected readonly roles = opcionesDe(ETIQUETAS_ROL).filter((r) => r.valor !== 'CLIENTE');
   protected readonly enviando = signal(false);
   protected readonly errorGeneral = signal<string | null>(null);
   protected readonly form = inject(NonNullableFormBuilder).group({

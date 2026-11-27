@@ -1,3 +1,4 @@
+import { AccesosRapidos } from '@/app/compartido/accesos-rapidos';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -41,6 +42,7 @@ function saludo(hora = new Date().getHours()) {
 @Component({
   selector: 'app-dashboard',
   imports: [
+    AccesosRapidos,
     NgTemplateOutlet,
     RouterLink,
     LucideAngularModule,

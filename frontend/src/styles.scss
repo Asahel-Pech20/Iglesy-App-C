@@ -27,6 +27,10 @@
   --marco: #e7d7b5;
   /* Fondo detrás de diálogos y menús laterales */
   --overlay: rgb(15 23 42 / 0.5);
+  /* Texto sobre foto (portada de la landing): siempre blanco sobre sombra oscura, también en modo
+     oscuro, porque la foto es la misma en los dos temas. No se redefinen en .dark */
+  --foto-texto: #ffffff;
+  --foto-sombra: #0f172a;
   color-scheme: light;
 }
 
@@ -406,4 +410,11 @@ form .mat-mdc-form-field-subscript-wrapper,
 /* Pestañas: etiqueta un poco espaciada; la pestaña activa se marca en dorado (--acento) */
 .mat-mdc-tab .mdc-tab__text-label {
   letter-spacing: 0.5px;
+}
+
+/* El marco público mide su ancho como contenedor: la portada de la landing lo usa para llegar
+   de orilla a orilla sin provocar desplazamiento horizontal (100vw incluiría la barra de scroll) */
+app-explorar-layout {
+  display: block;
+  container-type: inline-size;
 }

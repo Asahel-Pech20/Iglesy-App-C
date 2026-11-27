@@ -122,10 +122,14 @@ export const iglesiasHandlers = [
     const url = new URL(request.url);
     const q = url.searchParams.get('q')?.toLowerCase();
     const estado = url.searchParams.get('estado');
+    const municipio = url.searchParams.get('municipio');
+    const tipo = url.searchParams.get('tipo');
     const situacion = url.searchParams.get('situacion') ?? 'todas';
     const lista = db.iglesias
       .filter((i) => !q || i.nombre.toLowerCase().includes(q))
       .filter((i) => !estado || i.estado?.clave === estado)
+      .filter((i) => !municipio || i.municipio?.clave === municipio)
+      .filter((i) => !tipo || i.tipo === tipo)
       .filter((i) => situacion === 'todas' || i.activa === (situacion === 'activas'))
       .sort((a, b) => a.nombre.localeCompare(b.nombre));
     return paginarMock(lista, url);

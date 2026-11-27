@@ -99,6 +99,18 @@ export const usuariosIniciales = (): Usuario[] => [
     createdAt: fecha,
     updatedAt: fecha,
   },
+  {
+    // Cliente de la demo: sus solicitudes de espacio son las que llevan su correo
+    id: 'u-cliente',
+    nombre: 'Rosa May Tun',
+    email: 'cliente@iglesia.local',
+    rol: 'CLIENTE',
+    iglesiaId: null,
+    activo: true,
+    ultimoAcceso: null,
+    createdAt: fecha,
+    updatedAt: fecha,
+  },
 ];
 
 export const configuracionInicial = (): ConfiguracionIglesia => ({

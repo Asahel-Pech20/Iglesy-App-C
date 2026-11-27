@@ -12,10 +12,12 @@ import { EstadoError, EstadoVacio, Esqueleto } from '@/app/compartido/estados';
 import { PageHeader } from '@/app/compartido/page-header';
 import { Paginacion } from '@/app/compartido/paginacion';
 import { filtrosURL } from '@/app/core/filtros-url';
-import { ETIQUETAS_TIPO_IGLESIA, formatearFecha } from '@/app/core/formato';
+import { ETIQUETAS_TIPO_IGLESIA, formatearFecha, opcionesDe } from '@/app/core/formato';
 import { PuedeDirective } from '@/app/core/puede.directive';
 import { valorDe } from '@/app/core/recurso';
-import type { Iglesia, SituacionIglesia } from '@/app/tipos/iglesias';
+import type { Iglesia, SituacionIglesia, TipoIglesia } from '@/app/tipos/iglesias';
+import type { Lugar } from '@/app/tipos/patrimonio';
+import { SelectorLugar } from '@/app/features/explorar/selector-lugar';
 import { CerrarIglesiaDialogo } from './cerrar-iglesia.dialogo';
 import { IglesiaFormDialogo } from './iglesia-form.dialogo';
 import { IglesiasService } from './iglesias.service';
@@ -44,14 +46,24 @@ const ANCHO = { width: '40rem', maxWidth: 'calc(100vw - 32px)' };
     EstadoVacio,
     Esqueleto,
     Paginacion,
+    SelectorLugar,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
+    /* Barra horizontal de filtros, como la de las pantallas públicas: cada campo de al menos 220 px */
     .filtros {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+      gap: 0 16px;
+      align-items: start;
       margin-bottom: 12px;
+      padding: 16px 20px 4px;
+      background: var(--superficie);
+      border: 1px solid var(--marco);
+      border-radius: 16px;
+    }
+    .filtros > * {
+      width: 100%;
     }
     .acciones {
       display: flex;
@@ -79,6 +91,25 @@ const ANCHO = { width: '40rem', maxWidth: 'calc(100vw - 32px)' };
         [valor]="filtros.valores().q"
         (cambio)="filtros.cambiar({ q: $event })"
       />
+      <!-- Por estado y municipio (la ciudad), con el catálogo del INEGI -->
+      <app-selector-lugar
+        [conLocalidad]="false"
+        [estado]="filtros.valores().estado || undefined"
+        [municipio]="filtros.valores().municipio || undefined"
+        (cambio)="cambiarLugar($event)"
+      />
+      <mat-form-field>
+        <mat-label>Tipo</mat-label>
+        <mat-select
+          [value]="filtros.valores().tipo"
+          (selectionChange)="filtros.cambiar({ tipo: $event.value })"
+        >
+          <mat-option value="">Todos</mat-option>
+          @for (t of opcionesTipo; track t.valor) {
+            <mat-option [value]="t.valor">{{ t.etiqueta }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
       <mat-form-field>
         <mat-label>Situación</mat-label>
         <mat-select
@@ -183,18 +214,34 @@ export class IglesiasPage {
 
   protected readonly filtros = filtrosURL({
     q: '',
+    estado: '',
+    municipio: '',
+    tipo: '',
     situacion: 'todas' as SituacionIglesia,
     page: 1,
   });
+  protected readonly opcionesTipo = opcionesDe(ETIQUETAS_TIPO_IGLESIA);
   protected readonly iconos = { Church, Plus };
   protected readonly tipos = ETIQUETAS_TIPO_IGLESIA;
   protected readonly fecha = formatearFecha;
 
   protected readonly consulta = rxResource({
     params: () => ({ ...this.filtros.valores(), limit: 20, v: this.servicio.version() }),
-    stream: ({ params: { v: _v, ...query } }) => this.servicio.listar(query),
+    stream: ({ params: { v: _v, estado, municipio, tipo, ...query } }) =>
+      this.servicio.listar({
+        ...query,
+        // Vacíos no se mandan: el backend valida la clave del INEGI y el tipo
+        ...(estado ? { estado } : {}),
+        ...(municipio ? { municipio } : {}),
+        ...(tipo ? { tipo: tipo as TipoIglesia } : {}),
+      }),
   });
   protected readonly datos = computed(() => valorDe(this.consulta)?.data ?? []);
+
+  /** El selector de lugar cambió: al cambiar de estado se limpia el municipio. */
+  protected cambiarLugar(l: Lugar) {
+    this.filtros.cambiar({ estado: l.estado ?? '', municipio: l.municipio ?? '' });
+  }
 
   protected lugar(i: Iglesia) {
     return (

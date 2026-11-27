@@ -16,6 +16,10 @@ const esquemaEnv = z.object({
   SMTP_FROM: z.string().default('AppIglesia <no-reply@iglesia.local>'),
   UPLOAD_DIR: z.string().default('uploads'),
   API_PUBLIC_URL: z.url().optional(),
+  // Proxies delante de la API (Render: la reescritura del frontend y su balanceador). Con 0 no se
+  // confía en X-Forwarded-For; detrás de un proxy, sin esto, el límite de intentos del login sería
+  // uno solo para todos, porque todas las peticiones llegarían con la IP del proxy.
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
   // 12 según AGENTS.md §3; las pruebas usan un costo menor para ir rápido
   BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
 });
