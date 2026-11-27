@@ -11,6 +11,37 @@ subdominio (`<nombre>.onrender.com`), así que se usa guion:
 | `demo-iglesy` | `https://demo-iglesy.onrender.com` | **La aplicación**: consultas públicas, login y panel, conectada a la API |
 | *(opcional)* `iglesy-app-c` | `https://iglesy-app-c.onrender.com` | La app con datos de prueba (mocks), sin backend |
 
+## Acceso para el equipo (revisar cómo va la web)
+
+| Qué | Dirección |
+|---|---|
+| Landing | https://principal-iglesy.onrender.com |
+| Aplicación (login y panel) | https://demo-iglesy.onrender.com/login |
+| Documentación de la API (Swagger) | https://demo-iglesy.onrender.com/api/docs |
+| ¿La API está despierta? | https://api-iglesy.onrender.com/api/v1/public/estados?limit=1 (debe decir `"total":32`) |
+| App con datos de prueba (sin backend) | https://iglesy-app-c.onrender.com |
+
+Cuentas del seed (datos **ficticios**), todas con la contraseña de `SEED_PASSWORD` de
+`backend/.env.example` (`Iglesia123`):
+
+| Correo | Rol | Para revisar |
+|---|---|---|
+| `coordinacion@iglesia.local` | Coordinación Nacional | Iglesias de todo el país, usuarios, criterios del índice, padres |
+| `admin@iglesia.local` | Encargado de la iglesia inicial | Dashboard, patrimonio, misas, servicios, espacios y la gestión interna |
+| `pastor@iglesia.local` | Pastor | Miembros, ministerios, eventos, asistencia, anuncios |
+| `secretario@iglesia.local` | Secretario | Miembros, eventos, asistencia, anuncios (sin ingresos) |
+| `tesorero@iglesia.local` | Tesorero | Diezmo (capturar y corregir), donaciones, reporte de ingresos |
+| `coordinador@iglesia.local` | Coordinador de ministerio | Eventos, asistencia e integrantes de sus ministerios |
+| `tesorero2@` … `tesorero6@iglesia.local` | Tesoreros de otras 5 iglesias | Que cada iglesia solo ve su diezmo |
+
+En la app con datos de prueba están las mismas cuentas, más `cliente@iglesia.local` (propuesta de
+cuenta de cliente) y `admin2@iglesia.local` (encargado de otra iglesia).
+
+- La API se duerme tras ~15 min sin uso: abre primero el enlace de «¿La API está despierta?» y espera
+  a que salga el JSON (~1 min).
+- Es una base compartida: lo que alguien capture lo ven todos. No pongas datos reales de personas.
+- Si alguien cambia la contraseña de una cuenta desde «Mi cuenta», avísale al equipo.
+
 > La dirección sale del **nombre del servicio al crearlo** y no se cambia después. Si un nombre está
 > ocupado, usa otro y cambia esta guía (las reglas de reescritura apuntan a la API por su dirección).
 
