@@ -311,12 +311,17 @@ export class HorarioFormDialogo {
 })
 export class Horarios {
   readonly editable = input(false);
+  /** La Coordinación consulta los de la iglesia que eligió; el personal, los de la suya. */
+  readonly iglesiaId = input<string | null>(null);
   private readonly servicio = inject(ConfiguracionService);
   private readonly dialog = inject(MatDialog);
   private readonly confirmar = inject(ConfirmarService);
   private readonly notificar = inject(NotificarService);
 
-  protected readonly consulta = rxResource({ stream: () => this.servicio.listarHorarios() });
+  protected readonly consulta = rxResource({
+    params: () => this.iglesiaId(),
+    stream: ({ params }) => this.servicio.listarHorarios(params ?? undefined),
+  });
   protected readonly porDia = computed(() => {
     const horarios = valorDe(this.consulta) ?? [];
     return DIAS_SEMANA.map((dia, i) => ({

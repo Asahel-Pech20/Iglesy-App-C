@@ -28,8 +28,21 @@ async function aDataUrl(archivo: File) {
   return `data:${archivo.type};base64,${btoa(binario)}`;
 }
 
+/** Como el backend (E1-06b): la Coordinación debe indicar la iglesia con ?iglesiaId=. */
+function coordinacionSinIglesia(request: Request) {
+  if (!request.headers.get('Authorization')) return null;
+  const usuario = autenticar(request);
+  if (usuario instanceof Response) return null;
+  if (usuario.iglesiaId || new URL(request.url).searchParams.get('iglesiaId')) return null;
+  const mensaje = 'La Coordinación debe indicar la iglesia (?iglesiaId=).';
+  return errorApi(400, 'VALIDATION_ERROR', mensaje, [{ campo: 'iglesiaId', mensaje }]);
+}
+
 export const configuracionHandlers = [
-  http.get(ruta('/configuracion'), () => HttpResponse.json({ data: db.configuracion })),
+  http.get(ruta('/configuracion'), ({ request }) => {
+    const sinIglesia = coordinacionSinIglesia(request);
+    return sinIglesia ?? HttpResponse.json({ data: db.configuracion });
+  }),
 
   http.put(ruta('/configuracion'), async ({ request }) => {
     const usuario = autenticar(request, 'configuracion:editar');
@@ -60,9 +73,10 @@ export const configuracionHandlers = [
     return HttpResponse.json({ data: db.configuracion });
   }),
 
-  http.get(ruta('/configuracion/horarios'), () =>
-    HttpResponse.json({ data: ordenarHorarios(db.horarios) }),
-  ),
+  http.get(ruta('/configuracion/horarios'), ({ request }) => {
+    const sinIglesia = coordinacionSinIglesia(request);
+    return sinIglesia ?? HttpResponse.json({ data: ordenarHorarios(db.horarios) });
+  }),
 
   http.post(ruta('/configuracion/horarios'), async ({ request }) => {
     const usuario = autenticar(request, 'configuracion:editar');
