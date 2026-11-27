@@ -28,9 +28,14 @@ describe('build «landing» (sitio principal de Render)', () => {
     await router.navigateByUrl('/');
     expect(abrir).not.toHaveBeenCalled();
     await router.navigateByUrl('/templos?estado=21');
-    expect(abrir).toHaveBeenCalledWith('https://demo-iglesy.onrender.com/templos?estado=21');
+    expect(abrir).toHaveBeenCalledWith(
+      'https://demo-iglesy.onrender.com/templos?estado=21&tema=claro',
+    );
+    // El tema que se ve en la landing viaja a la aplicación (cada sitio guarda el suyo)
+    document.documentElement.classList.add('dark');
     await router.navigateByUrl('/login');
-    expect(abrir).toHaveBeenLastCalledWith('https://demo-iglesy.onrender.com/login');
+    document.documentElement.classList.remove('dark');
+    expect(abrir).toHaveBeenLastCalledWith('https://demo-iglesy.onrender.com/login?tema=oscuro');
     // La navegación interna no se queda en otra pantalla de este sitio
     await vi.waitFor(() => expect(router.url).toBe('/'));
   });

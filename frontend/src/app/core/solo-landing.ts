@@ -19,8 +19,16 @@ export function soloLanding(
     .subscribe((e) => {
       const ruta = e.url.split(/[?#]/)[0];
       if (ruta === '/' || ruta === '') return;
-      // Se cancela la navegación interna y se abre la aplicación en su sitio
+      // Se cancela la navegación interna y se abre la aplicación en su sitio, con el mismo tema
       void router.navigateByUrl('/', { replaceUrl: true });
-      abrir(base + e.url);
+      abrir(base + conTema(e.url));
     });
+}
+
+/** Agrega ?tema= con el que se ve ahora: cada sitio guarda el suyo (ver TemaService). */
+function conTema(url: string) {
+  const tema = document.documentElement.classList.contains('dark') ? 'oscuro' : 'claro';
+  const [ruta = '', hash] = url.split('#');
+  const separador = ruta.includes('?') ? '&' : '?';
+  return `${ruta}${separador}tema=${tema}${hash ? `#${hash}` : ''}`;
 }
