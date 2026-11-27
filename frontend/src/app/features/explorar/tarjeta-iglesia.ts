@@ -1,9 +1,10 @@
+import type { FotoApi } from '@/app/tipos/patrimonio';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Award, LucideAngularModule } from 'lucide-angular';
 import { ETIQUETAS_TIPO_IGLESIA, formatearIndice } from '@/app/core/formato';
 import type { LugarInegi, TipoIglesia } from '@/app/tipos/iglesias';
-import { fotoDeIglesia, fueRecortada } from './fotos-iglesias';
+import { deFotoApi, fotoDeIglesia, fueRecortada } from './fotos-iglesias';
 
 /** Nivel de la distinción (RN-06) para elegir colores: la más alta resalta más. */
 export type NivelDistincion = 'sobresaliente' | 'alto' | 'valor' | 'ninguna';
@@ -229,7 +230,9 @@ export class TarjetaIglesia {
   protected readonly formato = formatearIndice;
   protected readonly nivel = computed(() => nivelDistincion(this.distincion()));
   /** Foto de la iglesia, si la tiene (solo las iglesias reales de la demo). */
-  protected readonly foto = computed(() => fotoDeIglesia(this.id()));
+  /** Foto que trae la API (iglesias reales); sin ella, la de los datos de prueba. */
+  readonly fotoApi = input<FotoApi | null | undefined>(null, { alias: 'foto' });
+  protected readonly foto = computed(() => deFotoApi(this.fotoApi()) ?? fotoDeIglesia(this.id()));
   protected readonly recortada = fueRecortada;
   protected readonly lugar = computed(
     () =>

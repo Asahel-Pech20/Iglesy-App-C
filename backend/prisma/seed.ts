@@ -8,6 +8,7 @@ import { seedB2 } from './seed-b2';
 import { seedB3 } from './seed-b3';
 import { seedDonaciones } from './seed-b4';
 import { llenarDiezmo, prepararDiezmo } from './seed-diezmo';
+import { seedIglesiasReales } from './seed-iglesias-reales';
 import { seedPatrimonio } from './seed-patrimonio';
 import { seedEspacios } from './seed-espacios';
 import { seedMisasYServicios } from './seed-misas-servicios';
@@ -58,6 +59,8 @@ async function main() {
 
   // E2-09 (Nataly): catálogo del INEGI, 40 iglesias y 120 objetos del patrimonio (ficticios)
   const patrimonio = await seedPatrimonio();
+  // Iglesias reales de los 32 estados con foto de Wikimedia Commons (sus objetos, ilustrativos)
+  const reales = await seedIglesiasReales();
   // Ecclesia: tipos de espacio y 12 solicitudes (clave de demostración ABCDE-FGHJK)
   const espacios = await seedEspacios();
   // E3-19 (Genaro): 15 padres, horario semanal sin choques, servicios y pláticas en cada iglesia
@@ -69,7 +72,7 @@ async function main() {
   const b3 = await seedB3({ ministerios, iglesiaId: iglesia.id });
 
   console.warn(
-    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; misas y servicios en ${misas.iglesias} iglesias: ${misas.padres} padres, ${misas.misas} misas del horario, ${misas.servicios} servicios y ${misas.platicas} pláticas nuevos; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos.`,
+    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; misas y servicios en ${misas.iglesias} iglesias: ${misas.padres} padres, ${misas.misas} misas del horario, ${misas.servicios} servicios y ${misas.platicas} pláticas nuevos; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos; ${reales.iglesias} iglesias reales con foto en ${reales.estados} estados (${reales.creadas} nuevas).`,
   );
 }
 

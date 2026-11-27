@@ -15,6 +15,40 @@ import type {
 
 const LUGAR = { select: { clave: true, nombre: true } } as const;
 
+/** Columnas de la foto; en la respuesta van juntas en `foto` (o `foto: null` si no hay). */
+const FOTO = {
+  fotoUrl: true,
+  fotoAutor: true,
+  fotoLicencia: true,
+  fotoLicenciaUrl: true,
+  fotoEnlace: true,
+} as const satisfies Prisma.IglesiaSelect;
+
+interface ColumnasFoto {
+  fotoUrl: string | null;
+  fotoAutor: string | null;
+  fotoLicencia: string | null;
+  fotoLicenciaUrl: string | null;
+  fotoEnlace: string | null;
+}
+
+/** Saca las columnas de la foto y las devuelve como `foto: { url, autor, licencia, … }`. */
+export function conFoto<T extends ColumnasFoto>(fila: T) {
+  const { fotoUrl, fotoAutor, fotoLicencia, fotoLicenciaUrl, fotoEnlace, ...resto } = fila;
+  return {
+    ...resto,
+    foto: fotoUrl
+      ? {
+          url: fotoUrl,
+          autor: fotoAutor,
+          licencia: fotoLicencia,
+          licenciaUrl: fotoLicenciaUrl,
+          enlace: fotoEnlace,
+        }
+      : null,
+  };
+}
+
 const SELECT = {
   id: true,
   nombre: true,
@@ -30,6 +64,7 @@ const SELECT = {
   longitud: true,
   fechaCierre: true,
   motivoCierre: true,
+  ...FOTO,
   estado: LUGAR,
   municipio: LUGAR,
   localidad: LUGAR,
@@ -42,7 +77,7 @@ type FilaIglesia = Prisma.IglesiaGetPayload<{ select: typeof SELECT }>;
 /** Coordenadas como texto con 6 decimales y fecha de cierre como `yyyy-MM-dd` (specs.md §7.1). */
 function formatear(i: FilaIglesia) {
   return {
-    ...i,
+    ...conFoto(i),
     latitud: i.latitud?.toFixed(6) ?? null,
     longitud: i.longitud?.toFixed(6) ?? null,
     fechaCierre: i.fechaCierre?.toISOString().slice(0, 10) ?? null,
@@ -138,6 +173,7 @@ const SELECT_PUBLICO = {
   zonaHoraria: true,
   direccion: true,
   capacidad: true,
+  ...FOTO,
   municipio: LUGAR,
   localidad: LUGAR,
 } satisfies Prisma.IglesiaSelect;
@@ -171,7 +207,7 @@ export async function listarPublicas(query: QueryListaPublica) {
       take,
     }),
   ]);
-  return { datos, meta: crearMeta(total, page, limit) };
+  return { datos: datos.map(conFoto), meta: crearMeta(total, page, limit) };
 }
 
 /**
@@ -193,6 +229,7 @@ export async function obtenerPublica(id: string) {
       correo: true,
       latitud: true,
       longitud: true,
+      ...FOTO,
       estado: LUGAR,
       municipio: LUGAR,
       localidad: LUGAR,
@@ -213,6 +250,7 @@ export async function obtenerPublica(id: string) {
     capacidad: i.capacidad,
     anioConstruccion: i.anioConstruccion,
     contacto: { telefono: i.telefono, correo: i.correo },
+    foto: conFoto(i).foto,
     ...(i.latitud &&
       i.longitud && {
         coordenadas: { latitud: i.latitud.toFixed(6), longitud: i.longitud.toFixed(6) },
@@ -232,7 +270,7 @@ export interface LugarPublico {
  * Sin paginar: quien llama calcula el índice, ordena y pagina (plan-nataly.md, «Ranking»).
  */
 export async function activasDelLugar(lugar: LugarPublico) {
-  return prisma.iglesia.findMany({
+  const filas = await prisma.iglesia.findMany({
     where: {
       activa: true,
       ...(lugar.estado && { estadoClave: lugar.estado }),
@@ -247,9 +285,11 @@ export async function activasDelLugar(lugar: LugarPublico) {
       estado: LUGAR,
       municipio: LUGAR,
       localidad: LUGAR,
+      ...FOTO,
     },
     orderBy: [{ nombre: 'asc' }, { id: 'asc' }],
   });
+  return filas.map(conFoto);
 }
 
 export async function crear(datos: CrearIglesia) {

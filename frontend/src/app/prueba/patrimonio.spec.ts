@@ -275,6 +275,35 @@ describe('consultas públicas (E2-14)', () => {
     expect(document.querySelector('.cabecera .credito')?.textContent).toContain('CC BY-SA 4.0');
   });
 
+  it('la foto que manda la API (iglesias reales del backend) gana y lleva su autor y licencia', async () => {
+    // abrirApp reinicia la base de prueba: la foto se pone después y luego se navega
+    const { router } = await abrirApp('/');
+    const parroquia = db.iglesias.find((i) => i.id === 'ig-comunidad')!;
+    const url = 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Parroquia.jpg';
+    parroquia.foto = {
+      url,
+      autor: 'Ana Pérez',
+      licencia: 'CC BY-SA 4.0',
+      licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+      enlace: 'https://commons.wikimedia.org/wiki/File:Parroquia.jpg',
+    };
+    // En la tarjeta de la lista
+    await router.navigateByUrl('/templos?estado=21&tipo=PARROQUIA');
+    const tarjeta = () =>
+      [...document.querySelectorAll('app-tarjeta-iglesia')].find((t) =>
+        t.textContent?.includes('Parroquia Comunidad de Fe'),
+      );
+    await esperarA(() => tarjeta()?.querySelector('img') != null);
+    expect(tarjeta()!.querySelector('img')?.getAttribute('src')).toBe(url);
+    expect(tarjeta()!.querySelector('figcaption')?.textContent).toMatch(
+      /Ana Pérez\s*·\s*CC BY-SA 4\.0\s*\(recortada\)/,
+    );
+    // Y de fondo en la ficha, con su crédito
+    await router.navigateByUrl('/templos/ig-comunidad');
+    await esperarA(() => document.querySelector('.cabecera.con-foto') !== null);
+    expect(document.querySelector('.cabecera .credito')?.textContent).toContain('Ana Pérez');
+  });
+
   it('CA-08: imágenes de 300 años o más en Puebla, con los objetos que cumplen', async () => {
     await abrirApp('/busqueda-patrimonio?estado=21');
     await esperarA(() => textoPagina().includes('Templo de Santo Domingo'));

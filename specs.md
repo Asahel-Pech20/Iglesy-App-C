@@ -558,7 +558,7 @@ Borrador: la versión definitiva va en `docs/modelo-datos.md` con su diagrama en
 | Módulo | Entidades | Puntos clave del caso |
 |---|---|---|
 | `catalogos` | `Estado`, `Municipio`, `Localidad` | Claves oficiales del INEGI |
-| `iglesias` | `Iglesia` | Tipo, ubicación, capacidad, año, contacto, coordenadas; cierre sin borrar historia |
+| `iglesias` | `Iglesia` | Tipo, ubicación, capacidad, año, contacto, coordenadas; cierre sin borrar historia; foto por URL con autor y licencia (`fotoUrl`, `fotoAutor`, `fotoLicencia`, `fotoLicenciaUrl`, `fotoEnlace`; en las respuestas, `foto: { url, autor, licencia, licenciaUrl, enlace } \| null`) |
 | `patrimonio` | `ObjetoPatrimonial`, `CriterioIndice` | Siglo → mitad del siglo; INAH; estados vigente, perdido, prestado y baja; criterios ajustables |
 | `servicios` | `Servicio`, `Platica` y sus horarios | Costo, gratuito o donativo; requisitos, duración y cita; sesiones, cupo, lugar y quién imparte |
 | `misas` | `Padre`, `PadreIglesia`, `HorarioMisa`, `MisaCelebrada` | Tipo e idioma; sin choques de un padre; una hora por defecto; hora local; quién ofició, quién cambió y por qué |

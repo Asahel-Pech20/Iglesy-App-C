@@ -201,6 +201,7 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
                 [localidad]="i.localidad"
                 [indice]="i.indice"
                 [distincion]="i.distincion"
+                [foto]="i.foto"
               />
             }
           </section>
@@ -252,7 +253,7 @@ export class TemplosPage {
   protected readonly iglesias = computed(() => valorDe(this.consulta)?.data ?? []);
   /** Si sale alguna iglesia real de la demo, se avisa que sus objetos e índice son ilustrativos. */
   protected readonly hayReales = computed(() =>
-    this.iglesias().some((i) => esIglesiaRealDeDemo(i.id)),
+    this.iglesias().some((i) => esIglesiaRealDeDemo(i.id) || Boolean(i.foto)),
   );
 
   protected lugar(l: Lugar) {

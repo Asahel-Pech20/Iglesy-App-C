@@ -8,7 +8,7 @@ import type { EstadoObjeto, TipoIglesia, TipoObjeto } from '../src/generated/pri
 import { prisma } from '../src/lib/prisma';
 import * as catalogosService from '../src/modules/catalogos/catalogos.service';
 
-const ESTADOS: [string, string][] = [
+export const ESTADOS: [string, string][] = [
   ['01', 'Aguascalientes'],
   ['02', 'Baja California'],
   ['03', 'Baja California Sur'],
