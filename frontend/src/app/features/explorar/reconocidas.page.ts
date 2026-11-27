@@ -9,7 +9,9 @@ import type { Lugar } from '@/app/tipos/patrimonio';
 import { TituloColonial } from './explorar-layout';
 import { ExplorarService } from './explorar.service';
 import { SelectorLugar } from './selector-lugar';
+import { AvisoDemo, esIglesiaRealDeDemo } from './aviso-demo';
 import { TarjetaIglesia } from './tarjeta-iglesia';
+import { FOTOS_IGLESIAS } from './fotos-iglesias';
 
 /**
  * /reconocidas — iglesias más reconocidas del país, de un estado, municipio o ciudad, de mayor a
@@ -26,29 +28,45 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
     SelectorLugar,
     TarjetaIglesia,
     TituloColonial,
+    AvisoDemo,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
     .pagina {
       display: grid;
-      gap: 16px;
+      gap: 24px;
       align-items: start;
     }
+    /* Filtros en una barra horizontal sobre los resultados: cada campo tiene al menos 220 px, así
+       que las opciones largas («Imagen (santo, virgen o cristo)») ya no se cortan */
     .filtros {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+      gap: 0 16px;
+      align-items: start;
+      padding: 16px 20px 4px;
       background: var(--superficie);
       border: 1px solid var(--marco);
-      border-radius: 4px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
     }
     .filtros h2 {
-      margin: 0 0 8px;
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 400;
       color: var(--primario);
+    }
+    .filtros h2::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--acento);
+      transform: rotate(45deg);
     }
     .filtros mat-form-field,
     .filtros app-campo-busqueda {
@@ -68,9 +86,6 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
       list-style: none;
     }
     @media (min-width: 768px) {
-      .pagina {
-        grid-template-columns: 200px minmax(0, 1fr);
-      }
       .lista {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -83,6 +98,7 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   `,
   template: `
     <app-titulo-colonial
+      [foto]="foto"
       texto="Iglesias más reconocidas"
       subtitulo="Ordenadas por su índice de valor patrimonial, de mayor a menor."
     />
@@ -108,6 +124,9 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
             descripcion="Solo aparecen iglesias abiertas con objetos patrimoniales registrados."
           />
         } @else {
+          @if (hayReales()) {
+            <app-aviso-demo />
+          }
           <ol class="lista" aria-label="Ranking de iglesias">
             @for (i of ranking(); track i.id) {
               <li>
@@ -135,6 +154,8 @@ import { TarjetaIglesia } from './tarjeta-iglesia';
   `,
 })
 export class ReconocidasPage {
+  /** Foto de la banda de portada del título. */
+  protected readonly foto = FOTOS_IGLESIAS[1];
   private readonly servicio = inject(ExplorarService);
   protected readonly iconos = { Award };
   protected readonly filtros = filtrosURL({ estado: '', municipio: '', localidad: '', page: 1 });
@@ -157,6 +178,10 @@ export class ReconocidasPage {
       }),
   });
   protected readonly ranking = computed(() => valorDe(this.consulta)?.data ?? []);
+  /** Si sale alguna iglesia real de la demo, se avisa que sus objetos e índice son ilustrativos. */
+  protected readonly hayReales = computed(() =>
+    this.ranking().some((i) => esIglesiaRealDeDemo(i.id)),
+  );
 
   protected lugar(l: Lugar) {
     this.filtros.cambiar({

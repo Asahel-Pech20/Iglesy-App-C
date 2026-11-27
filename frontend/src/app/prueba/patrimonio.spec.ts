@@ -1,6 +1,8 @@
 // E2-14 y E2-15 (Nataly): consultas públicas, iglesias del panel, patrimonio y criterios del índice.
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, it } from 'vitest';
+import { provideRouter } from '@angular/router';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FOTOS_PORTADA, LandingPage } from '@/app/features/explorar/landing.page';
 import { db } from '@/mocks/db';
 import { indiceDeIglesia } from '@/mocks/handlers/patrimonio';
 import { abrirApp, escribir, esperarA, textoPagina } from './entorno';
@@ -49,11 +51,62 @@ describe('página de entrada', () => {
     expect(conTexto(/Acceso del personal/)?.getAttribute('href')).toBe('/login');
   });
 
+  it('debajo de la portada: la bienvenida lleva a las reconocidas y los mosaicos a las 3 consultas', async () => {
+    await abrirApp('/');
+    await esperarA(
+      () => document.querySelectorAll('ul[aria-label="Qué puedes hacer"] a').length === 3,
+    );
+    expect(document.querySelector('h1')?.textContent?.trim()).toBe('Ecclesia');
+    expect(conTexto(/Ver las más reconocidas/)?.getAttribute('href')).toBe('/reconocidas');
+    const mosaicos = [
+      ...document.querySelectorAll<HTMLAnchorElement>('ul[aria-label="Qué puedes hacer"] a'),
+    ].map((a) => [a.querySelector('h2')?.textContent?.trim(), a.getAttribute('href')]);
+    expect(mosaicos).toEqual([
+      ['Iglesias por estado', '/templos'],
+      ['Las más reconocidas', '/reconocidas'],
+      ['Búsqueda por patrimonio', '/busqueda-patrimonio'],
+    ]);
+    const foto = document.querySelector<HTMLImageElement>('.bienvenida img');
+    expect(foto?.getAttribute('alt')).toBe('Iglesia de Mamatla, Estado de México');
+  });
+
+  it('cada consulta abre con una banda de portada: su título sobre una foto con crédito', async () => {
+    const { router } = await abrirApp('/');
+    await esperarA(() => textoPagina().includes('Ecclesia'));
+    for (const [ruta, titulo] of [
+      ['/templos', 'Iglesias de México'],
+      ['/reconocidas', 'Iglesias más reconocidas'],
+      ['/busqueda-patrimonio', 'Búsqueda por patrimonio'],
+    ] as const) {
+      await router.navigateByUrl(ruta);
+      await esperarA(() => document.querySelector('.banda h1')?.textContent?.trim() === titulo);
+      const banda = document.querySelector<HTMLElement>('.banda')!;
+      expect(banda.style.backgroundImage).toContain('landing/');
+      expect(banda.querySelector('.credito a')?.textContent).toContain('en Unsplash');
+    }
+    // La ficha de una iglesia no lleva foto de portada: la foto no sería de esa iglesia
+    await router.navigateByUrl('/templos/ig-comunidad');
+    await esperarA(() => textoPagina().includes('Parroquia Comunidad de Fe'));
+    expect(document.querySelector('.banda')).toBeNull();
+  });
+
   it('con sesión, «/» sigue siendo el inicio del panel', async () => {
     const { router } = await abrirApp('/', { como: 'admin@iglesia.local' });
     await esperarA(() => textoPagina().includes('Miembros activos'));
     expect(router.url).toBe('/');
     expect(textoPagina()).not.toContain('Las iglesias de México y su patrimonio');
+  });
+
+  it('la portada tiene de fondo fotos de iglesias con su crédito; al entrar solo pide la primera', async () => {
+    await abrirApp('/');
+    await esperarA(() => document.querySelectorAll('.portada .foto').length === 4);
+    const fotos = [...document.querySelectorAll<HTMLElement>('.portada .foto')];
+    expect(fotos.map((f) => f.classList.contains('visible'))).toEqual([true, false, false, false]);
+    expect(fotos.map((f) => f.style.backgroundImage !== '')).toEqual([true, false, false, false]);
+    expect(fotos.every((f) => f.getAttribute('aria-hidden') === 'true')).toBe(true);
+    const credito = document.querySelector('.portada .credito a');
+    expect(credito?.textContent).toContain('Pedro Lastra en Unsplash');
+    expect(credito?.getAttribute('href')).toBe(FOTOS_PORTADA[0].enlace);
   });
 
   it('al cerrar sesión vuelve a la página de entrada, no al inicio de sesión', async () => {
@@ -65,6 +118,75 @@ describe('página de entrada', () => {
     await esperarA(() => textoPagina().includes('Las iglesias de México y su patrimonio'));
     expect(router.url).toBe('/');
     expect(textoPagina()).not.toContain('Miembros activos');
+  });
+});
+
+describe('fotos de la portada', () => {
+  /** Crea la landing sola, con el reloj falso ya puesto para controlar el cambio de foto. */
+  function crearLanding() {
+    TestBed.configureTestingModule({ imports: [LandingPage], providers: [provideRouter([])] });
+    const fixture = TestBed.createComponent(LandingPage);
+    fixture.detectChanges();
+    const estado = () => {
+      fixture.detectChanges();
+      const fotos = [...fixture.nativeElement.querySelectorAll('.foto')] as HTMLElement[];
+      return {
+        visible: fotos.findIndex((f) => f.classList.contains('visible')),
+        cargadas: fotos.filter((f) => f.style.backgroundImage !== '').length,
+        credito: fixture.nativeElement.querySelector('.credito')?.textContent ?? '',
+      };
+    };
+    return estado;
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('cambia cada 7 s y pide cada foto antes de mostrarla', () => {
+    vi.useFakeTimers();
+    const estado = crearLanding();
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 1 });
+    // La segunda se pide a los 3.5 s, no antes
+    vi.advanceTimersByTime(3499);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 1 });
+    vi.advanceTimersByTime(1);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 2 });
+    // Cambia justo a los 7 s y entonces pide la tercera
+    vi.advanceTimersByTime(3499);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 2 });
+    vi.advanceTimersByTime(1);
+    expect(estado()).toMatchObject({ visible: 1, cargadas: 3 });
+    expect(estado().credito).toContain('Francisco Fuentes');
+    // Después de la cuarta vuelve a la primera
+    vi.advanceTimersByTime(7000 * 3);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 4 });
+  });
+
+  it('con «reducir movimiento» se queda la primera foto', () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce') }));
+    const estado = crearLanding();
+    vi.advanceTimersByTime(30000);
+    expect(estado()).toMatchObject({ visible: 0, cargadas: 1 });
+    // Sin rotación no hay nada que pausar
+    expect(document.querySelector('.credito .pausa')).toBeNull();
+  });
+
+  it('el botón junto al crédito pausa y reanuda el cambio de fotos (WCAG 2.2.2)', () => {
+    vi.useFakeTimers();
+    const estado = crearLanding();
+    const boton = () => document.querySelector<HTMLButtonElement>('.credito .pausa')!;
+    estado();
+    expect(boton().getAttribute('aria-label')).toBe('Pausar el cambio de fotos');
+    boton().click();
+    vi.advanceTimersByTime(7000 * 3);
+    expect(estado().visible).toBe(0);
+    expect(boton().getAttribute('aria-label')).toBe('Reanudar el cambio de fotos');
+    boton().click();
+    vi.advanceTimersByTime(7000);
+    expect(estado().visible).toBe(1);
   });
 });
 
@@ -97,7 +219,8 @@ describe('consultas públicas (E2-14)', () => {
   });
 
   it('una búsqueda sin resultados muestra el estado vacío', async () => {
-    await abrirApp('/templos?estado=09');
+    // En la Ciudad de México hay catedral y basílica, pero ninguna capilla
+    await abrirApp('/templos?estado=09&tipo=CAPILLA');
     await esperarA(() => textoPagina().includes('No hay iglesias con esos filtros'));
   });
 
@@ -130,6 +253,28 @@ describe('consultas públicas (E2-14)', () => {
     expect(texto).not.toContain('Capilla de la Tercera Orden');
   });
 
+  it('las iglesias reales de la demo muestran su foto con autor y licencia; las demás, sin foto', async () => {
+    await abrirApp('/reconocidas');
+    await esperarA(() => textoPagina().includes('Catedral Metropolitana de la Ciudad de México'));
+    const tarjeta = (nombre: string) =>
+      [...document.querySelectorAll('app-tarjeta-iglesia')].find((t) =>
+        t.textContent?.includes(nombre),
+      )!;
+    const catedral = tarjeta('Catedral Metropolitana de la Ciudad de México');
+    expect(catedral.querySelector('img')?.getAttribute('src')).toBe('iglesias/catedral-cdmx.webp');
+    expect(catedral.querySelector('figcaption')?.textContent).toMatch(
+      /ProtoplasmaKid\s*·\s*CC BY-SA 4\.0\s*\(recortada\)/,
+    );
+    // La parroquia de la demo es ficticia: no lleva foto
+    expect(tarjeta('Parroquia Comunidad de Fe').querySelector('figure')).toBeNull();
+
+    TestBed.resetTestingModule();
+    document.body.innerHTML = '';
+    await abrirApp('/templos/ig-santa-prisca');
+    await esperarA(() => document.querySelector('.cabecera.con-foto') !== null);
+    expect(document.querySelector('.cabecera .credito')?.textContent).toContain('CC BY-SA 4.0');
+  });
+
   it('CA-08: imágenes de 300 años o más en Puebla, con los objetos que cumplen', async () => {
     await abrirApp('/busqueda-patrimonio?estado=21');
     await esperarA(() => textoPagina().includes('Templo de Santo Domingo'));
@@ -137,11 +282,48 @@ describe('consultas públicas (E2-14)', () => {
     expect(textoPagina()).not.toContain('Catedral de San Ildefonso');
     expect(textoPagina()).not.toContain('Templo de San Roque');
   });
+
+  it('los objetos de las iglesias reales de la demo llevan el aviso de que son ilustrativos', async () => {
+    const aviso =
+      'Datos de demostración: los objetos y el índice son ilustrativos, no es un inventario oficial.';
+    const abrir = async (url: string, espera: string) => {
+      TestBed.resetTestingModule();
+      document.body.innerHTML = '';
+      await abrirApp(url);
+      await esperarA(() => textoPagina().includes(espera));
+    };
+    // Ficha de una iglesia real: el aviso, junto a sus objetos
+    await abrir('/templos/ig-santa-prisca', 'Templo de Santa Prisca');
+    await esperarA(() => document.querySelector('ul.objetos') !== null);
+    expect(
+      document.querySelector('[aria-labelledby="titulo-patrimonio"] app-aviso-demo')?.textContent,
+    ).toContain(aviso);
+    // La parroquia de la demo es ficticia: sin aviso
+    await abrir('/templos/ig-comunidad', 'Imagen de San Miguel Arcángel');
+    expect(textoPagina()).not.toContain(aviso);
+    // Búsqueda con una iglesia real entre los resultados: el aviso
+    await abrir('/busqueda-patrimonio?estado=21', 'Templo de Santo Domingo');
+    expect(textoPagina()).toContain(aviso);
+    // Búsqueda que solo encuentra la parroquia ficticia (el único piano): sin aviso
+    await abrir(
+      '/busqueda-patrimonio?estado=21&tipoObjeto=PIANO&antiguedadMin=50',
+      'Piano vertical',
+    );
+    expect(textoPagina()).not.toContain(aviso);
+    // Listas: con iglesias reales, el aviso; con solo la parroquia ficticia, sin aviso
+    await abrir('/templos?estado=21', 'Templo de Santo Domingo');
+    expect(textoPagina()).toContain(aviso);
+    await abrir('/reconocidas?estado=21', 'Templo de Santo Domingo');
+    expect(textoPagina()).toContain(aviso);
+    await abrir('/templos?estado=21&tipo=PARROQUIA', 'Parroquia Comunidad de Fe');
+    expect(textoPagina()).not.toContain(aviso);
+  });
 });
 
 describe('iglesias en el panel (E2-15)', () => {
   it('la Coordinación ve ubicación y situación, incluidas las cerradas (RF-12)', async () => {
-    await abrirApp('/iglesias', { como: 'coordinacion@iglesia.local' });
+    // La lista tiene varias páginas con las iglesias reales de la demo: se busca la cerrada
+    await abrirApp('/iglesias?q=San Roque', { como: 'coordinacion@iglesia.local' });
     await esperarA(() => textoPagina().includes('Templo de San Roque'));
     expect(textoPagina()).toContain('Heroica Puebla de Zaragoza, Puebla');
     expect(textoPagina()).toContain('Cerrada');

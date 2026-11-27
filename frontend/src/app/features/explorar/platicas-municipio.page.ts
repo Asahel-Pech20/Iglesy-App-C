@@ -14,6 +14,7 @@ import { ServiciosService } from '@/app/features/servicios/servicios.service';
 import type { Lugar } from '@/app/tipos/patrimonio';
 import type { PlaticaPublica, TipoPlatica } from '@/app/tipos/servicios';
 import { TituloColonial } from './explorar-layout';
+import { FOTOS_IGLESIAS } from './fotos-iglesias';
 import { SelectorLugar } from './selector-lugar';
 
 /**
@@ -38,6 +39,7 @@ import { SelectorLugar } from './selector-lugar';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-titulo-colonial
+      [foto]="foto"
       texto="Pláticas en tu municipio"
       subtitulo="Elige el tipo de plática y el municipio para ver en qué iglesias y cuándo se imparte."
     />
@@ -165,6 +167,8 @@ import { SelectorLugar } from './selector-lugar';
   `,
 })
 export class PlaticasMunicipioPage {
+  /** Foto de la banda de portada, como las demás consultas públicas. */
+  protected readonly foto = FOTOS_IGLESIAS[3];
   private readonly servicio = inject(ServiciosService);
 
   protected readonly tipos = opcionesDe(ETIQUETAS_TIPO_PLATICA);

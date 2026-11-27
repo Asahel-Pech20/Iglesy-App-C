@@ -58,14 +58,20 @@ describe('iglesias', () => {
   it('la Coordinación ve la lista con el tipo de cada una', async () => {
     await abrirApp('/iglesias', { como: 'coordinacion@iglesia.local' });
     await esperarA(() => textoPagina().includes('Capilla del Valle'));
-    expect(textoPagina()).toContain('Parroquia Comunidad de Fe');
     expect(textoPagina()).toContain('Capilla');
     expect(textoPagina()).toContain('America/Mexico_City');
+    // Con las iglesias reales de la demo la lista tiene varias páginas: la parroquia se busca
+    TestBed.resetTestingModule();
+    document.body.innerHTML = '';
+    await abrirApp('/iglesias?q=Comunidad', { como: 'coordinacion@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Parroquia Comunidad de Fe'));
+    expect(textoPagina()).toContain('Parroquia');
   });
 
   it('crea una iglesia y aparece en la lista', async () => {
-    await abrirApp('/iglesias', { como: 'coordinacion@iglesia.local' });
-    await esperarA(() => textoPagina().includes('Capilla del Valle'));
+    // Filtrada por «Santuario» para que la nueva quede en la primera página
+    await abrirApp('/iglesias?q=Santuario', { como: 'coordinacion@iglesia.local' });
+    await esperarA(() => textoPagina().includes('Santuario de la Virgen de los Remedios'));
     conTexto(/Nueva iglesia/)!.click();
     await esperarA(() => enDialogo('Guardar') !== undefined);
     escribir(document.querySelector('mat-dialog-container input'), 'Santuario del Cerro');
