@@ -13,6 +13,7 @@ import {
   esquemaCrearServicio,
   esquemaIglesia,
   esquemaPlaticaDeIglesia,
+  esquemaPlaticasDelMunicipio,
   esquemaPlaticasPublicas,
   esquemaServicioDeIglesia,
 } from './servicios.schemas';
@@ -98,4 +99,11 @@ serviciosPublicoRouter.get(
   '/iglesias/:iglesiaId/platicas',
   validar({ params: esquemaIglesia, query: esquemaPlaticasPublicas }),
   c.platicasPublicas,
+);
+
+// RF-83 (deseable, supuesto P-29): ?tipo=PREBAUTISMAL&municipio=31050
+serviciosPublicoRouter.get(
+  '/platicas',
+  validar({ query: esquemaPlaticasDelMunicipio }),
+  c.platicasDelMunicipio,
 );

@@ -12,6 +12,7 @@ import {
   type CrearPlatica,
   type CrearServicio,
   type Horario,
+  type QueryPlaticasDelMunicipio,
   type QueryPlaticasPublicas,
 } from './servicios.schemas';
 
@@ -248,11 +249,48 @@ export async function platicasPublicas(iglesiaId: string, query: QueryPlaticasPu
     orderBy: [{ tipo: 'asc' }, { createdAt: 'asc' }],
     select: SELECT_PLATICA,
   });
-  return platicas.map(({ id: _id, padre: _padre, ...p }) => ({ ...p, costo: p.costo.toFixed(2) }));
+  return platicas.map(aPlaticaPublica);
+}
+
+// Forma pública: sin id ni padre (P-19) y con el costo como texto
+function aPlaticaPublica({
+  id: _id,
+  padre: _padre,
+  ...p
+}: Prisma.PlaticaGetPayload<{ select: typeof SELECT_PLATICA }>) {
+  return { ...p, costo: p.costo.toFixed(2) };
 }
 
 /** Ruta pública de pláticas: la iglesia debe existir y estar abierta (si no, 404). */
 export async function platicasDeIglesiaPublica(iglesiaId: string, query: QueryPlaticasPublicas) {
   await iglesiasService.obtenerPublica(iglesiaId);
   return platicasPublicas(iglesiaId, query);
+}
+
+/**
+ * RF-83 (deseable): las pláticas de un tipo en todas las iglesias abiertas de un municipio, con su
+ * iglesia, días y hora. Supuesto P-29: se muestran todas, agrupadas por iglesia en orden alfabético.
+ */
+export async function platicasDelMunicipio(query: QueryPlaticasDelMunicipio) {
+  const iglesias = await iglesiasService.activasDelLugar({ municipio: query.municipio });
+  if (iglesias.length === 0) return [];
+  // Una sola consulta para todas las iglesias del municipio (sugerencia de Nataly en el #40)
+  const platicas = await prisma.platica.findMany({
+    where: { iglesiaId: { in: iglesias.map((i) => i.id) }, activo: true, tipo: query.tipo },
+    orderBy: [{ tipo: 'asc' }, { createdAt: 'asc' }],
+    select: { ...SELECT_PLATICA, iglesiaId: true },
+  });
+  return iglesias.flatMap((iglesia) => {
+    const deEsta = platicas
+      .filter((p) => p.iglesiaId === iglesia.id)
+      .map(({ iglesiaId: _i, ...p }) => aPlaticaPublica(p));
+    return deEsta.length > 0
+      ? [
+          {
+            iglesia: { id: iglesia.id, nombre: iglesia.nombre, tipo: iglesia.tipo },
+            platicas: deEsta,
+          },
+        ]
+      : [];
+  });
 }

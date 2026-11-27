@@ -31,6 +31,8 @@ const PUBLICAS = new Set([
   'GET /public/iglesias/:iglesiaId/espacios',
   // E3-14 (Genaro): «¿cuándo son las pláticas de bautizo?» sin cuenta (RF-39, RN-33)
   'GET /public/iglesias/:iglesiaId/platicas',
+  // RF-83 (Genaro): pláticas de un tipo en todas las iglesias de un municipio
+  'GET /public/platicas',
   'POST /public/iglesias/:iglesiaId/solicitudes-espacio',
   'POST /public/solicitudes-espacio/:folio/consulta',
   'POST /public/solicitudes-espacio/:folio/aceptar',

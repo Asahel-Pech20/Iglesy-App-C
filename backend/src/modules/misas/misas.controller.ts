@@ -13,6 +13,7 @@ import type {
   QueryListarMisas,
 } from './misas.schemas';
 import * as service from './misas.service';
+import * as semana from './semana.service';
 import * as padres from './padres.service';
 
 type Iglesia = { iglesiaId: string };
@@ -95,6 +96,20 @@ export const actualizarMisaHorario: RequestHandler<HorarioDeIglesia> = async (re
 export const quitarMisaHorario: RequestHandler<HorarioDeIglesia> = async (req, res) => {
   await horario.quitarMisaHorario(req.params.iglesiaId, req.params.horarioId);
   res.status(204).end();
+};
+
+// ───────────── Semana armada desde el horario (RF-84) ─────────────
+
+export const semanaDeMisas: RequestHandler<Iglesia> = async (req, res) => {
+  res.json(
+    ok(await semana.semanaDeMisas(req.params.iglesiaId, req.query as unknown as QueryAgenda)),
+  );
+};
+
+export const armarSemana: RequestHandler<Iglesia> = async (req, res) => {
+  res.json(
+    ok(await semana.armarSemana(req.params.iglesiaId, req.body as QueryAgenda, usuarioDe(req).id)),
+  );
 };
 
 // ───────────── Misas celebradas (versión mínima del diezmo) ─────────────
