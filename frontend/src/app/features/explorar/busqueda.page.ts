@@ -186,6 +186,7 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
                 [localidad]="r.localidad"
                 [indice]="r.indice"
                 [distincion]="r.distincion"
+                [foto]="r.foto"
               >
                 <ul aria-label="Objetos que cumplen">
                   @for (o of r.objetos; track o.id) {
@@ -246,7 +247,7 @@ export class BusquedaPage {
   protected readonly resultados = computed(() => valorDe(this.consulta)?.data ?? []);
   /** Si sale alguna iglesia real de la demo, se avisa que sus objetos son ilustrativos. */
   protected readonly hayReales = computed(() =>
-    this.resultados().some((r) => esIglesiaRealDeDemo(r.id)),
+    this.resultados().some((r) => esIglesiaRealDeDemo(r.id) || Boolean(r.foto)),
   );
 
   protected lugar(l: Lugar) {

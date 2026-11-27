@@ -1,3 +1,4 @@
+import type { FotoApi } from '@/app/tipos/patrimonio';
 /**
  * Fotos de iglesias de México para las portadas públicas (`public/landing/`). Licencia gratuita de
  * Unsplash: no exige crédito, pero se muestra en cada portada con el enlace a la foto.
@@ -352,5 +353,20 @@ export const FOTOS_POR_IGLESIA: Readonly<Record<string, FotoDeIglesia>> = {
  * comprimidas, así que su crédito lo dice.
  */
 export const fueRecortada = (foto: FotoDeIglesia): boolean => foto.licencia.startsWith('CC BY');
+
+/**
+ * Foto que manda la API (iglesias reales del seed, Wikimedia Commons) en la forma que usan la tarjeta
+ * y la ficha. Gana sobre la de los datos de prueba.
+ */
+export function deFotoApi(foto: FotoApi | null | undefined): FotoDeIglesia | null {
+  if (!foto) return null;
+  return {
+    archivo: foto.url,
+    autor: foto.autor || 'Autor en Wikimedia Commons',
+    licencia: foto.licencia || 'Ver licencia',
+    licenciaUrl: foto.licenciaUrl || foto.enlace || foto.url,
+    enlace: foto.enlace || foto.url,
+  };
+}
 
 export const fotoDeIglesia = (id: string): FotoDeIglesia | null => FOTOS_POR_IGLESIA[id] ?? null;

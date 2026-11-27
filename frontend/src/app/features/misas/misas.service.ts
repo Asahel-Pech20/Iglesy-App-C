@@ -9,6 +9,8 @@ import type {
   HorarioMisaEntrada,
   MisaDeHorarioEntrada,
   PadreNacional,
+  ResultadoArmarSemana,
+  SemanaMisas,
 } from '@/app/tipos/misas';
 
 /**
@@ -93,6 +95,17 @@ export class MisasService {
   // ───────── Misas celebradas (E3-09) ─────────
   listarCelebradas(query: QueryMisas) {
     return this.api.lista<MisaCelebrada>(this.ruta('/misas-celebradas'), { ...query });
+  }
+
+  // ───────── Semana armada desde el horario (RF-84) ─────────
+  semana(semana?: string) {
+    return this.api.objeto<SemanaMisas>(this.ruta('/semana-misas'), { semana });
+  }
+
+  armarSemana(semana: string) {
+    return this.api
+      .post<ResultadoArmarSemana>(this.ruta('/misas-celebradas/semana'), { semana })
+      .pipe(tap(this.cambio));
   }
 
   registrarDesdeHorario(datos: MisaDeHorarioEntrada) {

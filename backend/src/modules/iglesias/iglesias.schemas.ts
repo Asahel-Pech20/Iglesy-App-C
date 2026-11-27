@@ -36,6 +36,12 @@ const telefono = z
   .transform((v) => v.replace(/[\s-]/g, ''))
   .pipe(z.string().regex(/^\+?\d{7,15}$/, 'El teléfono debe tener de 7 a 15 dígitos.'));
 const correo = z.string().trim().toLowerCase().pipe(z.email('Correo no válido.'));
+// Solo https: la foto se muestra en una página https y un enlace http daría contenido mixto
+const urlHttps = z
+  .string()
+  .trim()
+  .max(500, 'Máximo 500 caracteres.')
+  .pipe(z.url({ protocol: /^https$/, error: 'Usa una dirección https:// válida.' }));
 
 // Coordenadas: se reciben como número o texto y se guardan con 6 decimales (RF-07)
 const coordenada = (limite: number, nombre: string) =>
@@ -72,6 +78,12 @@ const camposDatos = {
   correo: opcional(correo),
   latitud: opcional(coordenada(90, 'Latitud')),
   longitud: opcional(coordenada(180, 'Longitud')),
+  // Foto por URL (sin subir archivos) y lo que su licencia pide mostrar
+  fotoUrl: opcional(urlHttps),
+  fotoAutor: opcional(texto(150)),
+  fotoLicencia: opcional(texto(60)),
+  fotoLicenciaUrl: opcional(urlHttps),
+  fotoEnlace: opcional(urlHttps),
 };
 
 const camposBase = {

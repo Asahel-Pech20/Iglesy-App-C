@@ -290,6 +290,46 @@ describe('GET y PATCH /iglesias/:iglesiaId (RF-08)', () => {
   });
 });
 
+describe('foto de la iglesia por URL (con su autor y licencia)', () => {
+  const FOTO = {
+    fotoUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Catedral.jpg',
+    fotoAutor: 'Ana Pérez',
+    fotoLicencia: 'CC BY-SA 4.0',
+    fotoLicenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0',
+    fotoEnlace: 'https://commons.wikimedia.org/wiki/File:Catedral.jpg',
+  };
+
+  it('el administrador guarda la foto; la ficha pública la muestra en `foto`', async () => {
+    const iglesia = await crearIglesia({ nombre: 'Templo con foto' });
+    const { auth } = await loginComo('ADMIN_IGLESIA', { iglesiaId: iglesia.id });
+    const res = await enviar('patch', `/iglesias/${iglesia.id}`, auth, FOTO);
+    expect(res.status).toBe(200);
+    expect(res.body.data.foto).toEqual({
+      url: FOTO.fotoUrl,
+      autor: 'Ana Pérez',
+      licencia: 'CC BY-SA 4.0',
+      licenciaUrl: FOTO.fotoLicenciaUrl,
+      enlace: FOTO.fotoEnlace,
+    });
+    // Las columnas sueltas no salen en la respuesta
+    expect(res.body.data).not.toHaveProperty('fotoUrl');
+
+    const publica = await request(app).get(`/api/v1/public/iglesias/${iglesia.id}`);
+    expect(publica.body.data.foto).toMatchObject({ url: FOTO.fotoUrl, autor: 'Ana Pérez' });
+  });
+
+  it('rechaza una foto que no sea https (400) y sin foto responde `foto: null`', async () => {
+    const iglesia = await crearIglesia();
+    const { auth } = await loginComo('ADMIN_IGLESIA', { iglesiaId: iglesia.id });
+    const mala = await enviar('patch', `/iglesias/${iglesia.id}`, auth, {
+      fotoUrl: 'http://ejemplo.com/foto.jpg',
+    });
+    expect(mala.status).toBe(400);
+    const leida = await api(auth).get(`/iglesias/${iglesia.id}`);
+    expect(leida.body.data.foto).toBeNull();
+  });
+});
+
 describe('POST /iglesias/:iglesiaId/cierre (RF-11, RN-07)', () => {
   it('la Coordinación la cierra con fecha y motivo sin borrar nada', async () => {
     const iglesia = await crearIglesia();
@@ -492,6 +532,8 @@ describe('GET /public/iglesias?estado= (E2-07)', () => {
       capacidad: 400,
       municipio: { clave: '21114', nombre: 'Puebla' },
       localidad: { clave: '211140001', nombre: 'Heroica Puebla de Zaragoza' },
+      // Sin foto registrada
+      foto: null,
       // RF-18: la distinción va junto a cada iglesia (sin objetos: índice 0)
       indice: 0,
       distincion: null,

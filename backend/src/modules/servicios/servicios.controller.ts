@@ -5,6 +5,7 @@ import type {
   ActualizarServicio,
   CrearPlatica,
   CrearServicio,
+  QueryPlaticasDelMunicipio,
   QueryPlaticasPublicas,
 } from './servicios.schemas';
 import * as service from './servicios.service';
@@ -81,5 +82,12 @@ export const platicasPublicas: RequestHandler<Iglesia> = async (req, res) => {
         req.query as unknown as QueryPlaticasPublicas,
       ),
     ),
+  );
+};
+
+// RF-83: pláticas de un tipo en todas las iglesias de un municipio
+export const platicasDelMunicipio: RequestHandler = async (req, res) => {
+  res.json(
+    ok(await service.platicasDelMunicipio(req.query as unknown as QueryPlaticasDelMunicipio)),
   );
 };

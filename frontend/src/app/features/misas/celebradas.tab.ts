@@ -9,6 +9,7 @@ import { PuedeDirective } from '@/app/core/puede.directive';
 import { valorDe } from '@/app/core/recurso';
 import { CelebradaDialogo } from './celebrada.dialogo';
 import { MisasService } from './misas.service';
+import { SemanaMisasPanel } from './semana.panel';
 
 /**
  * Misas celebradas del mes: quién la dio realmente y, si hubo sustitución, el padre programado,
@@ -16,10 +17,20 @@ import { MisasService } from './misas.service';
  */
 @Component({
   selector: 'app-celebradas-tab',
-  imports: [MatButton, LucideAngularModule, PuedeDirective, EstadoError, EstadoVacio, Esqueleto],
+  imports: [
+    MatButton,
+    LucideAngularModule,
+    PuedeDirective,
+    EstadoError,
+    EstadoVacio,
+    Esqueleto,
+    SemanaMisasPanel,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="tarjeta">
+    <!-- RF-84: la semana armada desde el horario -->
+    <app-semana-misas-panel />
+    <section class="tarjeta celebradas">
       <div class="encabezado">
         <p class="texto-suave">
           Misas de este mes. El horario dice lo que normalmente pasa; cada misa celebrada registra
@@ -82,6 +93,9 @@ import { MisasService } from './misas.service';
     </section>
   `,
   styles: `
+    .celebradas {
+      margin-top: 16px;
+    }
     .encabezado {
       display: flex;
       flex-wrap: wrap;

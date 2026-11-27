@@ -550,3 +550,99 @@ export const platicasPublicas = (iglesiaId: string) =>
   db.platicas
     .filter((p) => p.iglesiaId === iglesiaId && p.activo)
     .map(({ id: _id, iglesiaId: _i, activo: _a, padreId: _p, ...p }) => p);
+
+// ───────── Deseables (Genaro): RF-84 semana desde el horario y RF-83 pláticas por municipio ─────────
+
+function semanaMock(iglesiaId: string, semana: string | null) {
+  const base = new Date(`${semana ?? ahora().slice(0, 10)}T12:00:00Z`);
+  const domingo = new Date(base.getTime() - base.getUTCDay() * DIA).toISOString().slice(0, 10);
+  const misas = db.horariosMisa
+    .filter((m) => m.iglesiaId === iglesiaId && m.activo)
+    .map((m) => {
+      const fecha = new Date(new Date(`${domingo}T12:00:00Z`).getTime() + m.diaSemana * DIA)
+        .toISOString()
+        .slice(0, 10);
+      const inicio = new Date(`${fecha}T${m.hora}:00-06:00`).toISOString();
+      const hecha = db.misas.find((x) => x.iglesiaId === iglesiaId && x.inicio === inicio);
+      return {
+        horarioId: m.id,
+        diaSemana: m.diaSemana,
+        fecha,
+        hora: m.hora,
+        inicio,
+        tipo: m.tipo,
+        idioma: m.idioma,
+        duracionMin: m.duracionMin,
+        padreProgramado: padreDe(m.padreId),
+        estado: hecha ? 'REGISTRADA' : inicio > ahora() ? 'FUTURA' : 'PENDIENTE',
+        misaCelebrada: hecha
+          ? {
+              id: hecha.id,
+              padre: padreDe(hecha.padreId),
+              conSustitucion: Boolean(db.sustitucionesMisa[hecha.id]),
+            }
+          : null,
+      };
+    })
+    .sort((a, b) => a.inicio.localeCompare(b.inicio));
+  const hasta = new Date(new Date(`${domingo}T12:00:00Z`).getTime() + 6 * DIA)
+    .toISOString()
+    .slice(0, 10);
+  return { semana: { desde: domingo, hasta }, misas };
+}
+
+export const deseablesHandlers = [
+  http.get(ruta('/iglesias/:iglesiaId/semana-misas'), ({ request, params }) => {
+    const iglesiaId = String(params['iglesiaId']);
+    const u = acceso(request, ['misas:leer'], iglesiaId);
+    if (u instanceof Response) return u;
+    return HttpResponse.json({
+      data: semanaMock(iglesiaId, new URL(request.url).searchParams.get('semana')),
+    });
+  }),
+
+  http.post(ruta('/iglesias/:iglesiaId/misas-celebradas/semana'), async ({ request, params }) => {
+    const iglesiaId = String(params['iglesiaId']);
+    const u = acceso(request, ['misas:registrar'], iglesiaId);
+    if (u instanceof Response) return u;
+    const { semana } = (await request.json()) as { semana?: string };
+    const s = semanaMock(iglesiaId, semana ?? null);
+    let creadas = 0;
+    for (const m of s.misas.filter((x) => x.estado === 'PENDIENTE')) {
+      db.misas.push({
+        id: `mi-${crypto.randomUUID()}`,
+        iglesiaId,
+        inicio: m.inicio,
+        padreId: m.padreProgramado.id,
+      });
+      creadas++;
+    }
+    return HttpResponse.json({
+      data: {
+        semana: s.semana,
+        creadas,
+        yaRegistradas: s.misas.filter((x) => x.estado === 'REGISTRADA').length,
+        futuras: s.misas.filter((x) => x.estado === 'FUTURA').length,
+        omitidas: [],
+      },
+    });
+  }),
+
+  http.get(ruta('/public/platicas'), ({ request }) => {
+    const url = new URL(request.url);
+    const tipo = url.searchParams.get('tipo');
+    const municipio = url.searchParams.get('municipio') ?? '';
+    if (!tipo || !/^\d{5}$/.test(municipio)) {
+      return errorApi(400, 'VALIDATION_ERROR', 'Elige un tipo de plática y un municipio.');
+    }
+    const data = db.iglesias
+      .filter((i) => i.activa && i.municipio?.clave === municipio)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .map((i) => ({
+        iglesia: { id: i.id, nombre: i.nombre, tipo: i.tipo },
+        platicas: platicasPublicas(i.id).filter((p) => p.tipo === tipo),
+      }))
+      .filter((g) => g.platicas.length > 0);
+    return HttpResponse.json({ data });
+  }),
+];

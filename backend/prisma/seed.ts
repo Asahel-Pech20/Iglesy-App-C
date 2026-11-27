@@ -7,7 +7,8 @@ import { hashPassword } from '../src/lib/seguridad';
 import { seedB2 } from './seed-b2';
 import { seedB3 } from './seed-b3';
 import { seedDonaciones } from './seed-b4';
-import { seedDiezmo } from './seed-diezmo';
+import { llenarDiezmo, prepararDiezmo } from './seed-diezmo';
+import { seedIglesiasReales } from './seed-iglesias-reales';
 import { seedPatrimonio } from './seed-patrimonio';
 import { seedEspacios } from './seed-espacios';
 import { seedMisasYServicios } from './seed-misas-servicios';
@@ -53,21 +54,25 @@ async function main() {
   // B4: aportaciones de los últimos 12 meses
   const donaciones = await seedDonaciones(miembroIds, iglesia.id);
 
-  // Ecclesia: 4 semanas de misas y diezmos en 6 iglesias (datos ficticios)
-  const diezmo = await seedDiezmo(iglesia.id, passwordHash);
+  // Ecclesia: iglesias y tesoreros del diezmo; sus misas se arman después, desde el horario
+  const preparadoDiezmo = await prepararDiezmo(iglesia.id, passwordHash);
 
   // E2-09 (Nataly): catálogo del INEGI, 40 iglesias y 120 objetos del patrimonio (ficticios)
   const patrimonio = await seedPatrimonio();
+  // Iglesias reales de los 32 estados con foto de Wikimedia Commons (sus objetos, ilustrativos)
+  const reales = await seedIglesiasReales();
   // Ecclesia: tipos de espacio y 12 solicitudes (clave de demostración ABCDE-FGHJK)
   const espacios = await seedEspacios();
   // E3-19 (Genaro): 15 padres, horario semanal sin choques, servicios y pláticas en cada iglesia
   const misas = await seedMisasYServicios();
+  // Ecclesia: 4 semanas de misas (desde el horario, con algunas sustituciones) y diezmos en 6 iglesias
+  const diezmo = await llenarDiezmo(preparadoDiezmo);
 
   // B3: eventos (con asistencia), anuncios y un evento cancelado para la demo
   const b3 = await seedB3({ ministerios, iglesiaId: iglesia.id });
 
   console.warn(
-    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; misas y servicios en ${misas.iglesias} iglesias: ${misas.padres} padres, ${misas.misas} misas del horario, ${misas.servicios} servicios y ${misas.platicas} pláticas nuevos; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos.`,
+    `Seed listo: configuración, iglesia inicial, ${ROLES.length} usuarios (<rol>@iglesia.local; admin@ es ADMIN_IGLESIA), ${miembroIds.length} miembros, ${ministerios.size} ministerios, ${b3.eventos} eventos, ${b3.asistencias} asistencias, ${b3.anuncios} anuncios, ${donaciones} aportaciones, ${diezmo.misas} misas con diezmo en ${diezmo.iglesias} iglesias, ${espacios.solicitudes} solicitudes de espacio; misas y servicios en ${misas.iglesias} iglesias: ${misas.padres} padres, ${misas.misas} misas del horario, ${misas.servicios} servicios y ${misas.platicas} pláticas nuevos; patrimonio: ${patrimonio.estados} estados, ${patrimonio.iglesias} iglesias y ${patrimonio.objetos} objetos nuevos; ${reales.iglesias} iglesias reales con foto en ${reales.estados} estados (${reales.creadas} nuevas).`,
   );
 }
 

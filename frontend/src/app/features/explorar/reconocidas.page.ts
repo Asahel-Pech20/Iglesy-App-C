@@ -139,6 +139,7 @@ import { FOTOS_IGLESIAS } from './fotos-iglesias';
                   [localidad]="i.localidad"
                   [indice]="i.indice"
                   [distincion]="i.distincion"
+                  [foto]="i.foto"
                   [posicion]="i.posicion"
                 />
               </li>
@@ -180,7 +181,7 @@ export class ReconocidasPage {
   protected readonly ranking = computed(() => valorDe(this.consulta)?.data ?? []);
   /** Si sale alguna iglesia real de la demo, se avisa que sus objetos e índice son ilustrativos. */
   protected readonly hayReales = computed(() =>
-    this.ranking().some((i) => esIglesiaRealDeDemo(i.id)),
+    this.ranking().some((i) => esIglesiaRealDeDemo(i.id) || Boolean(i.foto)),
   );
 
   protected lugar(l: Lugar) {

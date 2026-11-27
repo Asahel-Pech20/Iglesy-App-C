@@ -13,6 +13,7 @@ import * as c from './misas.controller';
 import {
   esquemaActualizarHorario,
   esquemaAgenda,
+  esquemaArmarSemana,
   esquemaActualizarPadre,
   esquemaBuscarPadres,
   esquemaCrearHorario,
@@ -103,6 +104,25 @@ misasRouter.delete(
   alcance,
   validar({ params: esquemaHorarioDeIglesia }),
   c.quitarMisaHorario,
+);
+
+// ───────────── Semana armada desde el horario (RF-84, supuesto P-29) ─────────────
+
+misasRouter.get(
+  '/semana-misas',
+  autenticar,
+  autorizar('misas:leer'),
+  alcance,
+  validar({ params: esquemaIglesia, query: esquemaAgenda }),
+  c.semanaDeMisas,
+);
+misasRouter.post(
+  '/misas-celebradas/semana',
+  autenticar,
+  autorizar('misas:registrar'),
+  alcance,
+  validar({ params: esquemaIglesia, body: esquemaArmarSemana }),
+  c.armarSemana,
 );
 
 // ───────────── Misas celebradas (versión mínima del diezmo) ─────────────

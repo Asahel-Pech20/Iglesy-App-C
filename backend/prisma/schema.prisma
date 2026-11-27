@@ -399,6 +399,13 @@ model Iglesia {
   // Cierre sin borrar la historia (RF-11, RN-07)
   fechaCierre      DateTime? @db.Date
   motivoCierre     String?
+  // Foto de la iglesia (2026-11-26, propuesta de Oscar): solo la URL, sin subir archivos. Las de
+  // Wikimedia Commons piden autor y licencia junto a la foto (CC BY / CC BY-SA), por eso van aquí.
+  fotoUrl          String?
+  fotoAutor        String?
+  fotoLicencia     String?
+  fotoLicenciaUrl  String?
+  fotoEnlace       String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

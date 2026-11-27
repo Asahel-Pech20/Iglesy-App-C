@@ -29,6 +29,14 @@ export interface Iglesia {
   estado?: LugarInegi | null;
   municipio?: LugarInegi | null;
   localidad?: LugarInegi | null;
+  /** Foto por URL con su autor y licencia (null si no tiene) */
+  foto?: {
+    url: string;
+    autor: string | null;
+    licencia: string | null;
+    licenciaUrl: string | null;
+    enlace: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
